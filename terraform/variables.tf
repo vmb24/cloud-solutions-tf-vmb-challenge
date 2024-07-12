@@ -36,3 +36,9 @@ variable "llm_soil_metrics_repository_name" {
   type        = string
   default     = "llm-soil-metrics"
 }
+
+variable "key_name" {
+  description = "The name of the key vms"
+  type        = string
+  default     = "vockey"
+}
