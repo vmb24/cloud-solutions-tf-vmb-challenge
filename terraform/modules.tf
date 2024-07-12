@@ -13,7 +13,8 @@ module "network" {
 
 module "compute" {
   source = "./modules/compute"
-
+  
+  aws_region                       = var.aws_region
   vpc_id                           = module.network.vpc_id
   subnet_id1                       = module.network.private_subnet_ids[0]
   subnet_id2                       = module.network.private_subnet_ids[1]
@@ -23,4 +24,11 @@ module "compute" {
   llm_soil_metrics_repository_name = var.llm_soil_metrics_repository_name
   public_subnet_ids                = module.network.public_subnet_ids
   key_name                         = var.key_name
+  execution_arn_api_gateway        = module.application-services.execution_arn_api_gateway
+}
+
+module "application-services" {
+  source = "./modules/application-services"
+
+  uri_invoke_arn_lambda_function = module.compute.invoke_arn_lambda_function
 }

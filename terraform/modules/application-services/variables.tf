@@ -1,0 +1,1 @@
+variable "uri_invoke_arn_lambda_function" {}
