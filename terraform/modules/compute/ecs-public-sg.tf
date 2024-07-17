@@ -1,4 +1,4 @@
-resource "aws_security_group" "ecs_sg" {
+resource "aws_security_group" "ecs_service_sg" {
   vpc_id = var.vpc_id
 
   ingress {
@@ -16,6 +16,6 @@ resource "aws_security_group" "ecs_sg" {
   }
 
   tags = {
-    Name = "ecs-sg"
+    Name = "ecs_service_sg"
   }
 }

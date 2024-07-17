@@ -1,0 +1,9 @@
+variable "aws_region" {}
+variable "vpc_id" {}
+variable "private_subnet_id1" {}
+variable "private_subnet_id2" {}
+variable "load_balancer_arn" {}
+variable "ecs_task_execution_role_arn" {}
+variable "ecs_task_role_arn" {}
+variable "load_balancer_dns_name" {}
+variable "ecs_service_sg_id" {}
