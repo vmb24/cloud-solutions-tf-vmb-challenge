@@ -47,3 +47,16 @@ variable "key_name" {
   type        = string
   default     = "vockey"
 }
+
+# S3
+variable "bucket_name" {
+  description = "The name of the S3 bucket"
+  type        = string
+  default = "terrafarming-metrics-data-storage"
+}
+
+variable "environment" {
+  description = "The environment name (e.g., dev, prod)"
+  type        = string
+  default = "prod"
+}

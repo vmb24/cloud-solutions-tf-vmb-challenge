@@ -1,8 +1,23 @@
-FROM public.ecr.aws/lambda/python:3.8
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
 
-COPY app/ ${LAMBDA_TASK_ROOT}/app/
-COPY requirements.txt ${LAMBDA_TASK_ROOT}/
+# Set the working directory in the container
+WORKDIR /app
 
-RUN pip install -r requirements.txt
+# Copy the requirements.txt file into the container
+COPY requirements.txt ./
 
-CMD ["app.main.lambda_handler"]
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code into the container
+COPY . .
+
+# Make port 5002 available to the world outside this container
+EXPOSE 5002
+
+# Define environment variable
+ENV FLASK_APP=app.py
+
+# Run the application
+CMD ["flask", "run", "--host=0.0.0.0"]

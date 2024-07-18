@@ -1,18 +1,23 @@
-# Use uma imagem base oficial do Python
-FROM python:3.8-slim
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
 
-# Defina o diretório de trabalho
+# Set the working directory in the container
 WORKDIR /app
 
-# Copie o arquivo requirements.txt e instale as dependências
-COPY requirements.txt .
+# Copy the requirements.txt file into the container
+COPY requirements.txt ./
+
+# Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copie o conteúdo do diretório atual para o diretório de trabalho no contêiner
+# Copy the rest of the application code into the container
 COPY . .
 
-# Exponha a porta em que a aplicação estará rodando
+# Make port 5000 available to the world outside this container
 EXPOSE 5000
 
-# Comando para rodar a aplicação
-CMD ["python", "main.py"]
+# Define environment variable
+ENV FLASK_APP=app.py
+
+# Run the application
+CMD ["flask", "run", "--host=0.0.0.0"]

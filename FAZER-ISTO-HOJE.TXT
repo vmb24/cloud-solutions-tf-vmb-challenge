@@ -1,0 +1,11 @@
+Bom dia! Eu preciso que você me ajude a 
+implementar a parte de inteligencia artificial 
+com Amazon Bedrock no serviço de "soil metrics", 
+que vai coletar as métricas do solo e dar as 
+recomendações através de inteligência artificial. 
+Eu também preciso que você me ajude com a lambda 
+de recomendações de como o agricultor deve proceder 
+para melhorar o solo da sua agricultura no clima 
+local da fazenda, usando inteligencia artificial, 
+com sage maker, bedrock ou comprehend, a qual 
+você entender que é a melhor para este caso.

@@ -1,2 +1,7 @@
-Flask==2.0.1
-boto3==1.18.21
+boto3==1.26.65
+pydantic==1.10.5
+flask==2.0.3
+flask-restful==0.3.9
+pytest==6.2.5
+pytest-mock==3.6.1
+python-dotenv==0.19.2

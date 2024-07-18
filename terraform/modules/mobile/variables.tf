@@ -1,0 +1,1 @@
+variable "amplify_mobile_service_role_arn" {}
