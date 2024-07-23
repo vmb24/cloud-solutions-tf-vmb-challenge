@@ -22,7 +22,7 @@ resource "aws_api_gateway_integration" "post_farmer_service" {
   resource_id = aws_api_gateway_resource.farmer_service.id
   http_method = aws_api_gateway_method.post_farmer_service.http_method
   type        = "HTTP"
-  uri         = "http://${var.load_balancer_dns_name}/farmer-service"
+  uri         = "http://${var.microservices_load_balancer_dns_name}/farmer-service"
   integration_http_method = "POST"
 }
 
@@ -39,7 +39,7 @@ resource "aws_api_gateway_integration" "get_farmer_service" {
   resource_id = aws_api_gateway_resource.farmer_service.id
   http_method = aws_api_gateway_method.get_farmer_service.http_method
   type        = "HTTP"
-  uri         = "http://${var.load_balancer_dns_name}/farmer-service"
+  uri         = "http://${var.microservices_load_balancer_dns_name}/farmer-service"
   integration_http_method = "GET"
 }
 
@@ -56,7 +56,7 @@ resource "aws_api_gateway_integration" "put_farmer_service" {
   resource_id = aws_api_gateway_resource.farmer_service.id
   http_method = aws_api_gateway_method.put_farmer_service.http_method
   type        = "HTTP"
-  uri         = "http://${var.load_balancer_dns_name}/farmer-service"
+  uri         = "http://${var.microservices_load_balancer_dns_name}/farmer-service"
   integration_http_method = "PUT"
 }
 
@@ -73,6 +73,6 @@ resource "aws_api_gateway_integration" "delete_farmer_service" {
   resource_id = aws_api_gateway_resource.farmer_service.id
   http_method = aws_api_gateway_method.delete_farmer_service.http_method
   type        = "HTTP"
-  uri         = "http://${var.load_balancer_dns_name}/farmer-service"
+  uri         = "http://${var.microservices_load_balancer_dns_name}/farmer-service"
   integration_http_method = "DELETE"
 }

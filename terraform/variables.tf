@@ -52,11 +52,18 @@ variable "key_name" {
 variable "bucket_name" {
   description = "The name of the S3 bucket"
   type        = string
-  default = "terrafarming-metrics-data-storage"
+  default     = "terrafarming-metrics-data-storage"
 }
 
 variable "environment" {
   description = "The environment name (e.g., dev, prod)"
   type        = string
-  default = "prod"
+  default     = "prod"
+}
+
+# IDENTITY - COMPLIANCE - SECURITY
+variable "ecs_website_service_name" {
+  description = "The ECS name"
+  type = string
+  default = "terrafarming-website"
 }

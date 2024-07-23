@@ -1,10 +1,6 @@
-resource "aws_ecs_cluster" "terrafarming_cluster" {
-  name = "terrafarming-cluster"
-}
-
 resource "aws_ecs_service" "farmer_service" {
   name            = "farmer-service"
-  cluster         = aws_ecs_cluster.terrafarming_cluster.id
+  cluster         = var.terrafarming_microservices_ecs_cluster_id
   task_definition = aws_ecs_task_definition.farmer_service.arn
   desired_count   = 1
   launch_type     = "FARGATE"

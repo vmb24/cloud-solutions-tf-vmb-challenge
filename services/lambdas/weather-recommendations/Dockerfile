@@ -1,20 +1,17 @@
-# Use the AWS base image for Python 3.12
-FROM public.ecr.aws/lambda/python:3.12
+# Use the official AWS Lambda Python runtime as a parent image
+FROM amazon/aws-lambda-python:3.8
 
-# Install build-essential compiler and tools
-RUN microdnf update -y && microdnf install -y gcc-c++ make
+# Set the working directory
+WORKDIR /var/task
 
-# Copy requirements.tsx
-COPY requirements.txt ${LAMBDA_TASK_ROOT}
+# Copy the requirements file into the container
+COPY requirements.txt .
 
-# Install packages
-RUN pip install -r requirements.txt
+# Install any necessary dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy function code
-COPY GenerateLLMSoilMetrics.py ${LAMBDA_TASK_ROOT}
+# Copy the rest of the application code into the container
+COPY . .
 
-# Set the permissions to make the file executable
-RUN chmod +x GenerateLLMSoilMetrics.py
-
-# Set the CMD to your handler
-CMD ["GenerateLLMSoilMetrics.lambda_handler"]
+# Command to run the lambda function
+CMD ["app.lambda_handler"]

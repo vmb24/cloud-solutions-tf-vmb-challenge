@@ -11,9 +11,14 @@ class WeatherForecastRepository:
         self.table.put_item(Item=item)
         return item
 
-    def get_weather_forecast(self, weather_forecast_id: str):
-        response = self.table.get_item(Key={'id': weather_forecast_id})
-        return response.get('Item')
+
+    def get_weather_metric(self, weather_metric_id: str):
+        response = self.table.get_item(Key={'id': weather_metric_id})
+        return WeatherForecast(**response['Item'])
+
+    def get_weather_metrics(self):
+        response = self.table.scan()
+        return [WeatherForecast(**item) for item in response['Items']]
 
     def update_weather_forecast(self, weather_forecast_id: str, data: WeatherForecastCreate):
         update_expression = "SET " + ", ".join([f"{k}=:{k}" for k in data.dict().keys()])

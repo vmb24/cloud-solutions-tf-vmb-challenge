@@ -1,0 +1,1 @@
+variable "ecs_website_service_name" {}

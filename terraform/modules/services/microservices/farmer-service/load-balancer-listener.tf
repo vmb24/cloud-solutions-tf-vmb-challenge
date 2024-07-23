@@ -1,5 +1,5 @@
 resource "aws_lb_listener" "http" {
-  load_balancer_arn = var.load_balancer_arn
+  load_balancer_arn = var.microservices_load_balancer_arn
   port              = "80"
   protocol          = "HTTP"
 

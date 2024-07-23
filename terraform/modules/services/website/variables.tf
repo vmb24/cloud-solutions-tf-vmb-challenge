@@ -1,0 +1,13 @@
+variable "aws_region" {}
+variable "vpc_id" {}
+variable "public_subnet_id1" {}
+variable "public_subnet_id2" {}
+variable "microservices_load_balancer_arn" {}
+variable "ecs_task_execution_role_arn" {}
+variable "microservices_load_balancer_dns_name" {}
+variable "ecs_service_sg_id" {}
+variable "terrafarming_website_ecs_cluster_id" {}
+variable "terrafarming_website_ecs_cluster_name" {}
+variable "website_sg_id" {}
+variable "cloudwatch_log_group_website_container_name" {}
+variable "cloudwatch_log_group_website_task_definition_name" {}

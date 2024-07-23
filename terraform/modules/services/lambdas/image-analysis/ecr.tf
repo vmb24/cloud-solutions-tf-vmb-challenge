@@ -1,3 +1,3 @@
-resource "aws_ecr_repository" "fruit_image_processing" {
-  name = "llm-fruit-image-processing-lambda"
+resource "aws_ecr_repository" "image_analysis" {
+  name = "image-analysis-lambda"
 }

@@ -254,6 +254,21 @@ A função `image-analysis` utiliza o Amazon Rekognition para analisar imagens e
 
 A função `weather-recommendation` fornece recomendações com base nas condições climáticas e métricas do solo.
 
+Diagramas de Rede
+--------------------------
+
+### Diagramas de Rede (High-Level)
+
+-   **Subnets Públicas**:
+
+    -   NAT Gateway
+    -   Load Balancer (se aplicável)
+-   **Subnets Privadas**:
+
+    -   Todos os microserviços (Farmer Service, Soil Metrics Service, Crop Health Service, Equipment Health Service, Weather Service, Greenhouse Service)
+    -   Lambdas (Weather Recommendations, Soil Metrics Recommendations)
+    -   Banco de Dados (por exemplo, DynamoDB, RDS)
+
 
 Comunicação entre serviços
 --------------------------

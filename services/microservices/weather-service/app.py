@@ -8,6 +8,11 @@ weather_forecast_controller = WeatherForecastController()
 def create_weather_forecast():
     return weather_forecast_controller.create_weather_forecast(request.json)
 
+@app.route('/', methods=['GET'])
+def get_weather_metrics():
+    result = weather_forecast_controller.get_weather_forecasts()
+    return jsonify(result), 200
+
 @app.route('/weather_forecasts/<weather_forecast_id>', methods=['GET'])
 def get_weather_forecast(weather_forecast_id):
     return weather_forecast_controller.get_weather_forecast(weather_forecast_id)

@@ -1,33 +1,20 @@
 import unittest
-from app import app
+from unittest.mock import patch
+from usecases.soil_metrics_usecase import SoilMetricsUsecase
+from models.soil_metric import SoilMetricCreate
 
-class SoilMetricTestCase(unittest.TestCase):
-    def setUp(self):
-        self.app = app.test_client()
-        self.app.testing = True
+class TestSoilMetricsUsecase(unittest.TestCase):
+    @patch('usecases.soil_metrics_usecase.SoilMetricsRepository')
+    def setUp(self, MockRepository):
+        self.repo = MockRepository()
+        self.usecase = SoilMetricsUsecase()
 
-    def test_create_farmer(self):
-        response = self.app.post('/farmers', json={
-            "FarmerID": "1",
-            "Name": "John Doe",
-            "Email": "john@example.com"
-        })
-        self.assertEqual(response.status_code, 201)
-
-    def test_get_farmer(self):
-        response = self.app.get('/farmers/1')
-        self.assertEqual(response.status_code, 200)
-
-    def test_update_farmer(self):
-        response = self.app.put('/farmers/1', json={
-            "Name": "John Doe Updated",
-            "Email": "john_updated@example.com"
-        })
-        self.assertEqual(response.status_code, 200)
-
-    def test_delete_farmer(self):
-        response = self.app.delete('/farmers/1')
-        self.assertEqual(response.status_code, 200)
+    @patch('usecases.soil_metrics_usecase.SoilMetricsUsecase.get_jurassic2_response')
+    def test_create_soil_metric(self, mock_get_jurassic2_response):
+        mock_get_jurassic2_response.return_value = "Recomendação gerada"
+        data = SoilMetricCreate(ph=6.5, moisture=30, temperature=25)
+        result = self.usecase.create_soil_metric(data)
+        self.assertIn('recommendation', result)
 
 if __name__ == '__main__':
     unittest.main()

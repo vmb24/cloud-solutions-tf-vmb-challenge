@@ -8,6 +8,10 @@ soil_metric_controller = SoilMetricController()
 def create_soil_metric():
     return soil_metric_controller.create_soil_metric(request.json)
 
+@app.route('/soil_metrics', methods=['GET'])
+def get_soil_metrics():
+    return soil_metric_controller.get_soil_metrics()
+
 @app.route('/soil_metrics/<soil_metric_id>', methods=['GET'])
 def get_soil_metric(soil_metric_id):
     return soil_metric_controller.get_soil_metric(soil_metric_id)

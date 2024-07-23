@@ -13,10 +13,17 @@ class WeatherForecastController:
             return response_with(success_response(weather_forecast)), 201
         except Exception as e:
             return response_with(error_response(str(e)))
+        
+    def get_weather_forecasts(self):
+        try:
+            weather_forecast = self.weather_forecast_usecase.get_weather_metrics()
+            return response_with(success_response(weather_forecast)), 200
+        except Exception as e:
+            return response_with(error_response(str(e))), 500
 
     def get_weather_forecast(self, weather_forecast_id):
         try:
-            weather_forecast = self.weather_forecast_usecase.get_weather_forecast(weather_forecast_id)
+            weather_forecast = self.weather_forecast_usecase.get_weather_metric(weather_forecast_id)
             return response_with(success_response(weather_forecast)), 200
         except Exception as e:
             return response_with(error_response(str(e))), 500
