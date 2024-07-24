@@ -2,6 +2,10 @@ module "identity_compliance_security" {
   source = "./modules/identity-compliance-security"
 
   ecs_website_service_name = var.ecs_website_service_name
+  website_bucket_id = module.storage.website_bucket_id
+  website_bucket_name = module.storage.website_bucket_name
+  # cloudfront_oai_id = module.content_delivery.cloudfront_oai_id
+  logging_bucket_arn = module.storage.logging_bucket_arn
 }
 
 module "network" {
@@ -27,24 +31,34 @@ module "compute" {
 module "management_governance" {
   source = "./modules/management-governance"
 
-  ecs_website_service_name = var.ecs_website_service_name
+  ecs_website_service_name     = var.ecs_website_service_name
   ecs_task_execution_role_name = module.identity_compliance_security.ecs_task_execution_role_name
 }
 
 module "application" {
   source = "./modules/application"
 
-  kms_key_current_arn = module.identity_compliance_security.kms_key_current_arn
-  ecs_website_service_name = var.ecs_website_service_name
+  kms_key_current_arn                         = module.identity_compliance_security.kms_key_current_arn
+  ecs_website_service_name                    = var.ecs_website_service_name
   cloudwatch_log_group_website_container_name = module.management_governance.cloudwatch_log_group_website_container_name
 }
 
-# module "storage" {
-#   source = "./modules/storage"
+module "content_delivery" {
+  source = "./modules/content-delivery"
 
-#   bucket_name = var.bucket_name
-#   environment = var.environment
-# }
+  website_load_balancer_dns_name = module.compute.website_load_balancer_dns_name
+  acm_certificate_arn = var.acm_certificate_arn
+  website_bucket_name = module.storage.website_bucket_name
+  website_bucket_regional_domain_name = module.storage.website_bucket_regional_domain_name
+  logging_bucket_name = module.storage.logging_bucket_name
+}
+
+module "storage" {
+  source = "./modules/storage"
+
+  bucket_name = var.bucket_name
+  environment = var.environment
+}
 
 # module "database" {
 #   source = "./modules/database"
@@ -60,7 +74,7 @@ module "application" {
 #   microservices_load_balancer_arn           = module.compute.microservices_load_balancer_arn
 #   ecs_task_execution_role_arn = module.identity_compliance.ecs_task_execution_role_arn
 # #   microservices_load_balancer_dns_name      = module.compute.microservices_load_balancer_dns_name
-#   ecs_service_sg_id           = module.compute.ecs_service_sg_id
+#   ecs_public_service_sg_id           = module.compute.ecs_public_service_sg_id
 
 #   terrafarming_microservices_ecs_cluster_name = module.application.terrafarming_microservices_ecs_cluster_name
 #   cloudwatch_event_bus_name = module.integration.cloudwatch_event_bus_name
@@ -79,7 +93,7 @@ module "application" {
 #   microservices_load_balancer_arn           = module.compute.microservices_load_balancer_arn
 #   ecs_task_execution_role_arn = module.identity_compliance.ecs_task_execution_role_arn
 # #   microservices_load_balancer_dns_name      = module.compute.microservices_load_balancer_dns_name
-#   ecs_service_sg_id           = module.compute.ecs_service_sg_id
+#   ecs_public_service_sg_id           = module.compute.ecs_public_service_sg_id
 
 #   terrafarming_microservices_ecs_cluster_name = module.application.terrafarming_microservices_ecs_cluster_name 
 #   cloudwatch_event_bus_name = module.integration.cloudwatch_event_bus_name
@@ -100,7 +114,7 @@ module "application" {
 #   microservices_load_balancer_arn           = module.compute.microservices_load_balancer_arn
 #   ecs_task_execution_role_arn = module.identity_compliance.ecs_task_execution_role_arn
 # #   microservices_load_balancer_dns_name      = module.compute.microservices_load_balancer_dns_name
-#   ecs_service_sg_id           = module.compute.ecs_service_sg_id
+#   ecs_public_service_sg_id           = module.compute.ecs_public_service_sg_id
 
 #   terrafarming_microservices_ecs_cluster_name = module.application.terrafarming_microservices_ecs_cluster_name
 #   cloudwatch_event_bus_name = module.integration.cloudwatch_event_bus_name
@@ -121,7 +135,7 @@ module "application" {
 #   microservices_load_balancer_arn           = module.compute.microservices_load_balancer_arn
 #   ecs_task_execution_role_arn = module.identity_compliance.ecs_task_execution_role_arn
 # #   microservices_load_balancer_dns_name      = module.compute.microservices_load_balancer_dns_name
-#   ecs_service_sg_id           = module.compute.ecs_service_sg_id
+#   ecs_public_service_sg_id           = module.compute.ecs_public_service_sg_id
 
 #   terrafarming_microservices_ecs_cluster_name = module.application.terrafarming_microservices_ecs_cluster_name
 #   cloudwatch_event_bus_name = module.integration.cloudwatch_event_bus_name
@@ -141,7 +155,7 @@ module "application" {
 #   microservices_load_balancer_arn           = module.compute.microservices_load_balancer_arn
 #   ecs_task_execution_role_arn = module.identity_compliance.ecs_task_execution_role_arn
 # #   microservices_load_balancer_dns_name      = module.compute.microservices_load_balancer_dns_name
-#   ecs_service_sg_id           = module.compute.ecs_service_sg_id
+#   ecs_public_service_sg_id           = module.compute.ecs_public_service_sg_id
 
 #   terrafarming_microservices_ecs_cluster_name = module.application.terrafarming_microservices_ecs_cluster_name
 #   cloudwatch_event_bus_name = module.integration.cloudwatch_event_bus_name
@@ -162,7 +176,7 @@ module "application" {
 #   microservices_load_balancer_arn           = module.compute.microservices_load_balancer_arn
 #   ecs_task_execution_role_arn = module.identity_compliance.ecs_task_execution_role_arn
 # #   microservices_load_balancer_dns_name      = module.compute.microservices_load_balancer_dns_name
-#   ecs_service_sg_id           = module.compute.ecs_service_sg_id
+#   ecs_public_service_sg_id           = module.compute.ecs_public_service_sg_id
 
 #   terrafarming_microservices_ecs_cluster_name = module.application.terrafarming_microservices_ecs_cluster_name
 #   cloudwatch_event_bus_name = module.integration.cloudwatch_event_bus_name
@@ -217,22 +231,21 @@ module "application" {
 module "website" {
   source = "./modules/services/website"
 
-  aws_region                           = var.aws_region
-  vpc_id                               = module.network.vpc_id
-  public_subnet_id1                    = module.network.public_subnet_ids[0]
-  public_subnet_id2                    = module.network.public_subnet_ids[1]
-  microservices_load_balancer_arn      = module.compute.microservices_load_balancer_arn
-  ecs_task_execution_role_arn          = module.identity_compliance_security.ecs_task_execution_role_arn
-  microservices_load_balancer_dns_name = module.compute.microservices_load_balancer_dns_name
-  ecs_service_sg_id                    = module.compute.ecs_service_sg_id
+  aws_region                     = var.aws_region
+  vpc_id                         = module.network.vpc_id
+  public_subnet_id1              = module.network.public_subnet_ids[0]
+  public_subnet_id2              = module.network.public_subnet_ids[1]
+  website_load_balancer_arn      = module.compute.website_load_balancer_arn
+  website_load_balancer_dns_name = module.compute.website_load_balancer_dns_name
+  ecs_task_execution_role_arn    = module.identity_compliance_security.ecs_task_execution_role_arn
+  ecs_public_service_sg_id       = module.compute.ecs_public_service_sg
 
-  terrafarming_website_ecs_cluster_id   = module.application.terrafarming_website_ecs_cluster_id
-  terrafarming_website_ecs_cluster_name = module.application.terrafarming_website_ecs_cluster_name
-  website_sg_id                         = module.compute.website_sg_id
-  cloudwatch_log_group_website_container_name = module.management_governance.cloudwatch_log_group_website_container_name
+  terrafarming_website_ecs_cluster_id               = module.application.terrafarming_website_ecs_cluster_id
+  terrafarming_website_ecs_cluster_name             = module.application.terrafarming_website_ecs_cluster_name
+  website_sg_id                                     = module.compute.website_sg_id
+  cloudwatch_log_group_website_container_name       = module.management_governance.cloudwatch_log_group_website_container_name
   cloudwatch_log_group_website_task_definition_name = module.management_governance.cloudwatch_log_group_website_task_definition_name
 }
-
 
 # module "delivery-application" {
 #   source = "./modules/delivery-application"

@@ -11,9 +11,9 @@ resource "aws_ecs_service" "website_service" {
     assign_public_ip = true
   }
 
-  # load_balancer {
-  #   target_group_arn = aws_lb_target_group.website_lb_target.arn
-  #   container_name   = "website"
-  #   container_port   = 3000
-  # }
+  load_balancer {
+    target_group_arn = aws_lb_target_group.website_lb_target.arn
+    container_name   = "website"
+    container_port   = 3000
+  }
 }

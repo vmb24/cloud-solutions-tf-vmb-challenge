@@ -14,8 +14,8 @@ output "website_load_balancer_dns_name" {
   value = aws_lb.website_lb.dns_name
 }
 
-output "ecs_service_sg_id" {
-  value = aws_security_group.ecs_service_sg.id
+output "ecs_public_service_sg" {
+  value = aws_security_group.ecs_public_service_sg.id
 }
 
 output "website_sg_id" {

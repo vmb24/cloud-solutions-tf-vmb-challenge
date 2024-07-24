@@ -6,7 +6,7 @@ variable "microservices_load_balancer_arn" {}
 variable "ecs_task_execution_role_arn" {}
 variable "ecs_task_execution_role_arn" {}
 variable "microservices_load_balancer_dns_name" {}
-variable "ecs_service_sg_id" {}
+variable "ecs_public_service_sg_id" {}
 variable "cloudwatch_event_bus_name" {}
 variable "sns_topic_crop_health_notifications_arn" {}
 variable "sns_topic_equipment_health_notifications_arn" {}

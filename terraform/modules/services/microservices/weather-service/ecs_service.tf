@@ -7,7 +7,7 @@ resource "aws_ecs_service" "weather_service" {
   
   network_configuration {
     subnets         = [var.private_subnet_id1, var.private_subnet_id2]
-    security_groups = [var.ecs_service_sg_id]
+    security_groups = [var.ecs_public_service_sg_id]
   }
 
   load_balancer {
