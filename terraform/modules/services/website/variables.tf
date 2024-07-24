@@ -11,3 +11,4 @@ variable "terrafarming_website_ecs_cluster_name" {}
 variable "website_sg_id" {}
 variable "cloudwatch_log_group_website_container_name" {}
 variable "cloudwatch_log_group_website_task_definition_name" {}
+variable "acm_certificate_arn" {}

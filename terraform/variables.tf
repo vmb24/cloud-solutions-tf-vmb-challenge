@@ -72,5 +72,5 @@ variable "ecs_website_service_name" {
 variable "acm_certificate_arn" {
   description = "HTTPS Certificate"
   type        = string
-  default = "arn:aws:acm:us-east-1:590184100199:certificate/58370164-61ab-4d3c-a048-f7e4ac2fa7ec"
+  default     = "arn:aws:acm:us-east-1:590184100199:certificate/58370164-61ab-4d3c-a048-f7e4ac2fa7ec"
 }

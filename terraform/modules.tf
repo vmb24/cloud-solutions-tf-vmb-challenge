@@ -2,8 +2,8 @@ module "identity_compliance_security" {
   source = "./modules/identity-compliance-security"
 
   ecs_website_service_name = var.ecs_website_service_name
-  website_bucket_id = module.storage.website_bucket_id
-  website_bucket_name = module.storage.website_bucket_name
+  website_bucket_id        = module.storage.website_bucket_id
+  website_bucket_name      = module.storage.website_bucket_name
   # cloudfront_oai_id = module.content_delivery.cloudfront_oai_id
   logging_bucket_arn = module.storage.logging_bucket_arn
 }
@@ -46,11 +46,11 @@ module "application" {
 module "content_delivery" {
   source = "./modules/content-delivery"
 
-  website_load_balancer_dns_name = module.compute.website_load_balancer_dns_name
-  acm_certificate_arn = var.acm_certificate_arn
-  website_bucket_name = module.storage.website_bucket_name
+  website_load_balancer_dns_name      = module.compute.website_load_balancer_dns_name
+  acm_certificate_arn                 = var.acm_certificate_arn
+  website_bucket_name                 = module.storage.website_bucket_name
   website_bucket_regional_domain_name = module.storage.website_bucket_regional_domain_name
-  logging_bucket_name = module.storage.logging_bucket_name
+  logging_bucket_name                 = module.storage.logging_bucket_name
 }
 
 module "storage" {
@@ -239,6 +239,7 @@ module "website" {
   website_load_balancer_dns_name = module.compute.website_load_balancer_dns_name
   ecs_task_execution_role_arn    = module.identity_compliance_security.ecs_task_execution_role_arn
   ecs_public_service_sg_id       = module.compute.ecs_public_service_sg
+  acm_certificate_arn            = var.acm_certificate_arn
 
   terrafarming_website_ecs_cluster_id               = module.application.terrafarming_website_ecs_cluster_id
   terrafarming_website_ecs_cluster_name             = module.application.terrafarming_website_ecs_cluster_name
