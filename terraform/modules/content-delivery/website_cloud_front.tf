@@ -19,11 +19,10 @@ resource "aws_cloudfront_distribution" "terrafarming_distribution" {
   is_ipv6_enabled     = true
   default_root_object = "index.html"
 
-  # Remove logging_config for now
   # logging_config {
+  #   bucket = "${var.website_bucket_regional_domain_name}"
   #   include_cookies = false
-  #   bucket          = "${var.logging_bucket_name}.s3.amazonaws.com"
-  #   prefix          = "myprefix"
+  #   prefix = "cloudfront-logs/"
   # }
 
   aliases = ["terrafarming.com.br"]
@@ -103,7 +102,7 @@ resource "aws_cloudfront_distribution" "terrafarming_distribution" {
   price_class = "PriceClass_200"  # Inclui a América do Sul e outros locais
 
   viewer_certificate {
-    acm_certificate_arn = var.acm_certificate_arn
+    acm_certificate_arn = aws_acm_certificate.cert.arn
     ssl_support_method  = "sni-only"
   }
 

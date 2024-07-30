@@ -1,6 +1,6 @@
-resource "aws_route53_record" "terrafarming_record" {
+resource "aws_route53_record" "www_record" {
   zone_id = aws_route53_zone.terrafarming_zone.id
-  name    = "terrafarming.com.br"
+  name    = "www.terrafarming.com.br"
   type    = "A"
   alias {
     name                   = aws_cloudfront_distribution.terrafarming_distribution.domain_name

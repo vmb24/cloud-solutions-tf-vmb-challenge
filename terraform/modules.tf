@@ -47,7 +47,7 @@ module "content_delivery" {
   source = "./modules/content-delivery"
 
   website_load_balancer_dns_name      = module.compute.website_load_balancer_dns_name
-  acm_certificate_arn                 = var.acm_certificate_arn
+  acm_certificate_cert_arn            = var.acm_certificate_cert_arn
   website_bucket_name                 = module.storage.website_bucket_name
   website_bucket_regional_domain_name = module.storage.website_bucket_regional_domain_name
   logging_bucket_name                 = module.storage.logging_bucket_name
@@ -239,7 +239,7 @@ module "website" {
   website_load_balancer_dns_name = module.compute.website_load_balancer_dns_name
   ecs_task_execution_role_arn    = module.identity_compliance_security.ecs_task_execution_role_arn
   ecs_public_service_sg_id       = module.compute.ecs_public_service_sg
-  acm_certificate_arn            = var.acm_certificate_arn
+  acm_certificate_cert_arn       = module.content_delivery.acm_certificate_cert_arn
 
   terrafarming_website_ecs_cluster_id               = module.application.terrafarming_website_ecs_cluster_id
   terrafarming_website_ecs_cluster_name             = module.application.terrafarming_website_ecs_cluster_name

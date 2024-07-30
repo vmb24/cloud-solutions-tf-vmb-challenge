@@ -14,7 +14,7 @@ resource "aws_s3_bucket_ownership_controls" "logging_bucket_ownership_controls" 
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "logging_bucket_public_access_block" {
+resource "aws_s3_bucket_public_access_block" "website_bucket_public_access_block" {
   bucket = aws_s3_bucket.logging_bucket.id
 
   block_public_acls       = false
@@ -26,9 +26,9 @@ resource "aws_s3_bucket_public_access_block" "logging_bucket_public_access_block
 resource "aws_s3_bucket_acl" "logging_bucket_acl" {
   depends_on = [
     aws_s3_bucket_ownership_controls.logging_bucket_ownership_controls,
-    aws_s3_bucket_public_access_block.logging_bucket_public_access_block,
+    aws_s3_bucket_public_access_block.website_bucket_public_access_block,
   ]
 
   bucket = aws_s3_bucket.logging_bucket.id
-  acl    = "log-delivery-write"
+  acl    = "public-read"
 }

@@ -16,4 +16,12 @@ resource "aws_ecs_service" "website_service" {
     container_name   = "website"
     container_port   = 3000
   }
+
+  deployment_controller {
+    type = "ECS"
+  }
+
+  tags = {
+    Name = "website-service"
+  }
 }

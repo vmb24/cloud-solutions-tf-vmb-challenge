@@ -5,12 +5,12 @@
 #     Version = "2012-10-17"
 #     Statement = [
 #       {
-#         Sid    = "AllowCloudFrontServicePrincipal"
+#         Sid    = "PublicReadForGetBucketObjects"
 #         Effect = "Allow"
 #         Principal = {
 #           Service = "cloudfront.amazonaws.com"
 #         }
-#         Action   = "s3:GetObject"
+#         Action   = "*"
 #         Resource = "${var.logging_bucket_arn}/*"
 #       }
 #     ]
