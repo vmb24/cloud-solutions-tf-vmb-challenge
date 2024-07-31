@@ -12,3 +12,4 @@ variable "website_sg_id" {}
 variable "cloudwatch_log_group_website_container_name" {}
 variable "cloudwatch_log_group_website_task_definition_name" {}
 variable "acm_certificate_cert_arn" {}
+variable "route53_record_www_record_name" {}

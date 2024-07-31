@@ -1,5 +1,5 @@
-resource "aws_lb_listener_rule" "example" {
-  listener_arn = aws_lb_listener.website_listener_lb_http.arn
+resource "aws_lb_listener_rule" "website_lb_listener_rule" {
+  listener_arn = aws_lb_listener.https_listener.arn
   priority     = 1
 
   action {

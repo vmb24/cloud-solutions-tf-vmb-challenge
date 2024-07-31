@@ -36,11 +36,30 @@ variable "availability_zones" {
 
 # ------ COMPUTE ------
 # ECR & ECS
+variable "cognito_stage_name" {
+  description = "Cognito stage name"
+  type = string
+  default = "production"
+}
+
+variable "cognito_service_name" {
+  description = "Cognito service name"
+  type = string
+  default = "website-cognito"
+}
+
+# variable "autoscaling_instance_type" {
+#   description = "Autoscaling instance type"
+#   type = string
+#   default = "t2.micro"
+# }
+
 variable "llm_soil_metrics_repository_name" {
   description = "The name of the ECR Terrafarming repository"
   type        = string
   default     = "llm-soil-metrics"
 }
+
 
 variable "key_name" {
   description = "The name of the key vms"
@@ -74,3 +93,4 @@ variable "acm_certificate_cert_arn" {
   type        = string
   default     = "arn:aws:acm:us-east-1:590184100199:certificate/58370164-61ab-4d3c-a048-f7e4ac2fa7ec"
 }
+

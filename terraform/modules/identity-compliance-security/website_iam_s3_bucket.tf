@@ -11,7 +11,7 @@
 #           Service = "cloudfront.amazonaws.com"
 #         }
 #         Action   = "*"
-#         Resource = "${var.logging_bucket_arn}/*"
+#         Resource = "${var.cloudfront_logging_bucket_arn}/*"
 #       }
 #     ]
 #   })

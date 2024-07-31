@@ -25,3 +25,19 @@ output "website_sg_id" {
 output "general_public_sg_id" {
   value = aws_security_group.general_public_sg.id
 }
+
+output "website_lb_zone_id" {
+  value = aws_lb.website_lb.zone_id
+}
+
+output "website_lb_id" {
+  value = aws_lb.website_lb.id
+}
+
+# output "autoscaling_group_web_asg_name" {
+#   value = aws_autoscaling_group.web_asg.name
+# }
+
+# output "website_autoscaling_group_name" {
+#   value = aws_autoscaling_group.web_asg.name
+# }

@@ -7,4 +7,10 @@ resource "aws_route53_record" "cert_validation_record" {
   type    = each.value.resource_record_type
   ttl     = 60
   records = [each.value.resource_record_value]
+
+  # alias {
+  #   name                   = var.website_load_balancer_dns_name
+  #   zone_id                = var.website_lb_zone_id
+  #   evaluate_target_health = true
+  # }
 }

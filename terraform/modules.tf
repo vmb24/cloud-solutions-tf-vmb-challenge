@@ -5,7 +5,12 @@ module "identity_compliance_security" {
   website_bucket_id        = module.storage.website_bucket_id
   website_bucket_name      = module.storage.website_bucket_name
   # cloudfront_oai_id = module.content_delivery.cloudfront_oai_id
-  logging_bucket_arn = module.storage.logging_bucket_arn
+  cloudfront_logging_bucket_arn    = module.storage.cloudfront_logging_bucket_arn
+  load_balancer_logging_bucket_id  = module.storage.load_balancer_logging_bucket_id
+  load_balancer_logging_bucket_arn = module.storage.load_balancer_logging_bucket_arn
+
+  cognito_stage_name = var.cognito_stage_name
+  cognito_service_name = var.cognito_service_name
 }
 
 module "network" {
@@ -26,6 +31,8 @@ module "compute" {
   public_subnet_id2  = module.network.public_subnet_ids[1]
   private_subnet_id1 = module.network.private_subnet_ids[0]
   private_subnet_id2 = module.network.private_subnet_ids[1]
+
+  load_balancer_logging_bucket = module.storage.load_balancer_logging_bucket
 }
 
 module "management_governance" {
@@ -46,11 +53,14 @@ module "application" {
 module "content_delivery" {
   source = "./modules/content-delivery"
 
-  website_load_balancer_dns_name      = module.compute.website_load_balancer_dns_name
-  acm_certificate_cert_arn            = var.acm_certificate_cert_arn
-  website_bucket_name                 = module.storage.website_bucket_name
-  website_bucket_regional_domain_name = module.storage.website_bucket_regional_domain_name
-  logging_bucket_name                 = module.storage.logging_bucket_name
+  aws_region = var.aws_region
+  website_load_balancer_dns_name                 = module.compute.website_load_balancer_dns_name
+  acm_certificate_cert_arn                       = var.acm_certificate_cert_arn
+  website_bucket_name                            = module.storage.website_bucket_name
+  cloudfront_logging_bucket_regional_domain_name = module.storage.cloudfront_logging_bucket_regional_domain_name
+  cloudfront_logging_bucket_name                 = module.storage.cloudfront_logging_bucket_name
+  website_lb_zone_id                             = module.compute.website_lb_zone_id
+  website_lb_id = module.compute.website_lb_id
 }
 
 module "storage" {
@@ -240,6 +250,7 @@ module "website" {
   ecs_task_execution_role_arn    = module.identity_compliance_security.ecs_task_execution_role_arn
   ecs_public_service_sg_id       = module.compute.ecs_public_service_sg
   acm_certificate_cert_arn       = module.content_delivery.acm_certificate_cert_arn
+  route53_record_www_record_name = module.content_delivery.route53_record_www_record_name
 
   terrafarming_website_ecs_cluster_id               = module.application.terrafarming_website_ecs_cluster_id
   terrafarming_website_ecs_cluster_name             = module.application.terrafarming_website_ecs_cluster_name
