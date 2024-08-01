@@ -8,6 +8,6 @@ resource "aws_lb_listener" "https_listener" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.website_lb_target.arn
+    target_group_arn = aws_lb_target_group.app_website_lb_target.arn
   }
 }

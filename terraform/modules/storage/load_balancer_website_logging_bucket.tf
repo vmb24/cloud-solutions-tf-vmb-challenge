@@ -30,5 +30,5 @@ resource "aws_s3_bucket_acl" "load_balancer_logging_bucket_acl" {
   ]
 
   bucket = aws_s3_bucket.load_balancer_logging_bucket.id
-  acl    = "log-delivery-write"
+  acl    = "private"
 }

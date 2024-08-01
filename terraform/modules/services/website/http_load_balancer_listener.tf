@@ -7,8 +7,11 @@ resource "aws_lb_listener" "website_listener_lb_http" {
     type = "redirect"
 
     redirect {
-      protocol = "HTTPS"
-      port     = "443"
+      host        = "#{host}"
+      path        = "/"
+      port        = "443"
+      protocol    = "HTTPS"
+      query       = "#{query}"
       status_code = "HTTP_301"
     }
   }

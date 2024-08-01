@@ -6,9 +6,9 @@ output "iam_role_lambda_exec_arn" {
   value = aws_iam_role.lambda_exec.arn
 }
 
-output "amplify_mobile_service_role_arn" {
-  value = aws_iam_role.amplify_mobile_service_role.arn
-}
+# output "amplify_mobile_service_role_arn" {
+#   value = aws_iam_role.amplify_mobile_service_role.arn
+# }
 
 output "kms_key_current_arn" {
   value = aws_kms_key.current.arn

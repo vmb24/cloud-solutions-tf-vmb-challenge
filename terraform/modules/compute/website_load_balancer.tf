@@ -6,8 +6,9 @@ resource "aws_lb" "website_lb" {
   subnets            = [var.public_subnet_id1, var.public_subnet_id2]
   enable_deletion_protection = false
   enable_cross_zone_load_balancing = true
+  enable_http2 = true
 
-  # VERIFICAR
+  # # VERIFICAR
   # access_logs {
   #     bucket  = var.load_balancer_logging_bucket
   #     prefix  = "load-balancer-logs"

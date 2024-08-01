@@ -12,7 +12,7 @@ resource "aws_ecs_service" "website_service" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.website_lb_target.arn
+    target_group_arn = aws_lb_target_group.app_website_lb_target.arn
     container_name   = "website"
     container_port   = 3000
   }
