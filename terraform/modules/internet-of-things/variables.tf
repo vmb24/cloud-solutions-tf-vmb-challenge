@@ -1,0 +1,1 @@
+variable "soil_data_processing_recommendations_lambda_arn" {}

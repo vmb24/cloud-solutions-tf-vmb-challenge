@@ -1,7 +1,7 @@
 module "internet_of_things" {
   source = "./modules/internet-of-things"
 
-  soil_data_processing_recommendations_lambda_arn = module.soil_data_processing_recommendations.soil_data_processing_recommendations_lambda_arn
+  process_soil_moisture_lambda_arn = module.process_moisture_lambda.process_soil_moisture_lambda_arn
 }
 
 module "identity_compliance_security" {
@@ -10,6 +10,13 @@ module "identity_compliance_security" {
   ecs_website_service_name = var.ecs_website_service_name
   website_bucket_id        = module.storage.website_bucket_id
   website_bucket_name      = module.storage.website_bucket_name
+  # cloudfront_oai_id = module.content_delivery.cloudfront_oai_id
+  cloudfront_logging_bucket_arn    = module.storage.cloudfront_logging_bucket_arn
+  load_balancer_logging_bucket_id  = module.storage.load_balancer_logging_bucket_id
+  load_balancer_logging_bucket_arn = module.storage.load_balancer_logging_bucket_arn
+
+  cognito_stage_name   = var.cognito_stage_name
+  cognito_service_name = var.cognito_service_name
 }
 
 module "network" {
@@ -52,12 +59,14 @@ module "application" {
 module "content_delivery" {
   source = "./modules/content-delivery"
 
-  aws_region                     = var.aws_region
-  website_load_balancer_dns_name = module.compute.website_load_balancer_dns_name
-  acm_certificate_cert_arn       = var.acm_certificate_cert_arn
-  website_bucket_name            = module.storage.website_bucket_name
-  website_lb_zone_id             = module.compute.website_lb_zone_id
-  website_lb_id                  = module.compute.website_lb_id
+  aws_region                                     = var.aws_region
+  website_load_balancer_dns_name                 = module.compute.website_load_balancer_dns_name
+  acm_certificate_cert_arn                       = var.acm_certificate_cert_arn
+  website_bucket_name                            = module.storage.website_bucket_name
+  cloudfront_logging_bucket_regional_domain_name = module.storage.cloudfront_logging_bucket_regional_domain_name
+  cloudfront_logging_bucket_name                 = module.storage.cloudfront_logging_bucket_name
+  website_lb_zone_id                             = module.compute.website_lb_zone_id
+  website_lb_id                                  = module.compute.website_lb_id
 }
 
 module "storage" {
@@ -68,17 +77,14 @@ module "storage" {
 }
 
 module "moisture_task_planner" {
-  source = "./modules/services/lambdas/moisture-task-planner"
+  source = "./modules/services/lambdas/task-planner"
 
-  moisture_task_planner_lambda_role_arn = module.identity_compliance_security.moisture_task_planner_lambda_role_arn
-  moisture_iot_rule_arn                 = module.internet_of_things.moisture_iot_rule_arn
+  process_soil_moisture_lambda_role_arn = module.identity_compliance_security.process_soil_moisture_lambda_role_arn
+  task_planner_iot_rule_arn         = module.internet_of_things.task_planner_iot_rule_arn
 }
 
 module "soil_data_processing_recommendations" {
   source = "./modules/services/lambdas/soil-data-processing-recommendations"
-
-  soil_data_processing_recommendations_lambda_role_arn = module.identity_compliance_security.soil_data_processing_recommendations_lambda_role_arn
-  moisture_iot_rule_arn                                = module.internet_of_things.moisture_iot_rule_arn
 }
 
 module "database" {
