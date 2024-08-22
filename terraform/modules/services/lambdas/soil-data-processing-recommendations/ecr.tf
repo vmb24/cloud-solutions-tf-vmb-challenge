@@ -1,3 +1,3 @@
-resource "aws_ecr_repository" "moisture_task_planner" {
-  name = "moisture_task_planner"
+resource "aws_ecr_repository" "soil_data_processing_recommendations" {
+  name = "soil_data_processing_recommendations"
 }

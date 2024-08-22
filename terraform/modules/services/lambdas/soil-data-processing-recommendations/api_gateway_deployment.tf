@@ -8,7 +8,7 @@ resource "aws_api_gateway_deployment" "soil_data_processing_recommendations_api_
   ]
 
   rest_api_id = aws_api_gateway_rest_api.soil_data_processing_recommendations_api.id
-  stage_name  = "prod"
+  stage_name    = "prod"
 
   lifecycle {
     create_before_destroy = true
@@ -33,8 +33,8 @@ resource "aws_api_gateway_deployment" "soil_data_processing_recommendations_api_
 }
 
 # Estágio do API Gateway
-resource "aws_api_gateway_stage" "prod" {
-  deployment_id = aws_api_gateway_deployment.soil_data_processing_recommendations_api_deployment.id
-  rest_api_id   = aws_api_gateway_rest_api.soil_data_processing_recommendations_api.id
-  stage_name    = "prod"
-}
+//resource "aws_api_gateway_stage" "prod" {
+//  deployment_id = aws_api_gateway_deployment.soil_data_processing_recommendations_api_deployment.id
+//  rest_api_id   = aws_api_gateway_rest_api.soil_data_processing_recommendations_api.id
+//  stage_name    = "prod"
+//}

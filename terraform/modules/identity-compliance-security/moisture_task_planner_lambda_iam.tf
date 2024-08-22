@@ -5,32 +5,11 @@ resource "aws_iam_role" "moisture_task_planner_lambda_role" {
     Version = "2012-10-17",
     Statement = [
       {
-        Action = [
-          "sts:AssumeRole",
-          "rekognition:DetectLabels",
-          "rekognition:DetectFaces",
-          "rekognition:SearchFacesByImage",
-          "rekognition:IndexFaces",
-          "rekognition:ListFaces",
-          "rekognition:DeleteFaces",
-          "rekognition:SearchFaces",
-          "rekognition:CompareFaces",
-          "rekognition:DetectText",
-          "kinesisvideo:GetDataEndpoint",
-          "kinesisvideo:PutMedia",
-          "kinesisvideo:GetMedia",
-          "dynamodb:*",
-          "s3:*",
-          "bedrock:*",
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ]
+        Action = "sts:AssumeRole",
         Effect = "Allow",
         Principal = {
           Service = "lambda.amazonaws.com"
-        },
-        Resource = "*"
+        }
       }
     ]
   })
@@ -81,6 +60,28 @@ resource "aws_iam_role_policy" "moisture_task_planner_lambda_policy" {
           "logs:PutLogEvents"
         ]
         Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "rekognition:DetectLabels",
+          "rekognition:DetectFaces",
+          "rekognition:SearchFacesByImage",
+          "rekognition:IndexFaces",
+          "rekognition:ListFaces",
+          "rekognition:DeleteFaces",
+          "rekognition:SearchFaces",
+          "rekognition:CompareFaces",
+          "rekognition:DetectText"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "bedrock:*"
+        ]
+        Resource = "*"
       }
     ]
   })

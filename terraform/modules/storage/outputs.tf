@@ -10,18 +10,6 @@ output "website_bucket_id" {
   value = aws_s3_bucket.website_bucket.id
 }
 
-output "load_balancer_logging_bucket_id" {
-  value = aws_s3_bucket.load_balancer_logging_bucket.id
-}
-
-output "load_balancer_logging_bucket_arn" {
-  value = aws_s3_bucket.load_balancer_logging_bucket.arn
-}
-
-output "load_balancer_logging_bucket" {
-  value = aws_s3_bucket.load_balancer_logging_bucket.bucket
-}
-
 output "task_planner_media_bucket_arn" {
   value = aws_s3_bucket.task_planner_media.arn
 }

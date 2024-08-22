@@ -7,6 +7,7 @@ module "internet_of_things" {
 module "identity_compliance_security" {
   source = "./modules/identity-compliance-security"
 
+  aws_region               = var.aws_region
   ecs_website_service_name = var.ecs_website_service_name
   website_bucket_id        = module.storage.website_bucket_id
   website_bucket_name      = module.storage.website_bucket_name
@@ -14,6 +15,8 @@ module "identity_compliance_security" {
   task_planner_media_bucket_arn               = module.storage.task_planner_media_bucket_arn
   kinesis_video_stream_task_planner_video_arn = module.analyse.kinesis_video_stream_task_planner_video_arn
   dynamodb_table_task_plans_arn               = module.database.dynamodb_table_task_plans_arn
+  dynamodb_table_average_moisture_arn         = module.database.dynamodb_table_average_moisture_arn
+  average_moisture_tabledb_stream_arn         = module.database.average_moisture_tabledb_stream_arn
 }
 
 module "network" {
@@ -34,8 +37,6 @@ module "compute" {
   public_subnet_id2  = module.network.public_subnet_ids[1]
   private_subnet_id1 = module.network.private_subnet_ids[0]
   private_subnet_id2 = module.network.private_subnet_ids[1]
-
-  load_balancer_logging_bucket = module.storage.load_balancer_logging_bucket
 }
 
 module "management_governance" {
@@ -81,6 +82,7 @@ module "moisture_task_planner" {
   moisture_iot_rule_arn                        = module.internet_of_things.moisture_iot_rule_arn
   task_planner_faces_rekognition_collection_id = module.machine_learning.task_planner_faces_rekognition_collection_id
   task_planner_media_bucket_arn                = module.storage.task_planner_media_bucket_arn
+  average_moisture_tabledb_stream_arn          = module.database.average_moisture_tabledb_stream_arn
 }
 
 module "soil_data_processing_recommendations" {

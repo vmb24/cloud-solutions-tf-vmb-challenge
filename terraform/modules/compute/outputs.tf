@@ -1,11 +1,3 @@
-output "microservices_load_balancer_arn" {
-  value = aws_lb.microservices_lb.arn
-}
-
-output "microservices_load_balancer_dns_name" {
-  value = aws_lb.microservices_lb.dns_name
-}
-
 output "website_load_balancer_arn" {
   value = aws_lb.website_lb.arn
 }

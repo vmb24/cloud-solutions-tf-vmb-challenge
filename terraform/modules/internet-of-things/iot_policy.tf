@@ -1,24 +1,28 @@
-resource "aws_iot_policy" "arduino_policy" {
-  name   = "ArduinoPolicy"
+resource "aws_iot_policy" "iot_thing_policy" {
+  name   = "IOTPolicy"
+
   policy = jsonencode({
-    "Version": "2012-10-17",
-    "Statement": [
+    Version = "2012-10-17"
+    Statement = [
       {
-        "Effect": "Allow",
-        "Action": [
+        Effect = "Allow"
+        Action = [
           "iot:Connect",
           "iot:Publish",
           "iot:Subscribe",
-          "iot:Receive"
-        ],
-        "Resource": "*"
+          "iot:Receive",
+          "iot:GetThingShadow",
+          "iot:UpdateThingShadow",
+          "iot:DeleteThingShadow"
+        ]
+        Resource = "*"
       }
     ]
   })
 }
 
 resource "aws_iot_policy_attachment" "policy_attach" {
-  policy =  aws_iot_policy.arduino_policy.name
+  policy =  aws_iot_policy.iot_thing_policy.name
   target      = aws_iot_certificate.arduino_cert.arn
 }
 

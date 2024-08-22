@@ -1,23 +1,39 @@
 import json
 import boto3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from botocore.exceptions import ClientError
 import base64
 import uuid
 import os
 
 # Inicialização dos clientes AWS
 bedrock = boto3.client('bedrock-runtime')
-dynamodb = boto3.client('dynamodb')
+dynamodb = boto3.resource('dynamodb')
 s3 = boto3.client('s3')
 rekognition = boto3.client('rekognition')
 lambda_client = boto3.client('lambda')
 kinesis_video = boto3.client('kinesisvideo')
+iot_data = boto3.client('iot-data')
 
 # Obter o nome do Kinesis Video Stream da variável de ambiente
-KINESIS_VIDEO_STREAM_NAME = os.environ['KINESIS_VIDEO_STREAM_NAME']
+KINESIS_VIDEO_STREAM_NAME = os.environ['task_planner_video_stream']
 
 # Nome do bucket S3 para armazenar mídias
 S3_BUCKET_NAME = "task-planner-media-bucket"
+
+# Constantes para o planejamento de tarefas
+MOISTURE_THRESHOLD = 5.0  # Diferença de umidade que aciona um novo plano
+TIME_THRESHOLD = timedelta(hours=6)  # Tempo mínimo entre novos planos
+
+# Data atual
+current_time = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+# Tabelas do DynamoDB
+task_plan_table = dynamodb.Table('TaskPlans')
+moisture_history_table = dynamodb.Table('MoistureHistory')
+
+# Nome da coisa IoT
+IOT_THING_NAME = os.environ.get('IOT_THING_NAME', 'moisture_sensor')
 
 def lambda_handler(event, context):
     # Verifica se o evento é do DynamoDB Stream da tabela AverageMoisture
@@ -36,6 +52,8 @@ def lambda_handler(event, context):
             return get_images()
         elif path == '/videos':
             return get_videos()
+        elif path == '/realtime-moisture':
+            return get_realtime_moisture()
     elif http_method == 'POST':
         if path == '/generate-task-plan':
             return generate_new_task_plan()
@@ -46,6 +64,28 @@ def lambda_handler(event, context):
         'body': json.dumps({'error': 'Not Found'})
     }
 
+def get_realtime_moisture():
+    try:
+        response = iot_data.get_thing_shadow(thingName=IOT_THING_NAME)
+        payload = json.loads(response['payload'].read().decode('utf-8'))
+        current_moisture = payload['state']['reported']['moisture']
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'moisture': current_moisture
+            })
+        }
+    except ClientError as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({
+                'error': 'Failed to retrieve real-time data',
+                'details': str(e)
+            })
+        }
+
 def process_average_moisture_event(event):
     for record in event['Records']:
         if record['eventName'] == 'INSERT' or record['eventName'] == 'MODIFY':
@@ -55,31 +95,53 @@ def process_average_moisture_event(event):
                 new_average_moisture = float(new_image['averageMoisture']['N'])
                 timestamp = new_image['timestamp']['S']
                 
-                # Aqui você pode adicionar lógica adicional se necessário
-                # Por exemplo, verificar se a mudança é significativa o suficiente para gerar um novo plano
-                
-                # Gerar novo plano de tarefas
-                return generate_new_task_plan()
+                if should_generate_new_plan(new_average_moisture, timestamp):
+                    new_plan = generate_new_task_plan()
+                    store_task_plan(new_plan, timestamp)
+                    return {
+                        'statusCode': 200,
+                        'body': json.dumps('Novo plano de tarefas gerado e armazenado')
+                    }
 
     return {
         'statusCode': 200,
         'body': json.dumps('Processamento concluído sem necessidade de gerar novo plano')
     }
 
-def get_latest_task_plan():
-    # Busca o plano de tarefas mais recente do DynamoDB
-    response = dynamodb.query(
-        TableName='TaskPlans',
-        Limit=1,
+def should_generate_new_plan(new_moisture, timestamp):
+    last_plan = get_last_task_plan()
+    
+    if not last_plan:
+        return True
+    
+    last_plan_timestamp = datetime.fromisoformat(last_plan['timestamp'])
+    current_timestamp = datetime.fromisoformat(timestamp)
+    
+    if current_timestamp - last_plan_timestamp < TIME_THRESHOLD:
+        return False
+    
+    last_moisture = float(last_plan['averageMoisture'])
+    if abs(new_moisture - last_moisture) >= MOISTURE_THRESHOLD:
+        return True
+    
+    return False
+
+def get_last_task_plan():
+    response = task_plan_table.query(
+        KeyConditionExpression='timestamp = :timestamp',
+        ExpressionAttributeValues={':timestamp': 'latest'},
         ScanIndexForward=False,
-        KeyConditionExpression='#pk = :pk',
-        ExpressionAttributeNames={'#pk': 'PK'},
-        ExpressionAttributeValues={':pk': {'S': 'TASK_PLAN'}}
+        Limit=1
     )
-    if 'Items' in response and response['Items']:
+    items = response.get('Items', [])
+    return items[0] if items else None
+
+def get_latest_task_plan():
+    last_plan = get_last_task_plan()
+    if last_plan:
         return {
             'statusCode': 200,
-            'body': json.dumps(response['Items'][0])
+            'body': json.dumps(last_plan)
         }
     else:
         return {
@@ -88,37 +150,27 @@ def get_latest_task_plan():
         }
 
 def get_images():
-    # Busca as URLs das imagens mais recentes do S3
-    response = s3.list_objects_v2(Bucket='your-image-bucket', Prefix='task-plan-images/', MaxKeys=10)
-    image_urls = [f"https://your-image-bucket.s3.amazonaws.com/{obj['Key']}" for obj in response.get('Contents', [])]
+    response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix='task-plan-images/', MaxKeys=10)
+    image_urls = [f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{obj['Key']}" for obj in response.get('Contents', [])]
     return {
         'statusCode': 200,
         'body': json.dumps(image_urls)
     }
 
 def get_videos():
-    # Busca as URLs dos vídeos mais recentes do S3
-    response = s3.list_objects_v2(Bucket='your-video-bucket', Prefix='task-plan-videos/', MaxKeys=10)
-    video_urls = [f"https://your-video-bucket.s3.amazonaws.com/{obj['Key']}" for obj in response.get('Contents', [])]
+    response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix='task-plan-videos/', MaxKeys=10)
+    video_urls = [f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{obj['Key']}" for obj in response.get('Contents', [])]
     return {
         'statusCode': 200,
         'body': json.dumps(video_urls)
     }
 
 def generate_new_task_plan():
-    # Obtém os dados mais recentes de umidade média e recomendações
     moisture_data, recommendations = get_latest_data()
-    
-    # Gera um novo plano de tarefas usando IA
     task_plan = generate_task_plan_with_ai(moisture_data, recommendations)
-    
-    # Gera novas mídias (imagens e vídeos) para o plano de tarefas
     media_urls = generate_media(task_plan)
-    
-    # Armazena o novo plano de tarefas e as URLs das mídias no DynamoDB
     store_task_plan(task_plan, media_urls)
 
-    # Retorna o novo plano de tarefas e as URLs das mídias
     return {
         'statusCode': 200,
         'body': json.dumps({
@@ -128,11 +180,14 @@ def generate_new_task_plan():
     }
 
 def generate_task_plan_with_ai(moisture_data, recommendations):
-    # Prepara o prompt para a IA com base nos dados de umidade média e recomendações
+    realtime_moisture = get_realtime_moisture()
+    realtime_moisture_data = json.loads(realtime_moisture['body'])
+
     prompt = f"""
-    Com base nos seguintes dados de umidade média do solo e recomendações:
+    Com base nos seguintes dados de umidade do solo e recomendações:
     Umidade Média: {moisture_data['averageMoisture']}
-    Timestamp: {moisture_data['timestamp']}
+    Umidade em Tempo Real: {realtime_moisture_data['moisture']}
+    Timestamp: {realtime_moisture_data['timestamp']}
     Recomendações:
     {json.dumps(recommendations, indent=2)}
 
@@ -143,9 +198,9 @@ def generate_task_plan_with_ai(moisture_data, recommendations):
     4. Recomendações de irrigação
 
     Forneça um plano estruturado com datas específicas e descrições das tarefas.
+    Leve em consideração a diferença entre a umidade média e a umidade em tempo real ao fazer as recomendações.
     """
 
-    # Chama o modelo de IA (neste caso, usando o Bedrock da AWS)
     response = bedrock.invoke_model(
         modelId='ai21.j2-mid-v1',
         body=json.dumps({
@@ -160,35 +215,29 @@ def generate_task_plan_with_ai(moisture_data, recommendations):
         })
     )
 
-    # Processa a resposta da IA
     bedrock_response = json.loads(response['body'].read())
     return bedrock_response['completions'][0]['data']['text']
 
 def get_latest_data():
-    # Busca o dado mais recente da tabela AverageMoisture
-    moisture_response = dynamodb.query(
-        TableName='AverageMoisture',
-        Limit=1,
+    moisture_response = dynamodb.Table('AverageMoisture').query(
+        KeyConditionExpression='PK = :pk',
+        ExpressionAttributeValues={':pk': 'MOISTURE_AGGREGATED'},
         ScanIndexForward=False,
-        KeyConditionExpression='#pk = :pk',
-        ExpressionAttributeNames={'#pk': 'PK'},
-        ExpressionAttributeValues={':pk': {'S': 'MOISTURE'}}
+        Limit=1
     )
     moisture_data = moisture_response['Items'][0] if moisture_response['Items'] else None
 
-    # Busca as recomendações mais recentes
     recommendations = {}
     if moisture_data:
-        state = moisture_data.get('state', {}).get('S', 'default')
-        recommendations_response = dynamodb.query(
-            TableName='RecommendationsByTopic',
+        state = moisture_data.get('state', 'default')
+        recommendations_response = dynamodb.Table('RecommendationsByTopic').query(
             KeyConditionExpression='state = :state',
-            ExpressionAttributeValues={':state': {'S': state}},
+            ExpressionAttributeValues={':state': state},
             ScanIndexForward=False,
-            Limit=10  # Obtém as 10 recomendações mais recentes
+            Limit=10
         )
         for item in recommendations_response.get('Items', []):
-            recommendations[item['topic']['S']] = item['recommendation']['S']
+            recommendations[item['topic']] = item['recommendation']
 
     return moisture_data, recommendations
 
@@ -196,14 +245,12 @@ def generate_media(task_plan):
     images = []
     videos = []
 
-    # Gerar imagens para cada tarefa no plano
     tasks = parse_task_plan(task_plan)
     for task in tasks:
         image_prompt = f"Agricultural scene showing {task['description']}"
         image_url = generate_and_upload_image(image_prompt)
         images.append(image_url)
 
-        # Gerar um vídeo simples a partir da imagem
         video_url = generate_and_upload_video(image_url, task['description'])
         videos.append(video_url)
 
@@ -213,8 +260,6 @@ def generate_media(task_plan):
     }
 
 def parse_task_plan(task_plan):
-    # Esta função deve analisar o texto do plano de tarefas e extrair as tarefas individuais
-    # Por simplicidade, vamos assumir que cada linha é uma tarefa separada
     tasks = []
     for line in task_plan.split('\n'):
         if line.strip():
@@ -247,35 +292,27 @@ def generate_and_upload_image(prompt):
     return f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{file_name}"
 
 def generate_and_upload_video(image_url, description):
-    # Obter o endpoint para o Kinesis Video Stream
     endpoint = kinesis_video.get_data_endpoint(
         APIName='PUT_MEDIA',
         StreamName=KINESIS_VIDEO_STREAM_NAME
     )['DataEndpoint']
     
-    # Criar um cliente Kinesis Video usando o endpoint
     kvs = boto3.client('kinesis-video-media', endpoint_url=endpoint)
     
-    # Baixar a imagem do S3
     image_key = image_url.split('/')[-1]
     s3.download_file(S3_BUCKET_NAME, image_key, '/tmp/image.png')
     
-    # Simular a criação de um vídeo (na prática, você usaria uma biblioteca como OpenCV ou MoviePy)
     with open('/tmp/image.png', 'rb') as image_file:
         image_data = image_file.read()
     
-    # Simular um vídeo repetindo a imagem por alguns segundos
-    video_data = image_data * 30  # Repete a imagem 30 vezes para simular um vídeo de alguns segundos
+    video_data = image_data * 30
     
-    # Upload do "vídeo" para o Kinesis Video Stream
     kvs.put_media(
         StreamName=KINESIS_VIDEO_STREAM_NAME,
         Data=video_data,
         ContentType='video/h264'
     )
     
-    # Na prática, você processaria o vídeo com Rekognition aqui
-    # Por simplicidade, vamos apenas salvar o "vídeo" no S3
     video_key = f"generated_video_{uuid.uuid4()}.mp4"
     s3.put_object(
         Bucket=S3_BUCKET_NAME,
@@ -287,29 +324,22 @@ def generate_and_upload_video(image_url, description):
     return f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{video_key}"
 
 def store_task_plan(task_plan, media_urls):
-    # Armazena o plano de tarefas e as URLs das mídias no DynamoDB
-    timestamp = datetime.utcnow().isoformat()
-    dynamodb.put_item(
-        TableName='TaskPlans',
-        Item={
-            'timestamp': {'S': timestamp},
-            'taskPlan': {'S': task_plan},
-            'mediaUrls': {'M': {
-                'images': {'L': [{'S': url} for url in media_urls['images']]},
-                'videos': {'L': [{'S': url} for url in media_urls['videos']]}
-            }}
-        }
-    )
+    timestamp = current_time
+    item = {
+        'timestamp': timestamp,
+        'taskPlan': task_plan,
+        'mediaUrls': media_urls,
+        'averageMoisture': str(task_plan['averageMoisture'])
+    }
     
-    # Atualiza o item 'latest' para facilitar a recuperação do plano mais recente
-    dynamodb.put_item(
-        TableName='TaskPlans',
-        Item={
-            'timestamp': {'S': 'latest'},
-            'taskPlan': {'S': task_plan},
-            'mediaUrls': {'M': {
-                'images': {'L': [{'S': url} for url in media_urls['images']]},
-                'videos': {'L': [{'S': url} for url in media_urls['videos']]}
-            }}
-        }
-    )
+    task_plan_table.put_item(Item=item)
+    
+    latest_item = item.copy()
+    latest_item['timestamp'] = 'latest'
+    task_plan_table.put_item(Item=latest_item)
+    
+    moisture_history_table.put_item(Item={
+        'timestamp': timestamp,
+        'averageMoisture': str(task_plan['averageMoisture']),
+        'planGenerated': 'Yes'
+    })

@@ -27,7 +27,7 @@ resource "aws_api_gateway_integration" "get_recommendations_integration" {
 
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.moisture_task_planner.invoke_arn
+  uri                     = aws_lambda_function.soil_data_processing_recommendations.invoke_arn
 }
 
 # Recurso /recommendations/by-topic
@@ -57,7 +57,7 @@ resource "aws_api_gateway_integration" "get_recommendations_by_topic_integration
 
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.moisture_task_planner.invoke_arn
+  uri                     = aws_lambda_function.soil_data_processing_recommendations.invoke_arn
 }
 
 # Recurso /moisture
@@ -83,7 +83,7 @@ resource "aws_api_gateway_integration" "get_moisture_integration" {
 
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.moisture_task_planner.invoke_arn
+  uri                     = aws_lambda_function.soil_data_processing_recommendations.invoke_arn
 }
 
 # Recurso /generate-recommendations
@@ -109,5 +109,5 @@ resource "aws_api_gateway_integration" "post_generate_recommendations_integratio
 
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.moisture_task_planner.invoke_arn
+  uri                     = aws_lambda_function.soil_data_processing_recommendations.invoke_arn
 }

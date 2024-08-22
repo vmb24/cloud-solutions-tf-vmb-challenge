@@ -1,6 +1,6 @@
 # S3 Bucket para armazenar imagens e vídeos
 resource "aws_s3_bucket" "task_planner_media" {
-  bucket = "task_planner_media_bucket"
+  bucket = "task-planner-media-bucket"
 }
 
 # Permissão para o S3 Bucket
