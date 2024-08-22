@@ -1,7 +1,8 @@
 module "internet_of_things" {
   source = "./modules/internet-of-things"
 
-  soil_data_processing_recommendations_lambda_arn = module.moisture_task_planner.moisture_task_planner_lambda_arn
+  soil_data_processing_recommendations_lambda_arn = module.soil_data_processing_recommendations.soil_data_processing_recommendations_lambda_arn
+  moisture_task_planner_lambda_arn = module.moisture_task_planner.moisture_task_planner_lambda_arn
 }
 
 module "identity_compliance_security" {
