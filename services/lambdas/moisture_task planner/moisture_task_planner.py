@@ -3,6 +3,7 @@ import boto3
 from datetime import datetime, timedelta
 import base64
 import uuid
+import os
 
 # Inicialização dos clientes AWS
 bedrock = boto3.client('bedrock-runtime')
@@ -10,6 +11,13 @@ dynamodb = boto3.client('dynamodb')
 s3 = boto3.client('s3')
 rekognition = boto3.client('rekognition')
 lambda_client = boto3.client('lambda')
+kinesis_video = boto3.client('kinesisvideo')
+
+# Obter o nome do Kinesis Video Stream da variável de ambiente
+KINESIS_VIDEO_STREAM_NAME = os.environ['KINESIS_VIDEO_STREAM_NAME']
+
+# Nome do bucket S3 para armazenar mídias
+S3_BUCKET_NAME = "task-planner-media-bucket"
 
 def lambda_handler(event, context):
     # Verifica se o evento é do DynamoDB Stream da tabela AverageMoisture
@@ -228,47 +236,55 @@ def generate_and_upload_image(prompt):
     response_body = json.loads(response['body'].read())
     image_data = base64.b64decode(response_body['artifacts'][0]['base64'])
     
-    bucket_name = 'your-s3-bucket-name'
     file_name = f"generated_image_{uuid.uuid4()}.png"
     s3.put_object(
-        Bucket=bucket_name,
+        Bucket=S3_BUCKET_NAME,
         Key=file_name,
         Body=image_data,
         ContentType='image/png'
     )
 
-    return f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
+    return f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{file_name}"
 
 def generate_and_upload_video(image_url, description):
-    # Usar Rekognition para criar um vídeo simples a partir da imagem
-    response = rekognition.start_segment_detection(
-        Video={'S3Object': {'Bucket': 'your-s3-bucket-name', 'Name': image_url.split('/')[-1]}},
-        SegmentTypes=['TECHNICAL_CUE'],
-        Filters={'TechnicalCueFilter': {'MinSegmentConfidence': 80}}
+    # Obter o endpoint para o Kinesis Video Stream
+    endpoint = kinesis_video.get_data_endpoint(
+        APIName='PUT_MEDIA',
+        StreamName=KINESIS_VIDEO_STREAM_NAME
+    )['DataEndpoint']
+    
+    # Criar um cliente Kinesis Video usando o endpoint
+    kvs = boto3.client('kinesis-video-media', endpoint_url=endpoint)
+    
+    # Baixar a imagem do S3
+    image_key = image_url.split('/')[-1]
+    s3.download_file(S3_BUCKET_NAME, image_key, '/tmp/image.png')
+    
+    # Simular a criação de um vídeo (na prática, você usaria uma biblioteca como OpenCV ou MoviePy)
+    with open('/tmp/image.png', 'rb') as image_file:
+        image_data = image_file.read()
+    
+    # Simular um vídeo repetindo a imagem por alguns segundos
+    video_data = image_data * 30  # Repete a imagem 30 vezes para simular um vídeo de alguns segundos
+    
+    # Upload do "vídeo" para o Kinesis Video Stream
+    kvs.put_media(
+        StreamName=KINESIS_VIDEO_STREAM_NAME,
+        Data=video_data,
+        ContentType='video/h264'
     )
-
-    job_id = response['JobId']
-
-    # Esperar até que o trabalho seja concluído
-    while True:
-        response = rekognition.get_segment_detection(JobId=job_id)
-        status = response['JobStatus']
-        if status in ['SUCCEEDED', 'FAILED']:
-            break
-
-    if status == 'SUCCEEDED':
-        # Salvar o vídeo no S3
-        bucket_name = 'your-s3-bucket-name'
-        video_name = f"generated_video_{uuid.uuid4()}.mp4"
-        s3.put_object(
-            Bucket=bucket_name,
-            Key=video_name,
-            Body=response['VideoMetadata']['Codec'],
-            ContentType='video/mp4'
-        )
-        return f"https://{bucket_name}.s3.amazonaws.com/{video_name}"
-    else:
-        return None
+    
+    # Na prática, você processaria o vídeo com Rekognition aqui
+    # Por simplicidade, vamos apenas salvar o "vídeo" no S3
+    video_key = f"generated_video_{uuid.uuid4()}.mp4"
+    s3.put_object(
+        Bucket=S3_BUCKET_NAME,
+        Key=video_key,
+        Body=video_data,
+        ContentType='video/mp4'
+    )
+    
+    return f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{video_key}"
 
 def store_task_plan(task_plan, media_urls):
     # Armazena o plano de tarefas e as URLs das mídias no DynamoDB

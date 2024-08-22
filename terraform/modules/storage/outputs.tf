@@ -21,3 +21,12 @@ output "load_balancer_logging_bucket_arn" {
 output "load_balancer_logging_bucket" {
   value = aws_s3_bucket.load_balancer_logging_bucket.bucket
 }
+
+output "task_planner_media_bucket_arn" {
+  value = aws_s3_bucket.task_planner_media.arn
+}
+
+output "tf_state_bucket_name" {
+  value       = aws_s3_bucket.terraform_state.id
+  description = "The name of the S3 bucket"
+}

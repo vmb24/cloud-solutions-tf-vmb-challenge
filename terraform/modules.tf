@@ -1,7 +1,7 @@
 module "internet_of_things" {
   source = "./modules/internet-of-things"
 
-  soil_data_processing_recommendations_lambda_arn = module.soil_data_processing_recommendations.soil_data_processing_recommendations_lambda_arn
+  soil_data_processing_recommendations_lambda_arn = module.moisture_task_planner.moisture_task_planner_lambda_arn
 }
 
 module "identity_compliance_security" {
@@ -10,6 +10,10 @@ module "identity_compliance_security" {
   ecs_website_service_name = var.ecs_website_service_name
   website_bucket_id        = module.storage.website_bucket_id
   website_bucket_name      = module.storage.website_bucket_name
+
+  task_planner_media_bucket_arn               = module.storage.task_planner_media_bucket_arn
+  kinesis_video_stream_task_planner_video_arn = module.analyse.kinesis_video_stream_task_planner_video_arn
+  dynamodb_table_task_plans_arn               = module.database.dynamodb_table_task_plans_arn
 }
 
 module "network" {
@@ -65,13 +69,18 @@ module "storage" {
 
   bucket_name = var.bucket_name
   environment = var.environment
+
+  moisture_task_planner_lambda_arn = module.moisture_task_planner.moisture_task_planner_lambda_arn
+  allow_s3_moisture_task_planner   = module.moisture_task_planner.allow_s3_moisture_task_planner
 }
 
 module "moisture_task_planner" {
   source = "./modules/services/lambdas/moisture-task-planner"
 
-  moisture_task_planner_lambda_role_arn = module.identity_compliance_security.moisture_task_planner_lambda_role_arn
-  moisture_iot_rule_arn                 = module.internet_of_things.moisture_iot_rule_arn
+  moisture_task_planner_lambda_role_arn        = module.identity_compliance_security.moisture_task_planner_lambda_role_arn
+  moisture_iot_rule_arn                        = module.internet_of_things.moisture_iot_rule_arn
+  task_planner_faces_rekognition_collection_id = module.machine_learning.task_planner_faces_rekognition_collection_id
+  task_planner_media_bucket_arn                = module.storage.task_planner_media_bucket_arn
 }
 
 module "soil_data_processing_recommendations" {
@@ -104,4 +113,12 @@ module "website" {
   website_sg_id                                     = module.compute.website_sg_id
   cloudwatch_log_group_website_container_name       = module.management_governance.cloudwatch_log_group_website_container_name
   cloudwatch_log_group_website_task_definition_name = module.management_governance.cloudwatch_log_group_website_task_definition_name
+}
+
+module "analyse" {
+  source = "./modules/analyse"
+}
+
+module "machine_learning" {
+  source = "./modules/machine-learning"
 }
