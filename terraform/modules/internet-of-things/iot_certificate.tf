@@ -1,3 +1,3 @@
-resource "aws_iot_certificate" "arduino_cert" {
+resource "aws_iot_certificate" "iot_cert" {
   active = true
 }

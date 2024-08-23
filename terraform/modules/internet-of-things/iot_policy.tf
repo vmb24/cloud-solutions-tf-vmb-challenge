@@ -23,10 +23,10 @@ resource "aws_iot_policy" "iot_thing_policy" {
 
 resource "aws_iot_policy_attachment" "policy_attach" {
   policy =  aws_iot_policy.iot_thing_policy.name
-  target      = aws_iot_certificate.arduino_cert.arn
+  target      = aws_iot_certificate.iot_cert.arn
 }
 
 resource "aws_iot_thing_principal_attachment" "thing_attach" {
   thing     = aws_iot_thing.moisture_sensor.name
-  principal = aws_iot_certificate.arduino_cert.arn
+  principal = aws_iot_certificate.iot_cert.arn
 }

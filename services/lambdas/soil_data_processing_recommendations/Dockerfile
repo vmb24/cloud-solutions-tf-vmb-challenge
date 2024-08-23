@@ -1,4 +1,4 @@
-FROM public.ecr.aws/lambda/python:3.8
+FROM public.ecr.aws/lambda/python:3.9
 
 # Copie os arquivos necessários
 COPY soil_data_processing_recommendations.py requirements.txt ./
