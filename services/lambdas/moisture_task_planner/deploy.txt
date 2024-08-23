@@ -1,4 +1,0 @@
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 590184100199.dkr.ecr.us-east-1.amazonaws.com
-docker build -t process_soil_moisture .
-docker tag process_soil_moisture:latest 590184100199.dkr.ecr.us-east-1.amazonaws.com/process_soil_moisture:latest
-docker push 590184100199.dkr.ecr.us-east-1.amazonaws.com/process_soil_moisture:latest

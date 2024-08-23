@@ -1,6 +1,7 @@
 module "internet_of_things" {
   source = "./modules/internet-of-things"
 
+  aws_region = var.aws_region
   soil_data_processing_recommendations_lambda_arn = module.soil_data_processing_recommendations.soil_data_processing_recommendations_lambda_arn
   moisture_task_planner_lambda_arn = module.moisture_task_planner.moisture_task_planner_lambda_arn
 }
@@ -16,8 +17,8 @@ module "identity_compliance_security" {
   task_planner_media_bucket_arn               = module.storage.task_planner_media_bucket_arn
   kinesis_video_stream_task_planner_video_arn = module.analyse.kinesis_video_stream_task_planner_video_arn
   dynamodb_table_task_plans_arn               = module.database.dynamodb_table_task_plans_arn
-  dynamodb_table_average_moisture_arn         = module.database.dynamodb_table_average_moisture_arn
-  average_moisture_tabledb_stream_arn         = module.database.average_moisture_tabledb_stream_arn
+  dynamodb_table_agricultural_moisture_recommendations_arn         = module.database.dynamodb_table_agricultural_moisture_recommendations_arn
+  agricultural_moisture_recommendations_tabledb_stream_arn         = module.database.agricultural_moisture_recommendations_tabledb_stream_arn
 }
 
 module "network" {
@@ -83,7 +84,7 @@ module "moisture_task_planner" {
   moisture_iot_rule_arn                        = module.internet_of_things.moisture_iot_rule_arn
   task_planner_faces_rekognition_collection_id = module.machine_learning.task_planner_faces_rekognition_collection_id
   task_planner_media_bucket_arn                = module.storage.task_planner_media_bucket_arn
-  average_moisture_tabledb_stream_arn          = module.database.average_moisture_tabledb_stream_arn
+  agricultural_moisture_recommendations_tabledb_stream_arn          = module.database.agricultural_moisture_recommendations_tabledb_stream_arn
 }
 
 module "soil_data_processing_recommendations" {

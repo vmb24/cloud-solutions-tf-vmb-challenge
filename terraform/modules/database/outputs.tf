@@ -2,8 +2,8 @@ output "dynamodb_table_task_plans_arn" {
   value = aws_dynamodb_table.task_plans.arn
 }
 
-output "dynamodb_table_average_moisture_arn" {
-  value = aws_dynamodb_table.average_moisture.arn
+output "dynamodb_table_agricultural_moisture_recommendations_arn" {
+  value = aws_dynamodb_table.agricultural_moisture_recommendations.arn
 }
 
 output "dynamodb_tfstate_table_name" {
@@ -11,6 +11,6 @@ output "dynamodb_tfstate_table_name" {
   description = "The name of the DynamoDB table"
 }
 
-output "average_moisture_tabledb_stream_arn" {
-  value = aws_dynamodb_table.average_moisture.stream_arn
+output "agricultural_moisture_recommendations_tabledb_stream_arn" {
+  value = aws_dynamodb_table.agricultural_moisture_recommendations.stream_arn
 }

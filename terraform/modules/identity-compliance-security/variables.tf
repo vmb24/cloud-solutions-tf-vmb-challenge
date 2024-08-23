@@ -5,5 +5,5 @@ variable "website_bucket_name" {}
 variable task_planner_media_bucket_arn {}
 variable kinesis_video_stream_task_planner_video_arn {}
 variable dynamodb_table_task_plans_arn {}
-variable dynamodb_table_average_moisture_arn {}
-variable "average_moisture_tabledb_stream_arn" {}
+variable dynamodb_table_agricultural_moisture_recommendations_arn {}
+variable "agricultural_moisture_recommendations_tabledb_stream_arn" {}

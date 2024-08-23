@@ -5,7 +5,7 @@ from boto3.dynamodb.conditions import Key
 
 bedrock = boto3.client('bedrock-runtime')
 dynamodb = boto3.resource('dynamodb')
-iot = boto3.client('iot-data')
+iot_client = boto3.client('iot-data', endpoint_url=f"https://a3bw5rp1377npv-ats.iot.us-east-1.amazonaws.com")
 
 IOT_THING_NAME = 'moisture_sensor'
 DYNAMODB_TABLE_NAME = 'AgriculturalRecommendations'
@@ -24,6 +24,14 @@ TOPICS = [
 ]
 
 def lambda_handler(event, context):
+    print("Received event:", json.dumps(event, indent=2))
+
+    if 'httpMethod' in event and 'path' in event:
+        return handle_api_gateway_event(event)
+    
+    return generate_all_recommendations()
+
+def handle_api_gateway_event(event):
     http_method = event['httpMethod']
     path = event['path']
 
@@ -37,7 +45,8 @@ def lambda_handler(event, context):
             return get_latest_recommendation(topic)
     elif http_method == 'POST':
         if path == '/generate-recommendation':
-            topic = json.loads(event['body']).get('topic')
+            body = json.loads(event.get('body', '{}'))
+            topic = body.get('topic')
             return generate_recommendation_for_topic(topic)
         elif path == '/generate-all-recommendations':
             return generate_all_recommendations()
@@ -52,8 +61,10 @@ def get_latest_moisture():
     Obtém o dado de umidade mais recente do IoT Core.
     """
     try:
-        response = iot.get_thing_shadow(thingName=IOT_THING_NAME)
+        print(f"Attempting to get shadow for thing: {IOT_THING_NAME}")
+        response = iot_client.get_thing_shadow(thingName=IOT_THING_NAME)
         payload = json.loads(response['payload'].read().decode())
+        print(f"Received shadow payload: {payload}")
         state = payload['state']['reported']
         return {
             'statusCode': 200,
@@ -64,23 +75,25 @@ def get_latest_moisture():
             })
         }
     except Exception as e:
+        print(f"Error getting thing shadow: {str(e)}")
         return {
             'statusCode': 500,
-            'body': json.dumps({'error': str(e)})
+            'body': json.dumps({'error': f"An error occurred when calling the GetThingShadow operation: {str(e)}"})
         }
 
 def generate_recommendation_for_topic(topic):
-    """
-    Gera uma recomendação para um tópico específico usando o Amazon Bedrock.
-    """
+    print(f"Generating recommendation for topic: {topic}")
     if topic not in TOPICS:
+        print(f"Invalid topic: {topic}")
         return {
             'statusCode': 400,
             'body': json.dumps({'error': 'Invalid topic'})
         }
 
     moisture_data = get_latest_moisture()
+    print(f"Moisture data: {moisture_data}")
     if moisture_data['statusCode'] != 200:
+        print(f"Failed to get moisture data: {moisture_data}")
         return moisture_data
 
     moisture_info = json.loads(moisture_data['body'])
@@ -99,19 +112,37 @@ def generate_recommendation_for_topic(topic):
     A recomendação deve ser específica, detalhada e diretamente relacionada ao nível de umidade atual.
     """
 
-    response = bedrock.invoke_model(
-        modelId="anthropic.claude-v2",
-        body=json.dumps({
-            "prompt": prompt,
-            "max_tokens_to_sample": 500,
-            "temperature": 0.7,
-            "top_p": 0.9,
-        })
-    )
+    print(f"Sending request to Bedrock with prompt: {prompt}")
+    try:
+        response = bedrock.invoke_model(
+            modelId="anthropic.claude-v2",
+            body=json.dumps({
+                "prompt": prompt,
+                "max_tokens_to_sample": 500,
+                "temperature": 0.7,
+                "top_p": 0.9,
+            })
+        )
+        print(f"Bedrock response: {response}")
+    except Exception as e:
+        print(f"Error calling Bedrock: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': f'Failed to generate recommendation: {str(e)}'})
+        }
 
     recommendation = json.loads(response['body'].read())['completion'].strip()
+    print(f"Generated recommendation: {recommendation}")
 
-    store_recommendation(topic, recommendation, current_moisture, current_status, timestamp)
+    try:
+        store_recommendation(topic, recommendation, current_moisture, current_status, timestamp)
+        print("Recommendation stored successfully")
+    except Exception as e:
+        print(f"Error storing recommendation: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': f'Failed to store recommendation: {str(e)}'})
+        }
 
     return {
         'statusCode': 200,
@@ -123,6 +154,7 @@ def generate_recommendation_for_topic(topic):
             'timestamp': timestamp
         })
     }
+
 
 def store_recommendation(topic, recommendation, moisture, status, timestamp):
     """
