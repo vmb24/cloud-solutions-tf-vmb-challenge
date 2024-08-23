@@ -48,7 +48,7 @@ resource "aws_iam_role_policy" "soil_data_processing_recommendations_bedrock_spe
         ]
         Resource = [
           "arn:aws:bedrock:${var.aws_region}::foundation-model/ai21.j2-mid-v1",
-          "arn:aws:bedrock:${var.aws_region}::foundation-model/stability.stable-diffusion-xl"
+          "arn:aws:bedrock:${var.aws_region}::foundation-model/stability.stable-diffusion-xl-v1"
         ]
       }
     ]
@@ -67,7 +67,7 @@ resource "aws_iam_role_policy" "moisture_task_planner_bedrock_specific_model_acc
         Action = [
           "bedrock:InvokeModel"
         ]
-        Resource = "arn:aws:bedrock:${var.aws_region}::foundation-model/anthropic.claude-v2"
+        Resource = "arn:aws:bedrock:${var.aws_region}::foundation-model/anthropic.claude-v2:1"
       }
     ]
   })
