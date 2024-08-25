@@ -96,12 +96,11 @@ module "soil_data_processing_recommendations" {
 }
 
 module "moisture_task_planner_http_events" {
-  source = "./modules/services/lambdas/moisture-task-planner_http_events"
+  source = "./modules/services/lambdas/moisture-task-planner-http-events"
 
-  moisture_task_planner_http_events_lambda_role_arn        = module.identity_compliance_security.moisture_task_planner_http_events_lambda_role_arn
-  moisture_iot_rule_arn                                    = module.internet_of_things.moisture_iot_rule_arn
-  task_planner_media_bucket_arn                            = module.storage.task_planner_media_bucket_arn
-  agricultural_moisture_recommendations_tabledb_stream_arn = module.database.agricultural_moisture_recommendations_tabledb_stream_arn
+  moisture_task_planner_http_events_lambda_role_arn = module.identity_compliance_security.moisture_task_planner_http_events_lambda_role_arn
+  moisture_iot_rule_arn                             = module.internet_of_things.moisture_iot_rule_arn
+  task_planner_media_bucket_arn                     = module.storage.task_planner_media_bucket_arn
   # task_planner_faces_rekognition_collection_id = module.machine_learning.task_planner_faces_rekognition_collection_id
 }
 

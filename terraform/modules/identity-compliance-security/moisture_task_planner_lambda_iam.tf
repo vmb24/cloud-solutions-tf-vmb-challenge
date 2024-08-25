@@ -96,7 +96,7 @@ resource "aws_iam_role_policy_attachment" "moisture_task_planner_lambda_policy" 
 }
 
 # Permissão para o Rekognition acessar o S3 (se necessário)
-resource "aws_iam_role_policy_attachment" "rekognition_s3_access" {
-  role       = aws_iam_role.moisture_task_planner_lambda_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
-}
+# resource "aws_iam_role_policy_attachment" "rekognition_s3_access" {
+#   role       = aws_iam_role.moisture_task_planner_lambda_role.name
+#   policy_arn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+# }
