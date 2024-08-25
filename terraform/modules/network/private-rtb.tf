@@ -1,4 +1,4 @@
-resource "aws_route_table" "private" {
+/*resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
   route {
     cidr_block     = "0.0.0.0/0"
@@ -7,4 +7,4 @@ resource "aws_route_table" "private" {
   tags = {
     Name = "private-route-table"
   }
-}
+} */

@@ -1,5 +1,5 @@
-resource "aws_iam_role" "moisture_task_planner_lambda_role" {
-  name = "moisture_task_planner_lambda"
+resource "aws_iam_role" "moisture_task_planner_http_events_lambda_role" {
+  name = "moisture_task_planner_http_events_lambda"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -16,9 +16,9 @@ resource "aws_iam_role" "moisture_task_planner_lambda_role" {
 }
 
 # Política IAM para a função Lambda
-resource "aws_iam_role_policy" "moisture_task_planner_lambda_policy" {
+resource "aws_iam_role_policy" "moisture_task_planner_http_events_lambda_policy" {
   name = "task-planner-lambda-policy"
-  role = aws_iam_role.moisture_task_planner_lambda_role.id
+  role = aws_iam_role.moisture_task_planner_http_events_lambda_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -90,13 +90,13 @@ resource "aws_iam_role_policy" "moisture_task_planner_lambda_policy" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "moisture_task_planner_lambda_policy" {
-  role       = aws_iam_role.moisture_task_planner_lambda_role.name
+resource "aws_iam_role_policy_attachment" "moisture_task_planner_http_events_lambda_policy" {
+  role       = aws_iam_role.moisture_task_planner_http_events_lambda_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
 # Permissão para o Rekognition acessar o S3 (se necessário)
 resource "aws_iam_role_policy_attachment" "rekognition_s3_access" {
-  role       = aws_iam_role.moisture_task_planner_lambda_role.name
+  role       = aws_iam_role.moisture_task_planner_http_events_lambda_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
 }

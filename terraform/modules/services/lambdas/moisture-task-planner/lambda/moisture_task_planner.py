@@ -11,7 +11,6 @@ bedrock = boto3.client('bedrock-runtime')
 dynamodb = boto3.resource('dynamodb')
 s3 = boto3.client('s3')
 rekognition = boto3.client('rekognition')
-lambda_client = boto3.client('lambda')
 kinesis_video = boto3.client('kinesisvideo')
 iot_client = boto3.client('iot-data', endpoint_url=f"https://a3bw5rp1377npv-ats.iot.us-east-1.amazonaws.com")
 
@@ -36,37 +35,13 @@ moisture_history_table = dynamodb.Table('MoistureHistory')
 IOT_THING_NAME = os.environ.get('IOT_THING_NAME', 'moisture_sensor')
 
 def lambda_handler(event, context):
-    # Verifica se o evento é do IoT Core
     if 'moisture' in event and 'status' in event:
         return process_iot_event(event)
-    
-    # Verifica se o evento é do DynamoDB Stream da tabela AverageMoisture
-    if 'Records' in event and event['Records'][0].get('eventSource') == 'aws:dynamodb':
-        return process_average_moisture_event(event)
-    
-    # Se não for um evento do DynamoDB Stream ou IoT Core, processa como uma requisição HTTP
-    http_method = event['httpMethod']
-    path = event['path']
-
-    # Roteamento das requisições baseado no método HTTP e caminho
-    if http_method == 'GET':
-        if path == '/task-plan':
-            return get_latest_task_plan()
-        elif path == '/images':
-            return get_images()
-        elif path == '/videos':
-            return get_videos()
-        elif path == '/realtime-moisture':
-            return get_realtime_moisture()
-    elif http_method == 'POST':
-        if path == '/generate-task-plan':
-            return generate_new_task_plan()
-
-    # Retorna 404 se nenhuma rota corresponder
-    return {
-        'statusCode': 404,
-        'body': json.dumps({'error': 'Not Found'})
-    }
+    else:
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'error': 'Invalid event format'})
+        }
 
 def process_iot_event(event):
     moisture = event['moisture']
@@ -92,52 +67,6 @@ def process_iot_event(event):
     return {
         'statusCode': 200,
         'body': json.dumps('Dados do IoT processados com sucesso')
-    }
-
-def get_realtime_moisture():
-    try:
-        response = iot_client.get_thing_shadow(thingName=IOT_THING_NAME)
-        payload = json.loads(response['payload'].read().decode('utf-8'))
-        current_moisture = payload['state']['reported']['moisture']
-        current_status = payload['state']['reported']['status']
-        
-        return {
-            'statusCode': 200,
-            'body': json.dumps({
-                'timestamp': datetime.now(timezone.utc).isoformat(),
-                'moisture': current_moisture,
-                'status': current_status
-            })
-        }
-    except ClientError as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps({
-                'error': 'Failed to retrieve real-time data',
-                'details': str(e)
-            })
-        }
-
-def process_average_moisture_event(event):
-    for record in event['Records']:
-        if record['eventName'] == 'INSERT' or record['eventName'] == 'MODIFY':
-            new_image = record['dynamodb']['NewImage']
-            
-            if 'averageMoisture' in new_image and 'timestamp' in new_image:
-                new_average_moisture = float(new_image['averageMoisture']['N'])
-                timestamp = new_image['timestamp']['S']
-                
-                if should_generate_new_plan(new_average_moisture, timestamp):
-                    new_plan = generate_new_task_plan()
-                    store_task_plan(new_plan, timestamp, new_average_moisture)
-                    return {
-                        'statusCode': 200,
-                        'body': json.dumps('Novo plano de tarefas gerado e armazenado')
-                    }
-
-    return {
-        'statusCode': 200,
-        'body': json.dumps('Processamento concluído sem necessidade de gerar novo plano')
     }
 
 def should_generate_new_plan(new_moisture, timestamp):
@@ -169,47 +98,13 @@ def get_last_task_plan():
     items = response.get('Items', [])
     return items[0] if items else None
 
-def get_latest_task_plan():
-    last_plan = get_last_task_plan()
-    if last_plan:
-        return {
-            'statusCode': 200,
-            'body': json.dumps(last_plan)
-        }
-    else:
-        return {
-            'statusCode': 404,
-            'body': json.dumps({'error': 'No task plan found'})
-        }
-
-def get_images():
-    response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix='task-plan-images/', MaxKeys=10)
-    image_urls = [f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{obj['Key']}" for obj in response.get('Contents', [])]
-    return {
-        'statusCode': 200,
-        'body': json.dumps(image_urls)
-    }
-
-def get_videos():
-    response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix='task-plan-videos/', MaxKeys=10)
-    video_urls = [f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{obj['Key']}" for obj in response.get('Contents', [])]
-    return {
-        'statusCode': 200,
-        'body': json.dumps(video_urls)
-    }
-
 def generate_new_task_plan():
     moisture_data, recommendations = get_latest_data()
     task_plan = generate_task_plan_with_ai(moisture_data, recommendations)
     media_urls = generate_media(task_plan)
-    store_task_plan(task_plan, current_time, moisture_data['averageMoisture'])
-
     return {
-        'statusCode': 200,
-        'body': json.dumps({
-            'taskPlan': task_plan,
-            'mediaUrls': media_urls
-        })
+        'taskPlan': task_plan,
+        'mediaUrls': media_urls
     }
 
 def generate_task_plan_with_ai(moisture_data, recommendations):
@@ -218,7 +113,7 @@ def generate_task_plan_with_ai(moisture_data, recommendations):
 
     prompt = f"""
     Com base nos seguintes dados de umidade do solo e recomendações:
-    Umidade Média: {moisture_data['averageMoisture']}
+    Umidade Atual: {moisture_data['moisture']}
     Umidade em Tempo Real: {realtime_moisture_data['moisture']}
     Timestamp: {realtime_moisture_data['timestamp']}
     Recomendações:
@@ -231,7 +126,7 @@ def generate_task_plan_with_ai(moisture_data, recommendations):
     4. Recomendações de irrigação
 
     Forneça um plano estruturado com datas específicas e descrições das tarefas.
-    Leve em consideração a diferença entre a umidade média e a umidade em tempo real ao fazer as recomendações.
+    Leve em consideração a diferença entre a umidade atual e a umidade em tempo real ao fazer as recomendações.
     """
 
     response = bedrock.invoke_model(
@@ -252,9 +147,9 @@ def generate_task_plan_with_ai(moisture_data, recommendations):
     return bedrock_response['completions'][0]['data']['text']
 
 def get_latest_data():
-    moisture_response = dynamodb.Table('AverageMoisture').query(
-        KeyConditionExpression='PK = :pk',
-        ExpressionAttributeValues={':pk': 'MOISTURE_AGGREGATED'},
+    moisture_response = moisture_history_table.query(
+        KeyConditionExpression='timestamp <= :now',
+        ExpressionAttributeValues={':now': datetime.now(timezone.utc).isoformat()},
         ScanIndexForward=False,
         Limit=1
     )
@@ -262,7 +157,7 @@ def get_latest_data():
 
     recommendations = {}
     if moisture_data:
-        state = moisture_data.get('state', 'default')
+        state = moisture_data.get('status', 'default')
         recommendations_response = dynamodb.Table('RecommendationsByTopic').query(
             KeyConditionExpression='state = :state',
             ExpressionAttributeValues={':state': state},
@@ -361,9 +256,10 @@ def store_task_plan(task_plan, timestamp, average_moisture):
     item = {
         'PlanId': plan_id,
         'CreatedAt': timestamp,
-        'TaskPlan': task_plan,
+        'TaskPlan': task_plan['taskPlan'],
+        'MediaUrls': task_plan['mediaUrls'],
         'AverageMoisture': str(average_moisture),
-        'UserId': 'default_user'  # Você pode modificar isso para usar um ID de usuário real se necessário
+        'UserId': 'default_user'
     }
     
     task_plan_table.put_item(Item=item)
@@ -377,3 +273,27 @@ def store_task_plan(task_plan, timestamp, average_moisture):
         'averageMoisture': str(average_moisture),
         'planGenerated': 'Yes'
     })
+
+def get_realtime_moisture():
+    try:
+        response = iot_client.get_thing_shadow(thingName=IOT_THING_NAME)
+        payload = json.loads(response['payload'].read().decode('utf-8'))
+        current_moisture = payload['state']['reported']['moisture']
+        current_status = payload['state']['reported']['status']
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'moisture': current_moisture,
+                'status': current_status
+            })
+        }
+    except ClientError as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({
+                'error': 'Failed to retrieve real-time data',
+                'details': str(e)
+            })
+        }

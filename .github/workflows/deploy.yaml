@@ -1,35 +1,58 @@
-name: Deploy to AWS Lambda
+name: 'Terraform CI/CD'
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "development" ]
 
 jobs:
-  build:
+  terraform:
+    name: 'Terraform'
     runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v3
 
-    - name: Login to Amazon ECR
-      id: ecr-login
-      uses: aws-actions/amazon-ecr-login@v1
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.5.7 # Especifique a versão desejada do Terraform aqui
 
-    - name: Build Docker image
-      run: |
-        docker build -t llm-metrics-lambda ../../backend/Dockerfile
-        docker tag llm-metrics-lambda:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/llm-metrics-lambda:latest
+    - name: Setup TFLint
+      uses: terraform-linters/setup-tflint@v3
+      with:
+        tflint_version: v0.46.1
 
-    - name: Push Docker image to Amazon ECR
-      run: |
-        docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/llm-metrics-lambda:latest
-
-    - name: Update Lambda function
-      run: |
-        aws lambda update-function-code --function-name llm-metrics-lambda --image-uri ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/llm-metrics-lambda:latest
+    - name: Terraform Init
+      run: terraform init
       env:
-        AWS_REGION: ${{ secrets.AWS_REGION }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        TF_BACKEND_BUCKET: ${{ secrets.TF_BACKEND_BUCKET }}
+        TF_BACKEND_KEY: ${{ secrets.TF_BACKEND_KEY }}
+
+    - name: Terraform Format
+      run: terraform fmt -check
+
+    - name: Terraform Plan
+      run: terraform plan -input=false -out=tfplan
+      
+    - name: Upload Terraform Plan
+      uses: actions/upload-artifact@v3
+      with:
+        name: tfplan
+        path: tfplan
+
+    - name: Terraform Show
+      run: terraform show -no-color tfplan > tfplan.txt
+
+    - name: Upload Terraform Plan Text
+      uses: actions/upload-artifact@v3
+      with:
+        name: tfplan-text
+        path: tfplan.txt
+
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: terraform apply -auto-approve tfplan

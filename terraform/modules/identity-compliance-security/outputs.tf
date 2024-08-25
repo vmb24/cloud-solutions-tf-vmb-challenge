@@ -19,3 +19,7 @@ output "soil_data_processing_recommendations_lambda_role_arn" {
 output "moisture_task_planner_lambda_role_arn" {
   value = aws_iam_role.moisture_task_planner_lambda_role.arn
 }
+
+output "moisture_task_planner_http_events_lambda_role_arn" {
+  value = aws_iam_role.moisture_task_planner_http_events_lambda_role.arn
+}
