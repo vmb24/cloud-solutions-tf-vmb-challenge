@@ -2,7 +2,7 @@
 resource "aws_dynamodb_table" "moisture_history" {
   name           = "MoistureHistory"
   billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "date"
+  hash_key       = "status"
   range_key      = "timestamp"
 
   attribute {
@@ -20,24 +20,22 @@ resource "aws_dynamodb_table" "moisture_history" {
     type = "S"
   }
 
-  global_secondary_index {
-    name               = "ThingNameIndex"
-    hash_key           = "thing_name"
-    range_key          = "timestamp"
-    projection_type    = "ALL"
+  attribute {
+    name = "date"
+    type = "S"
   }
 
   global_secondary_index {
-    name               = "StatusIndex"
-    hash_key           = "status"
-    range_key          = "timestamp"
-    projection_type    = "ALL"
-  }
-
-  global_secondary_index {
-    name               = "MoistureIndex"
+    name               = "DateTimestampIndex"
     hash_key           = "date"
-    range_key          = "moisture"
+    range_key          = "timestamp"
+    projection_type    = "ALL"
+  }
+
+  global_secondary_index {
+    name               = "MoistureTimestampIndex"
+    hash_key           = "moisture"
+    range_key          = "timestamp"
     projection_type    = "ALL"
   }
 

@@ -52,6 +52,7 @@ def process_iot_event(event):
     moisture_history_table.put_item(Item={
         'timestamp': timestamp,
         'moisture': str(moisture),
+        'date': timestamp.split('T')[0],
         'status': status
     })
 

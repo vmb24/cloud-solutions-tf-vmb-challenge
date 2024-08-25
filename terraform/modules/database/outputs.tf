@@ -18,3 +18,7 @@ output "agricultural_moisture_recommendations_tabledb_stream_arn" {
 output "dynamodb_table_moisture_history_arn" {
   value = aws_dynamodb_table.moisture_history.arn
 }
+
+output "dynamodb_table_moisture_averages_arn" {
+  value = aws_dynamodb_table.moisture_averages.arn
+}

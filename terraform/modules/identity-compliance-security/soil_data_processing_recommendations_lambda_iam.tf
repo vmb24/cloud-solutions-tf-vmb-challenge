@@ -30,7 +30,10 @@ resource "aws_iam_role_policy" "soil_data_processing_recommendations_lambda_poli
           "dynamodb:GetItem",
           "dynamodb:Query"
         ]
-        Resource = var.dynamodb_table_agricultural_moisture_recommendations_arn
+        Resource = [
+          var.dynamodb_table_agricultural_moisture_recommendations_arn,
+          var.dynamodb_table_moisture_averages_arn
+        ]
       },
       {
         Effect = "Allow"

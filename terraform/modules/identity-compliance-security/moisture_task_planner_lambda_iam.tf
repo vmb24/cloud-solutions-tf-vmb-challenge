@@ -52,7 +52,8 @@ resource "aws_iam_role_policy" "moisture_task_planner_lambda_policy" {
         ]
         Resource = [
           var.dynamodb_table_task_plans_arn, 
-          var.dynamodb_table_moisture_history_arn
+          var.dynamodb_table_moisture_history_arn,
+          var.dynamodb_table_moisture_averages_arn
         ]
       },
       {
