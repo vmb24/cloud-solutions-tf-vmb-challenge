@@ -2,6 +2,7 @@ import json
 import boto3
 from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Key
+from decimal import Decimal
 
 bedrock = boto3.client('bedrock-runtime')
 dynamodb = boto3.resource('dynamodb')
@@ -107,7 +108,7 @@ def store_average_moisture(moisture, status, timestamp):
             'date': timestamp.split('T')[0],
             'timestamp': timestamp,
             'thing_name': IOT_THING_NAME,
-            'moisture': moisture,
+            'moisture': Decimal(str(moisture)),  # Convertendo para Decimal
             'status': status
         }
     )
@@ -215,7 +216,7 @@ def store_recommendation(topic, recommendation, moisture, status, timestamp):
             'topic': topic,
             'timestamp': timestamp,
             'recommendation': recommendation,
-            'moisture': moisture,
+            'moisture': Decimal(str(moisture)),  # Convertendo para Decimal
             'status': status
         }
     )

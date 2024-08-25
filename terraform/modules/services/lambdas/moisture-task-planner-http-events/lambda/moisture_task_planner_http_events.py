@@ -106,7 +106,7 @@ def generate_new_task_plan():
     # Esta função agora invocará a outra função Lambda
     lambda_client = boto3.client('lambda')
     response = lambda_client.invoke(
-        FunctionName='nome_da_outra_funcao_lambda',
+        FunctionName='moisture_task_planner',
         InvocationType='RequestResponse',
         Payload=json.dumps({})
     )
