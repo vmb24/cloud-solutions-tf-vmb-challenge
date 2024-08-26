@@ -1,7 +1,10 @@
 import json
+import random
+import time
 import boto3
 from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Key
+from botocore.exceptions import ClientError
 from decimal import Decimal
 
 bedrock = boto3.client('bedrock-runtime')
@@ -9,8 +12,8 @@ dynamodb = boto3.resource('dynamodb')
 iot_client = boto3.client('iot-data', endpoint_url=f"https://a3bw5rp1377npv-ats.iot.us-east-1.amazonaws.com")
 
 IOT_THING_NAME = 'moisture_sensor'
-DYNAMODB_TABLE_NAME = 'AgriculturalRecommendations'
-MOISTURE_DATA_TABLE_NAME = 'MoistureAverages'
+AGRICULTURAL_MOISTURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME = 'AgriculturalMoistureRecommendations'
+MOISTURE_AVERAGES_DATA_TABLE_NAME = 'MoistureAverages'
 
 TOPICS = [
     "Necessidade de Irrigação",
@@ -86,14 +89,11 @@ def process_moisture_data(event):
         status = event['status']
         timestamp = datetime.now().isoformat()
 
-        store_average_moisture(moisture, status, timestamp)
+        store_moisture_data(moisture, status, timestamp)
 
-        generate_all_recommendations(moisture, status)
+        recommendations_result = generate_all_recommendations(moisture, status)
 
-        return {
-            'statusCode': 200,
-            'body': json.dumps({'message': 'Dados de umidade processados e recomendações geradas'})
-        }
+        return recommendations_result
     except Exception as e:
         print(f"Erro ao processar dados de umidade: {str(e)}")
         return {
@@ -101,25 +101,53 @@ def process_moisture_data(event):
             'body': json.dumps({'error': f"Falha ao processar dados de umidade: {str(e)}"})
         }
 
-def store_average_moisture(moisture, status, timestamp):
-    table = dynamodb.Table(MOISTURE_DATA_TABLE_NAME)
-    table.put_item(
-        Item={
-            'date': timestamp.split('T')[0],
-            'timestamp': timestamp,
-            'thing_name': IOT_THING_NAME,
-            'moisture': Decimal(str(moisture)),  # Convertendo para Decimal
-            'status': status
-        }
-    )
+def store_moisture_data(moisture, status, timestamp):
+    table = dynamodb.Table(MOISTURE_AVERAGES_DATA_TABLE_NAME)
+    date = timestamp.split('T')[0]
+    
+    try:
+        response = table.update_item(
+            Key={'date': date},
+            UpdateExpression="SET thing_name = :tn, readings = list_append(if_not_exists(readings, :empty_list), :r), last_update = :lu",
+            ExpressionAttributeValues={
+                ':tn': IOT_THING_NAME,
+                ':r': [{
+                    'timestamp': timestamp,
+                    'moisture': Decimal(str(moisture)),
+                    'status': status
+                }],
+                ':lu': timestamp,
+                ':empty_list': []
+            },
+            ReturnValues="UPDATED_NEW"
+        )
+        
+        if response.get('Attributes', {}).get('readings', []):
+            print(f"Dados de umidade atualizados para a data {date}")
+        else:
+            print(f"Novo item criado para a data {date}")
+        
+        print(f"Dados de umidade armazenados com sucesso para a data {date}")
+    except ClientError as e:
+        error_code = e.response['Error']['Code']
+        if error_code == 'ResourceNotFoundException':
+            print(f"A tabela {MOISTURE_AVERAGES_DATA_TABLE_NAME} não foi encontrada. Verifique o nome da tabela e a região.")
+        elif error_code == 'ConditionalCheckFailedException':
+            print(f"Erro de condição ao atualizar o item para a data {date}. Verifique as condições de atualização.")
+        else:
+            print(f"Erro ao armazenar dados de umidade: {str(e)}")
+        raise
+    except Exception as e:
+        print(f"Erro inesperado ao armazenar dados de umidade: {str(e)}")
+        raise
 
 def get_moisture_history(days=30):
-    table = dynamodb.Table(MOISTURE_DATA_TABLE_NAME)
+    table = dynamodb.Table(MOISTURE_AVERAGES_DATA_TABLE_NAME)
     end_date = datetime.now().date()
     start_date = end_date - timedelta(days=days)
 
-    response = table.query(
-        KeyConditionExpression=Key('date').between(start_date.isoformat(), end_date.isoformat())
+    response = table.scan(
+        FilterExpression=Key('date').between(start_date.isoformat(), end_date.isoformat())
     )
 
     return {
@@ -128,119 +156,177 @@ def get_moisture_history(days=30):
     }
 
 def generate_all_recommendations(moisture, status):
-    results = {}
-    for topic in TOPICS:
-        result = generate_recommendation_for_topic(topic, moisture, status)
-        results[topic] = json.loads(result['body'])
+    timestamp = datetime.now().isoformat()
     
-    return {
-        'statusCode': 200,
-        'body': json.dumps(results)
-    }
-
-def generate_recommendation_for_topic(topic, moisture, status):
-    print(f"Gerando recomendação para o tópico: {topic}")
-    if topic not in TOPICS:
-        print(f"Tópico inválido: {topic}")
-        return {
-            'statusCode': 400,
-            'body': json.dumps({'error': 'Tópico inválido'})
-        }
-
-    prompt = f"""
-    Human: Você é um especialista em agricultura. Forneça uma recomendação detalhada para otimizar a saúde e produção das plantas com base nos seguintes dados:
+    print(f"Gerando recomendações para todos os tópicos. Umidade: {moisture}%, Status: {status}")
+    
+    topics_prompt = "\n".join([f"- {topic}" for topic in TOPICS])
+    
+    prompt = f'''Human: Você é um especialista em agricultura. Forneça recomendações detalhadas para otimizar a saúde e produção das plantas com base nos seguintes dados:
     - Umidade atual do solo: {moisture}%
     - Status atual: {status}
 
-    Forneça uma recomendação prática e acionável para o seguinte tópico:
-    {topic}
+    Forneça uma recomendação prática e acionável para cada um dos seguintes tópicos:
+    {topics_prompt}
 
-    A recomendação deve ser específica, detalhada e diretamente relacionada ao nível de umidade atual. Responda em português.
+    Cada recomendação deve ser específica, detalhada e diretamente relacionada ao nível de umidade atual. Responda em português.
+    Formate sua resposta como um dicionário JSON, onde a chave é o tópico e o valor é a recomendação correspondente.
 
-    Assistant: Baseado nos dados fornecidos, aqui está minha recomendação para {topic}:
+    Assistant: Aqui está um dicionário JSON com recomendações para cada tópico baseado nos dados fornecidos:
 
-    Human: Obrigado. Por favor, forneça apenas a recomendação, sem incluir nenhum texto introdutório ou conclusivo.
+    {{
+        "Necessidade de Irrigação": "Recomendação para Necessidade de Irrigação...",
+        "Índice de Estresse Hídrico": "Recomendação para Índice de Estresse Hídrico...",
+        ...
+    }}
 
-    Assistant:"""
+    Human: Obrigado. Por favor, forneça apenas o dicionário JSON com as recomendações, sem incluir nenhum texto introdutório ou conclusivo.
 
-    print(f"Enviando requisição para o Bedrock com o prompt: {prompt}")
-    try:
-        response = bedrock.invoke_model(
-            modelId="anthropic.claude-v2",
-            body=json.dumps({
-                "prompt": prompt,
-                "max_tokens_to_sample": 300,
-                "temperature": 0.5,
-                "top_p": 1,
-                "stop_sequences": ["\n\nHuman:"]
-            })
-        )
-        print(f"Resposta do Bedrock: {response}")
-    except Exception as e:
-        print(f"Erro ao chamar o Bedrock: {str(e)}")
+    Assistant:'''
+
+    print(f"Enviando requisição para o Bedrock com o prompt para todos os tópicos")
+    
+    max_retries = 5
+    base_delay = 1  # segundo
+    for attempt in range(max_retries):
+        try:
+            response = bedrock.invoke_model(
+                modelId="anthropic.claude-v2",
+                body=json.dumps({
+                    "prompt": prompt,
+                    "max_tokens_to_sample": 3000,
+                    "temperature": 0.5,
+                    "top_p": 1,
+                    "stop_sequences": ["\n\nHuman:"]
+                })
+            )
+            print(f"Resposta do Bedrock recebida com sucesso")
+            break
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ThrottlingException':
+                if attempt == max_retries - 1:
+                    print(f"Erro ao chamar o Bedrock após {max_retries} tentativas: {str(e)}")
+                    return {
+                        'statusCode': 500,
+                        'body': json.dumps({'error': f'Falha ao gerar recomendações após {max_retries} tentativas: {str(e)}'})
+                    }
+                delay = (2 ** attempt * base_delay) + (random.randint(0, 1000) / 1000.0)
+                print(f"Throttling detectado. Tentativa {attempt + 1} de {max_retries}. Aguardando {delay:.2f} segundos.")
+                time.sleep(delay)
+            else:
+                raise
+    else:
         return {
             'statusCode': 500,
-            'body': json.dumps({'error': f'Falha ao gerar recomendação: {str(e)}'})
+            'body': json.dumps({'error': f'Falha ao gerar recomendações após {max_retries} tentativas'})
         }
 
-    recommendation = json.loads(response['body'].read())['completion'].strip()
-    print(f"Recomendação gerada: {recommendation}")
-
-    timestamp = datetime.now().isoformat()
+    recommendations = json.loads(response['body'].read())['completion'].strip()
+    print(f"Recomendações geradas: {recommendations}")
 
     try:
-        store_recommendation(topic, recommendation, moisture, status, timestamp)
-        print("Recomendação armazenada com sucesso")
-    except Exception as e:
-        print(f"Erro ao armazenar recomendação: {str(e)}")
+        recommendations_dict = json.loads(recommendations)
+    except json.JSONDecodeError:
+        print("Erro ao decodificar as recomendações como JSON")
         return {
             'statusCode': 500,
-            'body': json.dumps({'error': f'Falha ao armazenar recomendação: {str(e)}'})
+            'body': json.dumps({'error': 'Falha ao decodificar as recomendações como JSON'})
+        }
+
+    try:
+        store_recommendation(recommendations_dict, moisture, status, timestamp)
+        print("Todas as recomendações armazenadas com sucesso")
+    except Exception as e:
+        print(f"Erro ao armazenar recomendações: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': f'Falha ao armazenar recomendações: {str(e)}'})
         }
 
     return {
         'statusCode': 200,
-        'body': json.dumps({
-            'topic': topic,
-            'recommendation': recommendation,
-            'moisture': moisture,
-            'status': status,
-            'timestamp': timestamp
-        })
+        'body': json.dumps(recommendations_dict)
     }
 
-def store_recommendation(topic, recommendation, moisture, status, timestamp):
-    table = dynamodb.Table(DYNAMODB_TABLE_NAME)
-    table.put_item(
-        Item={
-            'topic': topic,
-            'timestamp': timestamp,
-            'recommendation': recommendation,
-            'moisture': Decimal(str(moisture)),  # Convertendo para Decimal
-            'status': status
-        }
-    )
+def store_recommendation(recommendations_dict, moisture, status, timestamp):
+    try:
+        print("Tentando armazenar recomendações")
+        print(f"Nome da tabela DynamoDB: {AGRICULTURAL_MOISTURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME}")
+        
+        table = dynamodb.Table(AGRICULTURAL_MOISTURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
+        date = timestamp.split('T')[0]
+        
+        recommendations = []
+        for topic, recommendation in recommendations_dict.items():
+            recommendations.append({
+                'topic': topic,
+                'recommendation': recommendation,
+                'moisture': Decimal(str(moisture)),
+                'status': status,
+                'timestamp': timestamp
+            })
+        
+        response = table.update_item(
+            Key={'date': date},
+            UpdateExpression="SET thing_name = :tn, recommendations = list_append(if_not_exists(recommendations, :empty_list), :r), last_update = :lu",
+            ExpressionAttributeValues={
+                ':tn': IOT_THING_NAME,
+                ':r': recommendations,
+                ':lu': timestamp,
+                ':empty_list': []
+            },
+            ReturnValues="UPDATED_NEW"
+        )
+        
+        if response.get('Attributes', {}).get('recommendations', []):
+            print(f"Recomendações atualizadas para a data {date}")
+        else:
+            print(f"Novo item de recomendações criado para a data {date}")
+        
+        print(f"Recomendações armazenadas com sucesso para a data {date}")
+    except ClientError as e:
+        error_code = e.response['Error']['Code']
+        if error_code == 'ResourceNotFoundException':
+            print(f"A tabela {AGRICULTURAL_MOISTURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME} não foi encontrada. Verifique o nome da tabela e a região.")
+        elif error_code == 'ConditionalCheckFailedException':
+            print(f"Erro de condição ao atualizar o item para a data {date}. Verifique as condições de atualização.")
+        else:
+            print(f"Erro ao armazenar recomendações: {str(e)}")
+        raise
+    except Exception as e:
+        print(f"Erro inesperado ao armazenar recomendações: {str(e)}")
+        raise
 
 def get_all_recommendations():
-    table = dynamodb.Table(DYNAMODB_TABLE_NAME)
+    table = dynamodb.Table(AGRICULTURAL_MOISTURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
     response = table.scan()
+    recommendations = []
+    for item in response['Items']:
+        recommendations.extend(item.get('recommendations', []))
     return {
         'statusCode': 200,
-        'body': json.dumps(response['Items'])
+        'body': json.dumps(recommendations)
     }
 
 def get_latest_recommendation(topic):
-    table = dynamodb.Table(DYNAMODB_TABLE_NAME)
-    response = table.query(
-        KeyConditionExpression=Key('topic').eq(topic),
-        ScanIndexForward=False,
-        Limit=1
+    table = dynamodb.Table(AGRICULTURAL_MOISTURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
+    response = table.scan(
+        ProjectionExpression="recommendations",
+        FilterExpression="contains(recommendations, :topic)",
+        ExpressionAttributeValues={':topic': topic}
     )
-    items = response.get('Items', [])
-    if items:
+    
+    all_recommendations = []
+    for item in response['Items']:
+        all_recommendations.extend(item.get('recommendations', []))
+    
+    topic_recommendations = [r for r in all_recommendations if r['topic'] == topic]
+    topic_recommendations.sort(key=lambda x: x['timestamp'], reverse=True)
+    
+    if topic_recommendations:
         return {
             'statusCode': 200,
-            'body': json.dumps(items[0])
+            'body': json.dumps(topic_recommendations[0])
         }
     else:
         return {

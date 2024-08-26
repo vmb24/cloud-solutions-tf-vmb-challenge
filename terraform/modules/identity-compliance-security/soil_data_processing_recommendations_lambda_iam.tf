@@ -28,12 +28,10 @@ resource "aws_iam_role_policy" "soil_data_processing_recommendations_lambda_poli
         Action = [
           "dynamodb:PutItem",
           "dynamodb:GetItem",
-          "dynamodb:Query"
+          "dynamodb:Query",
+          "dynamodb:UpdateItem",      
         ]
-        Resource = [
-          var.dynamodb_table_agricultural_moisture_recommendations_arn,
-          var.dynamodb_table_moisture_averages_arn
-        ]
+        Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/*"
       },
       {
         Effect = "Allow"

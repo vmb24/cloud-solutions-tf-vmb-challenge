@@ -14,6 +14,11 @@ resource "aws_lambda_function" "soil_data_processing_recommendations" {
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 
   architectures = ["x86_64"]
+  # Aumentar o timeout (em segundos)
+  timeout = 300  # 5 minutos, por exemplo
+
+  # Aumentar a memória
+  memory_size = 256  # em MB
 }
 
 resource "aws_lambda_permission" "allow_iot" {

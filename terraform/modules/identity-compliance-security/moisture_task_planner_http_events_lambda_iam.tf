@@ -48,12 +48,10 @@ resource "aws_iam_role_policy" "moisture_task_planner_http_events_lambda_policy"
         Action = [
           "dynamodb:PutItem",
           "dynamodb:GetItem",
-          "dynamodb:Query"
+          "dynamodb:Query",
+          "dynamodb:UpdateItem",
         ]
-        Resource = [
-          var.dynamodb_table_task_plans_arn, 
-          var.dynamodb_table_moisture_history_arn
-        ]
+        Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/*"
       },
       {
         Effect = "Allow"

@@ -21,11 +21,6 @@ resource "aws_dynamodb_table" "task_plans" {
   }
 
   attribute {
-    name = "TaskPlan"
-    type = "S"
-  }
-
-  attribute {
     name = "AverageMoisture"
     type = "N"
   }
@@ -38,16 +33,14 @@ resource "aws_dynamodb_table" "task_plans" {
   }
 
   global_secondary_index {
-    name               = "TaskPlanIndex"
-    hash_key           = "TaskPlan"
-    range_key          = "CreatedAt"
-    projection_type    = "ALL"
-  }
-
-  global_secondary_index {
     name               = "MoistureIndex"
     hash_key           = "PlanId"
     range_key          = "AverageMoisture"
     projection_type    = "ALL"
+  }
+
+  tags = {
+    Name        = "TaskPlans"
+    Environment = "production"
   }
 }

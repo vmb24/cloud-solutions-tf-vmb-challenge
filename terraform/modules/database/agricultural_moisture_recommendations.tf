@@ -1,14 +1,13 @@
 resource "aws_dynamodb_table" "agricultural_moisture_recommendations" {
-  name           = "AgriculturalRecommendations"
+  name           = "AgriculturalMoistureRecommendations"
   billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "timestamp"
-  range_key      = "thing_name"
+  hash_key       = "date"
 
   stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
-    name = "timestamp"
+    name = "date"
     type = "S"
   }
 
@@ -18,48 +17,14 @@ resource "aws_dynamodb_table" "agricultural_moisture_recommendations" {
   }
 
   attribute {
-    name = "topic"
-    type = "S"
-  }
-
-  # Atributos adicionais
-  attribute {
-    name = "recommendation"
-    type = "S"
-  }
-
-  attribute {
-    name = "moisture"
-    type = "N"
-  }
-
-  attribute {
-    name = "status"
+    name = "last_update"
     type = "S"
   }
 
   global_secondary_index {
-    name               = "TopicIndex"
-    hash_key           = "topic"
-    range_key          = "timestamp"
-    projection_type    = "ALL"
-  }
-
-  global_secondary_index {
-    name               = "RecommendationIndex"
-    hash_key           = "recommendation"
-    projection_type    = "ALL"
-  }
-
-  global_secondary_index {
-    name               = "MoistureIndex"
-    hash_key           = "moisture"
-    projection_type    = "ALL"
-  }
-
-  global_secondary_index {
-    name               = "StatusIndex"
-    hash_key           = "status"
+    name               = "ThingNameIndex"
+    hash_key           = "thing_name"
+    range_key          = "last_update"
     projection_type    = "ALL"
   }
 

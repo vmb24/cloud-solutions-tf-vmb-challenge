@@ -1,6 +1,7 @@
 import json
 import boto3
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from botocore.exceptions import ClientError
 import base64
 import uuid
@@ -99,6 +100,23 @@ def get_last_task_plan():
     items = response.get('Items', [])
     return items[0] if items else None
 
+def parse_task_plan(task_plan_text):
+    tasks = []
+    current_date = None
+    for line in task_plan_text.split('\n'):
+        line = line.strip()
+        if line:
+            if ':' in line:
+                # This line likely contains a date
+                current_date = line.split(':')[0].strip()
+            else:
+                # This line contains a task
+                tasks.append({
+                    'date': current_date,
+                    'task': line
+                })
+    return tasks
+
 def generate_new_task_plan():
     moisture_data, recommendations = get_latest_data()
     task_plan = generate_task_plan_with_ai(moisture_data, recommendations)
@@ -145,7 +163,12 @@ def generate_task_plan_with_ai(moisture_data, recommendations):
     )
 
     bedrock_response = json.loads(response['body'].read())
-    return bedrock_response['completions'][0]['data']['text']
+    task_plan_text = bedrock_response['completions'][0]['data']['text']
+    
+    # Parse the task plan into an array of tasks
+    tasks = parse_task_plan(task_plan_text)
+    
+    return tasks
 
 def get_latest_data():
     moisture_response = moisture_history_table.query(
@@ -174,13 +197,12 @@ def generate_media(task_plan):
     images = []
     videos = []
 
-    tasks = parse_task_plan(task_plan)
-    for task in tasks:
-        image_prompt = f"Agricultural scene showing {task['description']}"
+    for task in task_plan:
+        image_prompt = f"Agricultural scene showing {task['task']}"
         image_url = generate_and_upload_image(image_prompt)
         images.append(image_url)
 
-        video_url = generate_and_upload_video(image_url, task['description'])
+        video_url = generate_and_upload_video(image_url, task['task'])
         videos.append(video_url)
 
     return {
@@ -254,12 +276,22 @@ def generate_and_upload_video(image_url, description):
 
 def store_task_plan(task_plan, timestamp, average_moisture):
     plan_id = str(uuid.uuid4())
+    storage_date = datetime.now(timezone.utc).date().isoformat()
+    
+    task_plan_array = []
+    for task in task_plan['taskPlan']:
+        task_plan_array.append({
+            'date': task['date'],
+            'task': task['task'],
+            'storedAt': storage_date
+        })
+    
     item = {
         'PlanId': plan_id,
         'CreatedAt': timestamp,
-        'TaskPlan': task_plan['taskPlan'],
-        'MediaUrls': task_plan['mediaUrls'],
-        'AverageMoisture': str(average_moisture),
+        'TaskPlan': json.dumps(task_plan_array),  # Convertendo para JSON string
+        'MediaUrls': json.dumps(task_plan['mediaUrls']),  # Convertendo para JSON string
+        'AverageMoisture': Decimal(str(average_moisture)),
         'UserId': 'default_user'
     }
     
@@ -271,7 +303,7 @@ def store_task_plan(task_plan, timestamp, average_moisture):
     
     moisture_history_table.put_item(Item={
         'timestamp': timestamp,
-        'averageMoisture': str(average_moisture),
+        'averageMoisture': Decimal(str(average_moisture)),
         'planGenerated': 'Yes'
     })
 

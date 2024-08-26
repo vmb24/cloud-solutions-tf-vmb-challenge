@@ -25,6 +25,11 @@ resource "aws_dynamodb_table" "moisture_history" {
     type = "S"
   }
 
+  attribute {
+    name = "planGenerated"
+    type = "S"
+  }
+
   global_secondary_index {
     name               = "DateTimestampIndex"
     hash_key           = "date"
@@ -35,6 +40,13 @@ resource "aws_dynamodb_table" "moisture_history" {
   global_secondary_index {
     name               = "MoistureTimestampIndex"
     hash_key           = "moisture"
+    range_key          = "timestamp"
+    projection_type    = "ALL"
+  }
+
+  global_secondary_index {
+    name               = "PlanGeneratedIndex"
+    hash_key           = "planGenerated"
     range_key          = "timestamp"
     projection_type    = "ALL"
   }
