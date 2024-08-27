@@ -54,9 +54,6 @@ module "storage" {
 
   bucket_name = var.bucket_name
   environment = var.environment
-
-  moisture_task_planner_lambda_arn = module.moisture_task_planner.moisture_task_planner_lambda_arn
-  allow_s3_moisture_task_planner   = module.moisture_task_planner.allow_s3_moisture_task_planner
 }
 
 module "database" {
