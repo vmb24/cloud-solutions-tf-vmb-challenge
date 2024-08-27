@@ -26,14 +26,12 @@ module "network" {
 module "compute" {
   source = "./modules/compute"
 
-  aws_region         = var.aws_region
-  vpc_id             = module.network.vpc_id
-  public_subnet_id1  = module.network.public_subnet_ids[0]
-  public_subnet_id2  = module.network.public_subnet_ids[1]
-  private_subnet_id1 = module.network.private_subnet_ids[0]
-  private_subnet_id2 = module.network.private_subnet_ids[1]
-
-  load_balancer_logging_bucket = module.storage.load_balancer_logging_bucket
+  aws_region        = var.aws_region
+  vpc_id            = module.network.vpc_id
+  public_subnet_id1 = module.network.public_subnet_ids[0]
+  public_subnet_id2 = module.network.public_subnet_ids[1]
+  // private_subnet_id1 = module.network.private_subnet_ids[0]
+  // private_subnet_id2 = module.network.private_subnet_ids[1]
 }
 
 module "management_governance" {
@@ -56,6 +54,9 @@ module "storage" {
 
   bucket_name = var.bucket_name
   environment = var.environment
+
+  moisture_task_planner_lambda_arn = module.moisture_task_planner.moisture_task_planner_lambda_arn
+  allow_s3_moisture_task_planner   = module.moisture_task_planner.allow_s3_moisture_task_planner
 }
 
 module "database" {
@@ -97,12 +98,11 @@ module "website" {
   cloudwatch_log_group_website_task_definition_name = module.management_governance.cloudwatch_log_group_website_task_definition_name
 }
 
-# module "delivery-application" {
-#   source = "./modules/delivery-application"
+module "analyse" {
+  source = "./modules/analyse"
+}
 
-#   uri_invoke_arn_lambda_function = module.compute.invoke_arn_lambda_function
-# }
-
-# module "AI-analytics" {
-#   source = "./modules/AI-analytics"
-# }
+/*
+module "machine_learning" {
+  source = "./modules/machine-learning"
+} */

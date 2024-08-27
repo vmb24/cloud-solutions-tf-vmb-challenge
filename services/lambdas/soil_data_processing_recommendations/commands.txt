@@ -1,0 +1,4 @@
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 590184100199.dkr.ecr.us-east-1.amazonaws.com
+docker build --platform linux/amd64 -t soil_data_processing_recommendations .
+docker tag soil_data_processing_recommendations:latest 590184100199.dkr.ecr.us-east-1.amazonaws.com/soil_data_processing_recommendations:latest
+docker push 590184100199.dkr.ecr.us-east-1.amazonaws.com/soil_data_processing_recommendations:latest
