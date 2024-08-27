@@ -3,11 +3,6 @@ variable "aws_region" {
   default = "us-east-1"
 }
 
-variable "account_id" {
-  type    = string
-  default = "590184100199"
-}
-
 # ----- NETWORK ------
 
 variable "vpc_cidr" {
@@ -38,14 +33,28 @@ variable "availability_zones" {
 # ECR & ECS
 variable "cognito_stage_name" {
   description = "Cognito stage name"
-  type = string
-  default = "production"
+  type        = string
+  default     = "production"
+}
+
+variable "route53_record_www_record_name" {
+  description = "Record Name"
+  type        = string
+  default     = "www.vagasasaservice.com.br"
+}
+
+
+variable "http_certificate" {
+  description = "HTTPS Certificate"
+  type        = string
+  sensitive   = true
+  default     = "arn:aws:acm:us-east-1:021891598585:certificate/9133f5bf-141f-44b8-93fe-d11d5d704ba4"
 }
 
 variable "cognito_service_name" {
   description = "Cognito service name"
-  type = string
-  default = "website-cognito"
+  type        = string
+  default     = "website-cognito"
 }
 
 # variable "autoscaling_instance_type" {
@@ -53,13 +62,6 @@ variable "cognito_service_name" {
 #   type = string
 #   default = "t2.micro"
 # }
-
-variable "llm_soil_metrics_repository_name" {
-  description = "The name of the ECR Terrafarming repository"
-  type        = string
-  default     = "llm-soil-metrics"
-}
-
 
 variable "key_name" {
   description = "The name of the key vms"
@@ -71,7 +73,7 @@ variable "key_name" {
 variable "bucket_name" {
   description = "The name of the S3 bucket"
   type        = string
-  default     = "terrafarming-metrics-data-storage"
+  default     = "tech4parking-metrics-data-storage"
 }
 
 variable "environment" {
@@ -84,13 +86,13 @@ variable "environment" {
 variable "ecs_website_service_name" {
   description = "The ECS name"
   type        = string
-  default     = "terrafarming-website"
+  default     = "tech4parking-website"
 }
 
 ## DELIVERY CONTENT - WEBSITE ##
-variable "acm_certificate_cert_arn" {
-  description = "HTTPS Certificate"
-  type        = string
-  default     = "arn:aws:acm:us-east-1:590184100199:certificate/58370164-61ab-4d3c-a048-f7e4ac2fa7ec"
-}
+# variable "acm_certificate_cert_arn" {
+#   description = "HTTPS Certificate"
+#   type        = string
+#   default     = "arn:aws:acm:us-east-1:590184100199:certificate/58370164-61ab-4d3c-a048-f7e4ac2fa7ec"
+# }
 

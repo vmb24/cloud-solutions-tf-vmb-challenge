@@ -2,7 +2,7 @@
 resource "aws_route53_record" "cert_validation_record" {
   for_each = { for opt in aws_acm_certificate.cert.domain_validation_options : opt.domain_name => opt }
 
-  zone_id = aws_route53_zone.terrafarming_zone.id
+  zone_id = aws_route53_zone.tech4parking_zone.id
   name    = each.value.resource_record_name
   type    = each.value.resource_record_type
   ttl     = 60

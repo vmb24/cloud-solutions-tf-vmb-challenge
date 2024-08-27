@@ -1,5 +1,5 @@
-resource "aws_lb" "microservices_lb" {
-  name               = "microservices-lb"
+resource "aws_lb" "api_lb" {
+  name               = "api-lb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.ecs_public_service_sg.id]

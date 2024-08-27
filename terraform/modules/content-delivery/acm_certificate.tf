@@ -1,13 +1,13 @@
 # Certificado SSL
 resource "aws_acm_certificate" "cert" {
-  domain_name               = "terrafarming.com.br"
+  domain_name               = "tech4parking.com.br"
   validation_method         = "DNS"
 
   subject_alternative_names = [
-    "www.terrafarming.com.br",
+    "www.tech4parking.com.br",
   ]
 
   tags = {
-    Name = "terrafarming-certificate"
+    Name = "tech4parking-certificate"
   }
 }

@@ -1,7 +1,7 @@
-resource "aws_cloudfront_distribution" "terrafarming_distribution" {
+resource "aws_cloudfront_distribution" "tech4parking_distribution" {
   enabled         = true
   # is_ipv6_enabled = true
-  aliases = ["terrafarming.com.br"]
+  aliases = ["tech4parking.com.br"]
   price_class     = "PriceClass_All"  # Adjust based on your needs
 
   origin {
@@ -102,6 +102,6 @@ resource "aws_cloudfront_distribution" "terrafarming_distribution" {
   }
 
   tags = {
-    Name = "terrafarming-cloudfront-distribution"
+    Name = "tech4parking-cloudfront-distribution"
   }
 }

@@ -1,8 +1,8 @@
-# Terrafarming Application
+# tech4parking Application
 
 ## Visão Geral
 
-Este repositório contém o código para os microserviços e funções Lambda do aplicativo Terrafarming, junto com a configuração da infraestrutura AWS usando Terraform. O Terrafarming é um aplicativo de agricultura inteligente que utiliza inteligência artificial para fornecer recomendações aos agricultores com base em métricas do solo e condições climáticas.
+Este repositório contém o código para os microserviços e funções Lambda do aplicativo tech4parking, junto com a configuração da infraestrutura AWS usando Terraform. O tech4parking é um aplicativo de agricultura inteligente que utiliza inteligência artificial para fornecer recomendações aos agricultores com base em métricas do solo e condições climáticas.
 
 ## Estrutura do Repositório
 
@@ -371,11 +371,11 @@ Armazenamento de imagens e outros objetos
 
 O Amazon S3 (Simple Storage Service) é um serviço de armazenamento em nuvem da AWS que permite armazenar e recuperar qualquer quantidade de dados a qualquer momento. Na infraestrutura que estamos desenvolvendo, o S3 será usado para armazenar imagens e dados brutos que precisam ser processados pelas funções Lambda e pelos microserviços.
 
-#### 1\. Nome do Bucket: `terrafarming-metrics-data-storage`
+#### 1\. Nome do Bucket: `tech4parking-metrics-data-storage`
 
 #### 2\. Diretórios e Arquivos
 
-`terrafarming-metrics-data-storage/
+`tech4parking-metrics-data-storage/
 ├── farmer_data/
 │   ├── {farmer_id}/
 │   │   ├── profile/
@@ -612,7 +612,7 @@ def upload_to_s3(file_path, bucket_name, s3_key):
         print(f"Error uploading file to S3: {str(e)}")
 
 file_path = "path/to/your/file.jpg"
-bucket_name = "terrafarming-metrics-data-storage"
+bucket_name = "tech4parking-metrics-data-storage"
 s3_key = "farmer_data/12345/crop_health/image_20240705.jpg"
 
 upload_to_s3(file_path, bucket_name, s3_key)
@@ -682,8 +682,8 @@ Configuração e Implantação
 
     Copiar código
 
-    `git clone https://github.com/seu-usuario/terrafarming.git
-    cd terrafarming`
+    `git clone https://github.com/seu-usuario/tech4parking.git
+    cd tech4parking`
 
 2.  Configure suas credenciais AWS e inicialize o Terraform:
 
@@ -722,4 +722,4 @@ Contribuições são bem-vindas! Por favor, faça um fork do repositório e envi
 
 * * * * *
 
-Este documento cobre a configuração inicial e a arquitetura do aplicativo Terrafarming. Para mais detalhes sobre cada microserviço e função Lambda, consulte a documentação específica em cada diretório correspondente.
+Este documento cobre a configuração inicial e a arquitetura do aplicativo tech4parking. Para mais detalhes sobre cada microserviço e função Lambda, consulte a documentação específica em cada diretório correspondente.

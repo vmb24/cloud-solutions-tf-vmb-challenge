@@ -1,7 +1,7 @@
 resource "aws_appautoscaling_target" "website_scaling_target" {
   max_capacity       = 4
   min_capacity       = 2
-  resource_id        = "service/${var.terrafarming_website_ecs_cluster_name}/${aws_ecs_service.website_service.name}"
+  resource_id        = "service/${var.tech4parking_website_ecs_cluster_name}/${aws_ecs_service.website_service.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
 }
