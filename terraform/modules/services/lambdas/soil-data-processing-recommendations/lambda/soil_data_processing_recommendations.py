@@ -38,7 +38,8 @@ def lambda_handler(event, context):
     
     return {
         'statusCode': 400,
-        'body': json.dumps({'error': 'Requisição inválida'})
+        'body': json.dumps({'error': 'Requisição inválida'}),
+        'headers': get_cors_headers()
     }
 
 def handle_api_gateway_event(event):
@@ -58,29 +59,57 @@ def handle_api_gateway_event(event):
 
     return {
         'statusCode': 400,
-        'body': json.dumps({'error': 'Requisição inválida'})
+        'body': json.dumps({'error': 'Requisição inválida'}),
+        'headers': get_cors_headers()
     }
 
 def get_latest_moisture():
     try:
-        print(f"Tentando obter shadow para o dispositivo: {IOT_THING_NAME}")
-        response = iot_client.get_thing_shadow(thingName=IOT_THING_NAME)
-        payload = json.loads(response['payload'].read().decode())
-        print(f"Payload do shadow recebido: {payload}")
-        state = payload['state']['reported']
+        table = dynamodb.Table(MOISTURE_AVERAGES_DATA_TABLE_NAME)
+        
+        response = table.scan(
+            ProjectionExpression="#date, readings",
+            ExpressionAttributeNames={"#date": "date"},
+            Limit=1,
+            ScanIndexForward=False
+        )
+        
+        items = response.get('Items', [])
+        
+        if not items:
+            return {
+                'statusCode': 404,
+                'body': json.dumps({'error': 'Nenhum dado de umidade encontrado'}),
+                'headers': get_cors_headers()
+            }
+        
+        latest_item = items[0]
+        readings = latest_item.get('readings', [])
+        
+        if not readings:
+            return {
+                'statusCode': 404,
+                'body': json.dumps({'error': 'Nenhuma leitura encontrada para o último registro'}),
+                'headers': get_cors_headers()
+            }
+        
+        latest_reading = readings[-1]
+        
         return {
             'statusCode': 200,
             'body': json.dumps({
-                'moisture': state['moisture'],
-                'status': state['status'],
-                'timestamp': datetime.now().isoformat()
-            })
+                'moisture': float(latest_reading['moisture']),
+                'status': latest_reading['status'],
+                'timestamp': latest_reading['timestamp']
+            }),
+            'headers': get_cors_headers()
         }
     except Exception as e:
-        print(f"Erro ao obter shadow do dispositivo: {str(e)}")
+        print(f"Erro ao obter a última leitura de umidade: {str(e)}")
         return {
             'statusCode': 500,
-            'body': json.dumps({'error': f"Ocorreu um erro ao chamar a operação GetThingShadow: {str(e)}"})
+            'body': json.dumps({'error': f"Ocorreu um erro ao obter a última leitura de umidade: {str(e)}"}),
+            'headers': get_cors_headers()
         }
 
 def process_moisture_data(event):
@@ -98,7 +127,8 @@ def process_moisture_data(event):
         print(f"Erro ao processar dados de umidade: {str(e)}")
         return {
             'statusCode': 500,
-            'body': json.dumps({'error': f"Falha ao processar dados de umidade: {str(e)}"})
+            'body': json.dumps({'error': f"Falha ao processar dados de umidade: {str(e)}"}),
+            'headers': get_cors_headers()
         }
 
 def store_moisture_data(moisture, status, timestamp):
@@ -152,7 +182,8 @@ def get_moisture_history(days=30):
 
     return {
         'statusCode': 200,
-        'body': json.dumps(response['Items'])
+        'body': json.dumps(response['Items']),
+        'headers': get_cors_headers()
     }
 
 def generate_all_recommendations(moisture, status):
@@ -208,7 +239,8 @@ def generate_all_recommendations(moisture, status):
                     print(f"Erro ao chamar o Bedrock após {max_retries} tentativas: {str(e)}")
                     return {
                         'statusCode': 500,
-                        'body': json.dumps({'error': f'Falha ao gerar recomendações após {max_retries} tentativas: {str(e)}'})
+                        'body': json.dumps({'error': f'Falha ao gerar recomendações após {max_retries} tentativas: {str(e)}'}),
+                        'headers': get_cors_headers()
                     }
                 delay = (2 ** attempt * base_delay) + (random.randint(0, 1000) / 1000.0)
                 print(f"Throttling detectado. Tentativa {attempt + 1} de {max_retries}. Aguardando {delay:.2f} segundos.")
@@ -218,7 +250,8 @@ def generate_all_recommendations(moisture, status):
     else:
         return {
             'statusCode': 500,
-            'body': json.dumps({'error': f'Falha ao gerar recomendações após {max_retries} tentativas'})
+            'body': json.dumps({'error': f'Falha ao gerar recomendações após {max_retries} tentativas'}),
+            'headers': get_cors_headers()
         }
 
     recommendations = json.loads(response['body'].read())['completion'].strip()
@@ -230,7 +263,8 @@ def generate_all_recommendations(moisture, status):
         print("Erro ao decodificar as recomendações como JSON")
         return {
             'statusCode': 500,
-            'body': json.dumps({'error': 'Falha ao decodificar as recomendações como JSON'})
+            'body': json.dumps({'error': 'Falha ao decodificar as recomendações como JSON'}),
+            'headers': get_cors_headers()
         }
 
     try:
@@ -240,12 +274,14 @@ def generate_all_recommendations(moisture, status):
         print(f"Erro ao armazenar recomendações: {str(e)}")
         return {
             'statusCode': 500,
-            'body': json.dumps({'error': f'Falha ao armazenar recomendações: {str(e)}'})
+            'body': json.dumps({'error': f'Falha ao armazenar recomendações: {str(e)}'}),
+            'headers': get_cors_headers()
         }
 
     return {
         'statusCode': 200,
-        'body': json.dumps(recommendations_dict)
+        'body': json.dumps(recommendations_dict),
+        'headers': get_cors_headers()
     }
 
 def store_recommendation(recommendations_dict, moisture, status, timestamp):
@@ -305,7 +341,8 @@ def get_all_recommendations():
         recommendations.extend(item.get('recommendations', []))
     return {
         'statusCode': 200,
-        'body': json.dumps(recommendations)
+        'body': json.dumps(recommendations),
+        'headers': get_cors_headers()
     }
 
 def get_latest_recommendation(topic):
@@ -326,10 +363,19 @@ def get_latest_recommendation(topic):
     if topic_recommendations:
         return {
             'statusCode': 200,
-            'body': json.dumps(topic_recommendations[0])
+            'body': json.dumps(topic_recommendations[0]),
+            'headers': get_cors_headers()
         }
     else:
         return {
             'statusCode': 404,
-            'body': json.dumps({'error': 'Recomendação não encontrada'})
+            'body': json.dumps({'error': 'Recomendação não encontrada'}),
+            'headers': get_cors_headers()
         }
+
+def get_cors_headers():
+    return {
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+    }

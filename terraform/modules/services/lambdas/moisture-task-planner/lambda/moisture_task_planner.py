@@ -23,7 +23,14 @@ def lambda_handler(event, context):
     logger.info(f"Evento recebido: {json.dumps(event)}")
     
     try:
-        if 'Records' in event:
+        if event['httpMethod'] == 'GET':
+            if 'taskId' in event['queryStringParameters']:
+                return get_task_plan(event['queryStringParameters']['taskId'])
+            elif 'recommendations' in event['queryStringParameters']:
+                return get_recommendations(event['queryStringParameters']['recommendations'])
+            else:
+                return get_all_task_plans()
+        elif 'Records' in event:
             for record in event['Records']:
                 if record['eventName'] == 'INSERT':
                     new_image = record['dynamodb']['NewImage']
@@ -44,10 +51,7 @@ def lambda_handler(event, context):
 
     except Exception as e:
         logger.error(f"Erro no lambda_handler: {str(e)}")
-        return {
-            'statusCode': 500,
-            'body': json.dumps(f"Erro interno: {str(e)}")
-        }
+        return create_response(500, f"Erro interno: {str(e)}")
 
 def get_latest_moisture():
     try:
@@ -70,6 +74,27 @@ def get_latest_moisture():
             'statusCode': 500,
             'body': json.dumps({'error': f"Ocorreu um erro ao chamar a operação GetThingShadow: {str(e)}"})
         }
+        
+def get_task_plan(task_id):
+    try:
+        response = task_plan_table.get_item(Key={'planId': task_id})
+        item = response.get('Item')
+        if item:
+            return create_response(200, json.dumps(item))
+        else:
+            return create_response(404, "Plano de tarefas não encontrado")
+    except Exception as e:
+        logger.error(f"Erro ao obter plano de tarefas: {str(e)}")
+        return create_response(500, f"Erro ao obter plano de tarefas: {str(e)}")
+
+def get_all_task_plans():
+    try:
+        response = task_plan_table.scan()
+        items = response.get('Items', [])
+        return create_response(200, json.dumps(items))
+    except Exception as e:
+        logger.error(f"Erro ao obter todos os planos de tarefas: {str(e)}")
+        return create_response(500, f"Erro ao obter todos os planos de tarefas: {str(e)}")
 
 def process_moisture_data(data):
     try:
@@ -137,7 +162,7 @@ def get_recommendations(topic):
         
         prompt = "Human: " + recommendation_prompt + "\n\nAssistant:"
         
-        logger.info("Enviando prompt para o modelo de IA para o auxilio recomemdação das tarefas...")
+        logger.info("Enviando prompt para o modelo de IA para o auxilio recomendação das tarefas...")
         response = bedrock.invoke_model(
             modelId="anthropic.claude-v2",
             contentType="application/json",
@@ -152,10 +177,10 @@ def get_recommendations(topic):
         
         response_body = json.loads(response['body'].read())
         recommendations = response_body['completion']
-        return recommendations.strip()
+        return create_response(200, recommendations.strip())
     except Exception as e:
         logger.error(f"Erro ao obter recomendações para {topic}: {str(e)}")
-        return f"Não foi possível obter recomendações para {topic} devido a um erro."
+        return create_response(500, f"Não foi possível obter recomendações para {topic} devido a um erro.")
 
 def generate_task_plan_with_ai(realtime_moisture, realtime_timestamp):
     try:
@@ -414,6 +439,18 @@ def get_last_task_plan():
     except Exception as e:
         logger.error(f"Erro ao obter o último plano de tarefas: {str(e)}")
         return {}
+    
+def create_response(status_code, body):
+    return {
+        'statusCode': status_code,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+        },
+        'body': body
+    }
 
 # def invoke_image_generation_lambda(plan_id, task_plan):
 #     try:
