@@ -53,9 +53,9 @@ Regras do IoT Core:
     -   Trigger: CloudWatch Events (agendado)
     -   Função: Gera planos de tarefas baseados nos dados de umidade e recomendações
     -   Integrações: DynamoDB, Bedrock
--   alert_lambda
+-   generate_accessible_content
     -   Trigger: DynamoDB Streams (MoistureAverages)
-    -   Função: Envia alertas baseados em condições críticas de umidade
+    -   Função: Funcionalidades como transcrição de texto em fala para pessoas com deficiencia, dentre outras.
     -   Integrações: SNS
 -   image_generation_lambda
     -   Trigger: Diversos eventos (novos dados no DynamoDB, solicitações da aplicação web, etc.)
