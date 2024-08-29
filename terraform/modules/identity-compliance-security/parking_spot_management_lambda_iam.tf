@@ -26,6 +26,7 @@ resource "aws_iam_role_policy" "parking_spot_management_lambda_policy" {
       {
         Effect = "Allow"
         Action = [
+          "dynamodb:Scan",
           "dynamodb:PutItem",
           "dynamodb:GetItem",
           "dynamodb:Query",
