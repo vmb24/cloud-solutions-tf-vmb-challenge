@@ -46,6 +46,7 @@ resource "aws_iam_role_policy" "moisture_task_planner_lambda_policy" {
       {
         Effect = "Allow"
         Action = [
+          "dynamodb:ScanItem",
           "dynamodb:PutItem",
           "dynamodb:GetItem",
           "dynamodb:Query",

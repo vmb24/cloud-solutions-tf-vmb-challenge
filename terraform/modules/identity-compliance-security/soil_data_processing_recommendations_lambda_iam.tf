@@ -26,6 +26,7 @@ resource "aws_iam_role_policy" "soil_data_processing_recommendations_lambda_poli
       {
         Effect = "Allow"
         Action = [
+          "dynamodb:ScanItem",
           "dynamodb:PutItem",
           "dynamodb:GetItem",
           "dynamodb:Query",

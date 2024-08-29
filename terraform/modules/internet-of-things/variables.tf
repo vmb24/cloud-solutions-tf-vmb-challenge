@@ -1,3 +1,3 @@
 variable "aws_region" {}
-variable "parking_spot_management_lambda_arn" {}
-variable "parking_spot_status_update_lambda_arn" {}
+variable "soil_data_processing_recommendations_lambda_arn" {}
+variable "moisture_task_planner_lambda_arn" {}

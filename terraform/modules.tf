@@ -1,9 +1,9 @@
 module "internet_of_things" {
   source = "./modules/internet-of-things"
 
-  aws_region                            = var.aws_region
-  parking_spot_management_lambda_arn    = module.parking_spot_management.parking_spot_management_lambda_arn
-  parking_spot_status_update_lambda_arn = module.parking_spot_status_update.parking_spot_status_update_lambda_arn
+  aws_region                                      = var.aws_region
+  soil_data_processing_recommendations_lambda_arn = module.soil_data_processing_recommendations.soil_data_processing_recommendations_lambda_arn
+  moisture_task_planner_lambda_arn                = module.moisture_task_planner.moisture_task_planner_lambda_arn
 }
 
 module "identity_compliance_security" {
@@ -59,31 +59,57 @@ module "application" {
   cloudwatch_log_group_website_container_name = module.management_governance.cloudwatch_log_group_website_container_name
 }
 
+module "content_delivery" {
+  source = "./modules/content-delivery"
+
+  aws_region                     = var.aws_region
+  website_load_balancer_dns_name = module.compute.website_load_balancer_dns_name
+  acm_certificate_cert_arn       = var.acm_certificate_cert_arn
+  website_bucket_name            = module.storage.website_bucket_name
+  website_lb_zone_id             = module.compute.website_lb_zone_id
+  website_lb_id                  = module.compute.website_lb_id
+}
+
 module "storage" {
   source = "./modules/storage"
 
   bucket_name = var.bucket_name
   environment = var.environment
+
+  moisture_task_planner_lambda_arn = module.moisture_task_planner.moisture_task_planner_lambda_arn
+  allow_s3_moisture_task_planner   = module.moisture_task_planner.allow_s3_moisture_task_planner
+}
+
+module "moisture_task_planner" {
+  source = "./modules/services/lambdas/moisture-task-planner"
+
+  moisture_task_planner_lambda_role_arn                    = module.identity_compliance_security.moisture_task_planner_lambda_role_arn
+  moisture_iot_rule_arn                                    = module.internet_of_things.moisture_iot_rule_arn
+  task_planner_media_bucket_arn                            = module.storage.task_planner_media_bucket_arn
+  agricultural_moisture_recommendations_tabledb_stream_arn = module.database.agricultural_moisture_recommendations_tabledb_stream_arn
+  # task_planner_faces_rekognition_collection_id = module.machine_learning.task_planner_faces_rekognition_collection_id
+}
+
+module "soil_data_processing_recommendations" {
+  source = "./modules/services/lambdas/soil-data-processing-recommendations"
+
+  soil_data_processing_recommendations_lambda_role_arn = module.identity_compliance_security.soil_data_processing_recommendations_lambda_role_arn
+  moisture_iot_rule_arn                                = module.internet_of_things.moisture_iot_rule_arn
+}
+
+module "moisture_task_planner_http_events" {
+  source = "./modules/services/lambdas/moisture-task-planner-http-events"
+
+  moisture_task_planner_http_events_lambda_role_arn = module.identity_compliance_security.moisture_task_planner_http_events_lambda_role_arn
+  moisture_iot_rule_arn                             = module.internet_of_things.moisture_iot_rule_arn
+  task_planner_media_bucket_arn                     = module.storage.task_planner_media_bucket_arn
+  # task_planner_faces_rekognition_collection_id = module.machine_learning.task_planner_faces_rekognition_collection_id
 }
 
 module "database" {
   source = "./modules/database"
 
   moisture_task_planner_lambda_arn = module.moisture_task_planner.moisture_task_planner_lambda_arn
-}
-
-module "parking_spot_management" {
-  source = "./modules/services/lambda/parking-spot-management"
-
-  parking_spot_management_lambda_role_arn = module.identity_compliance_security.parking_spot_management_lambda_role_arn
-  parking_spot_iot_rule_arn               = module.internet_of_things.parking_spot_iot_rule_arn
-}
-
-module "parking_spot_status_update" {
-  source = "./modules/services/lambda/parking-spot-status-update"
-
-  parking_spot_status_update_lambda_role_arn = module.identity_compliance_security.parking_spot_status_update_lambda_role_arn
-  parking_spot_iot_rule_arn                  = module.internet_of_things.parking_spot_iot_rule_arn
 }
 
 module "website" {
@@ -97,11 +123,11 @@ module "website" {
   website_load_balancer_dns_name = module.compute.website_load_balancer_dns_name
   ecs_task_execution_role_arn    = module.identity_compliance_security.ecs_task_execution_role_arn
   ecs_public_service_sg_id       = module.compute.ecs_public_service_sg
-  acm_certificate_cert_arn       = var.http_certificate
-  route53_record_www_record_name = var.route53_record_www_record_name
+  acm_certificate_cert_arn       = module.content_delivery.acm_certificate_cert_arn
+  route53_record_www_record_name = module.content_delivery.route53_record_www_record_name
 
-  tech4parking_website_ecs_cluster_id               = module.application.tech4parking_website_ecs_cluster_id
-  tech4parking_website_ecs_cluster_name             = module.application.tech4parking_website_ecs_cluster_name
+  terrafarming_website_ecs_cluster_id               = module.application.terrafarming_website_ecs_cluster_id
+  terrafarming_website_ecs_cluster_name             = module.application.terrafarming_website_ecs_cluster_name
   website_sg_id                                     = module.compute.website_sg_id
   cloudwatch_log_group_website_container_name       = module.management_governance.cloudwatch_log_group_website_container_name
   cloudwatch_log_group_website_task_definition_name = module.management_governance.cloudwatch_log_group_website_task_definition_name
