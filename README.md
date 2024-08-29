@@ -18,6 +18,8 @@ Componentes Principais
 9.  Elastic Load Balancing
 10. Amazon Route 53
 11. AWS Certificate Manager (ACM)
+12. AWS Polly
+13. API Gateway
 
 Detalhamento dos Componentes
 
