@@ -20,6 +20,7 @@ module "identity_compliance_security" {
   dynamodb_table_agricultural_moisture_recommendations_arn = module.database.dynamodb_table_agricultural_moisture_recommendations_arn
   agricultural_moisture_recommendations_tabledb_stream_arn = module.database.agricultural_moisture_recommendations_tabledb_stream_arn
   dynamodb_table_moisture_history_arn                      = module.database.dynamodb_table_moisture_history_arn
+  dynamodb_table_moisture_history_stream_arn = module.database.dynamodb_table_moisture_history_stream_arn
   dynamodb_table_moisture_averages_arn                     = module.database.dynamodb_table_moisture_averages_arn
 }
 
@@ -107,6 +108,8 @@ module "moisture_task_planner_http_events" {
 
 module "database" {
   source = "./modules/database"
+
+  moisture_task_planner_lambda_arn = module.moisture_task_planner.moisture_task_planner_lambda_arn
 }
 
 module "website" {

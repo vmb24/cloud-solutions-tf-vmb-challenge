@@ -1,0 +1,1 @@
+variable "moisture_task_planner_lambda_arn" {}

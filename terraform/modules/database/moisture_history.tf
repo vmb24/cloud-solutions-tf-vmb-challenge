@@ -1,4 +1,3 @@
-# Tabela MoistureHistory
 resource "aws_dynamodb_table" "moisture_history" {
   name           = "MoistureHistory"
   billing_mode   = "PAY_PER_REQUEST"
@@ -12,7 +11,7 @@ resource "aws_dynamodb_table" "moisture_history" {
 
   attribute {
     name = "moisture"
-    type = "N"
+    type = "S"
   }
 
   attribute {
@@ -50,6 +49,9 @@ resource "aws_dynamodb_table" "moisture_history" {
     range_key          = "timestamp"
     projection_type    = "ALL"
   }
+
+  stream_enabled   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
 
   tags = {
     Name        = "MoistureHistory"

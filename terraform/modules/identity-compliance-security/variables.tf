@@ -9,3 +9,4 @@ variable dynamodb_table_agricultural_moisture_recommendations_arn {}
 variable "agricultural_moisture_recommendations_tabledb_stream_arn" {}
 variable "dynamodb_table_moisture_history_arn" {}
 variable "dynamodb_table_moisture_averages_arn" {}
+variable "dynamodb_table_moisture_history_stream_arn" {}

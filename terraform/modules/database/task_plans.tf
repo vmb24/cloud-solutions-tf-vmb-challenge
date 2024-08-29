@@ -1,41 +1,52 @@
-# Tabela DynamoDB para Task Plans (modificada)
 resource "aws_dynamodb_table" "task_plans" {
   name           = "TaskPlans"
   billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "PlanId"
-  range_key      = "CreatedAt"
+  hash_key       = "planId"
+  range_key      = "createdAt"
 
   attribute {
-    name = "PlanId"
+    name = "planId"
     type = "S"
   }
 
   attribute {
-    name = "CreatedAt"
+    name = "createdAt"
     type = "S"
   }
 
   attribute {
-    name = "UserId"
+    name = "userId"
     type = "S"
   }
 
   attribute {
-    name = "AverageMoisture"
-    type = "N"
+    name = "averageMoisture"
+    type = "S"
+  }
+
+  attribute {
+    name = "status"
+    type = "S"
   }
 
   global_secondary_index {
     name               = "UserIdIndex"
-    hash_key           = "UserId"
-    range_key          = "CreatedAt"
+    hash_key           = "userId"
+    range_key          = "createdAt"
     projection_type    = "ALL"
   }
 
   global_secondary_index {
     name               = "MoistureIndex"
-    hash_key           = "PlanId"
-    range_key          = "AverageMoisture"
+    hash_key           = "planId"
+    range_key          = "averageMoisture"
+    projection_type    = "ALL"
+  }
+
+  global_secondary_index {
+    name               = "StatusIndex"
+    hash_key           = "status"
+    range_key          = "createdAt"
     projection_type    = "ALL"
   }
 
