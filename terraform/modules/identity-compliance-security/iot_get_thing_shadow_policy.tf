@@ -15,14 +15,14 @@ resource "aws_iam_policy" "iot_get_thing_shadow_policy" {
         Action = [
           "iot:GetThingShadow"
         ]
-        Resource = "arn:aws:iot:${var.aws_region}:${data.aws_caller_identity.current.account_id}:thing/moisture_sensor"
+        Resource = "arn:aws:iot:${var.aws_region}:${data.aws_caller_identity.current.account_id}:thing/parking_sensor"
       }
     ]
   })
 }
 
 # Anexar a política à role da função Lambda
-resource "aws_iam_role_policy_attachment" "moisture_task_planner_lambda_iot_policy_attachment" {
-  role       = aws_iam_role.moisture_task_planner_lambda_role.name
+resource "aws_iam_role_policy_attachment" "parking_spot_status_update_lambda_iot_policy_attachment" {
+  role       = aws_iam_role.parking_spot_status_update_lambda_role.name
   policy_arn = aws_iam_policy.iot_get_thing_shadow_policy.arn
 }

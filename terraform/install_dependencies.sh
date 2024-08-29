@@ -5,8 +5,8 @@ BASE_DIR="modules/services/lambdas"
 
 # Lista de Lambdas
 LAMBDAS=(
-  "moisture_task_planner"
-  "soil_data_processing_recommendations"
+  "parking_spot_management"
+  "parking_spot_status_update"
 )
 
 # Instala as dependências para cada Lambda

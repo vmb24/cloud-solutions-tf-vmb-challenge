@@ -1,4 +1,4 @@
-# Load Balancer (exemplo com HTTPS listener)
+#              Load Balancer (exemplo com HTTPS listener)
 resource "aws_lb_listener" "https_listener" {
   load_balancer_arn = var.website_load_balancer_arn
   port              = 443
