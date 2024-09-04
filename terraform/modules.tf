@@ -2,7 +2,7 @@ module "internet_of_things" {
   source = "./modules/internet-of-things"
 
   aws_region                                      = var.aws_region
-  soil_data_processing_recommendations_lambda_arn = module.soil_data_processing_recommendations.soil_data_processing_recommendations_lambda_arn
+  soil_moisture_data_processing_recommendations_lambda_arn = module.soil_moisture_data_processing_recommendations.soil_moisture_data_processing_recommendations_lambda_arn
   moisture_task_planner_lambda_arn                = module.moisture_task_planner.moisture_task_planner_lambda_arn
 }
 
@@ -20,7 +20,7 @@ module "identity_compliance_security" {
   dynamodb_table_agricultural_moisture_recommendations_arn = module.database.dynamodb_table_agricultural_moisture_recommendations_arn
   agricultural_moisture_recommendations_tabledb_stream_arn = module.database.agricultural_moisture_recommendations_tabledb_stream_arn
   dynamodb_table_moisture_history_arn                      = module.database.dynamodb_table_moisture_history_arn
-  dynamodb_table_moisture_history_stream_arn = module.database.dynamodb_table_moisture_history_stream_arn
+  dynamodb_table_moisture_history_stream_arn               = module.database.dynamodb_table_moisture_history_stream_arn
   dynamodb_table_moisture_averages_arn                     = module.database.dynamodb_table_moisture_averages_arn
 }
 
@@ -64,7 +64,6 @@ module "content_delivery" {
 
   aws_region                     = var.aws_region
   website_load_balancer_dns_name = module.compute.website_load_balancer_dns_name
-  acm_certificate_cert_arn       = var.acm_certificate_cert_arn
   website_bucket_name            = module.storage.website_bucket_name
   website_lb_zone_id             = module.compute.website_lb_zone_id
   website_lb_id                  = module.compute.website_lb_id
@@ -90,20 +89,18 @@ module "moisture_task_planner" {
   # task_planner_faces_rekognition_collection_id = module.machine_learning.task_planner_faces_rekognition_collection_id
 }
 
-module "soil_data_processing_recommendations" {
-  source = "./modules/services/lambdas/soil-data-processing-recommendations"
+module "soil_moisture_data_processing_recommendations" {
+  source = "./modules/services/lambdas/soil-moisture-data-processing-recommendations"
 
-  soil_data_processing_recommendations_lambda_role_arn = module.identity_compliance_security.soil_data_processing_recommendations_lambda_role_arn
-  moisture_iot_rule_arn                                = module.internet_of_things.moisture_iot_rule_arn
+  soil_moisture_data_processing_recommendations_lambda_role_arn = module.identity_compliance_security.soil_moisture_data_processing_recommendations_lambda_role_arn
+  moisture_iot_rule_arn                                         = module.internet_of_things.moisture_iot_rule_arn
 }
 
-module "moisture_task_planner_http_events" {
-  source = "./modules/services/lambdas/moisture-task-planner-http-events"
+module "soil_temperature_data_processing_recommendations" {
+  source = "./modules/services/lambdas/soil-temperature-data-processing-recommendations"
 
-  moisture_task_planner_http_events_lambda_role_arn = module.identity_compliance_security.moisture_task_planner_http_events_lambda_role_arn
-  moisture_iot_rule_arn                             = module.internet_of_things.moisture_iot_rule_arn
-  task_planner_media_bucket_arn                     = module.storage.task_planner_media_bucket_arn
-  # task_planner_faces_rekognition_collection_id = module.machine_learning.task_planner_faces_rekognition_collection_id
+  soil_temperature_data_processing_recommendations_lambda_role_arn = module.identity_compliance_security.soil_temperature_data_processing_recommendations_lambda_role_arn
+  temperature_iot_rule_arn                                         = module.internet_of_things.temperature_iot_rule_arn
 }
 
 module "database" {

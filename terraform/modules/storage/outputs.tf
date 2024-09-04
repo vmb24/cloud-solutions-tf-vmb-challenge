@@ -10,22 +10,11 @@ output "website_bucket_id" {
   value = aws_s3_bucket.website_bucket.id
 }
 
-output "load_balancer_logging_bucket_id" {
-  value = aws_s3_bucket.load_balancer_logging_bucket.id
+output "task_planner_media_bucket_arn" {
+  value = aws_s3_bucket.task_planner_media.arn
 }
 
-output "load_balancer_logging_bucket_arn" {
-  value = aws_s3_bucket.load_balancer_logging_bucket.arn
+output "tf_state_bucket_name" {
+  value       = aws_s3_bucket.terraform_state.id
+  description = "The name of the S3 bucket"
 }
-
-output "load_balancer_logging_bucket" {
-  value = aws_s3_bucket.load_balancer_logging_bucket.bucket
-}
-
-# output "image_analysis_bucket_name" {
-#   value = aws_s3_bucket.images_bucket.bucket
-# }
-
-# output "mobile_bucket_name" {
-#   value = aws_s3_bucket.mobile_bucket.bucket
-# }

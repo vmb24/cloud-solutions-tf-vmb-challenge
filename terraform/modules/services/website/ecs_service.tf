@@ -1,6 +1,6 @@
 resource "aws_ecs_service" "website_service" {
   name            = "website-service"
-  cluster         = var.tech4parking_website_ecs_cluster_id
+  cluster         = var.terrafarming_website_ecs_cluster_id
   task_definition = aws_ecs_task_definition.ecs_website_task.arn
   desired_count   = 2
   launch_type     = "FARGATE"

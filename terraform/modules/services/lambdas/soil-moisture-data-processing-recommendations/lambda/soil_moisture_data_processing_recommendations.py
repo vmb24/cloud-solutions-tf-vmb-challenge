@@ -212,7 +212,7 @@ def generate_all_recommendations(moisture, status):
     }}
 
     Human: Obrigado. Por favor, forneça apenas o dicionário JSON com as recomendações, sem incluir nenhum texto introdutório ou conclusivo.
-
+    
     Assistant:'''
 
     print(f"Enviando requisição para o Bedrock com o prompt para todos os tópicos")

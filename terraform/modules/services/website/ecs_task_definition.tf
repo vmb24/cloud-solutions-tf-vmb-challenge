@@ -8,7 +8,7 @@ resource "aws_ecs_task_definition" "ecs_website_task" {
   container_definitions    = jsonencode([
     {
       name      = "website"
-      image     = "${aws_ecr_repository.tech4parking_website_repo.repository_url}:latest"
+      image     = "${aws_ecr_repository.terrafarming_website_repo.repository_url}:latest"
       essential = true
       portMappings = [
         {

@@ -158,7 +158,7 @@ def process_moisture_data(data):
 
 def get_recommendations(topic):
     try:
-        recommendation_prompt = f"""Human: Forneça recomendações detalhadas para {topic} em uma fazenda, considerando práticas agrícolas modernas e sustentáveis. Assistant:"""
+        recommendation_prompt = f"""Forneça recomendações detalhadas para {topic} em uma fazenda, considerando práticas agrícolas modernas e sustentáveis."""
         
         prompt = "Human: " + recommendation_prompt + "\n\nAssistant:"
         

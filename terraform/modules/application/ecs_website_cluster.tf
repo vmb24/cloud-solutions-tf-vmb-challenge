@@ -1,4 +1,4 @@
-resource "aws_ecs_cluster" "tech4parking_website_cluster" {
+resource "aws_ecs_cluster" "terrafarming_website_cluster" {
   name = "${var.ecs_website_service_name}-cluster"
 
   setting {

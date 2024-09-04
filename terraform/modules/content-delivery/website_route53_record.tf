@@ -1,6 +1,6 @@
 resource "aws_route53_record" "www_record" {
-  zone_id = aws_route53_zone.tech4parking_zone.id
-  name    = "www.tech4parking.com.br"
+  zone_id = aws_route53_zone.terrafarming_zone.id
+  name    = "www.terrafarming.com.br"
   type    = "A"
   alias {
     # LOAD BALANCER
@@ -8,8 +8,8 @@ resource "aws_route53_record" "www_record" {
     zone_id                = var.website_lb_zone_id
 
     # CLOUDFRONT
-    # name                   = aws_cloudfront_distribution.tech4parking_distribution.domain_name
-    # zone_id                = aws_cloudfront_distribution.tech4parking_distribution.hosted_zone_id
+    # name                   = aws_cloudfront_distribution.terrafarming_distribution.domain_name
+    # zone_id                = aws_cloudfront_distribution.terrafarming_distribution.hosted_zone_id
     evaluate_target_health = true
   }
 }

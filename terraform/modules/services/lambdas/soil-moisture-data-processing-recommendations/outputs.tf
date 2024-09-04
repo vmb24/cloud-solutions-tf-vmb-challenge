@@ -1,5 +1,5 @@
-output "soil_data_processing_recommendations_lambda_arn" {
-  value = aws_lambda_function.soil_data_processing_recommendations.arn
+output "soil_moisture_data_processing_recommendations_lambda_arn" {
+  value = aws_lambda_function.soil_moisture_data_processing_recommendations.arn
 }
 
 # Output da URL do API Gateway

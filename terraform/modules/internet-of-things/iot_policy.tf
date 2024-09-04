@@ -27,6 +27,6 @@ resource "aws_iot_policy_attachment" "policy_attach" {
 }
 
 resource "aws_iot_thing_principal_attachment" "thing_attach" {
-  thing     = aws_iot_thing.parking_sensor.name
+  thing     = aws_iot_thing.moisture_sensor.name
   principal = aws_iot_certificate.iot_cert.arn
 }

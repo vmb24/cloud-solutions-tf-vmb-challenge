@@ -1,5 +1,5 @@
 # Deployment do API Gateway
-resource "aws_api_gateway_deployment" "soil_data_processing_recommendations_api_deployment" {
+resource "aws_api_gateway_deployment" "soil_moisture_data_processing_recommendations_api_deployment" {
   depends_on = [
     aws_api_gateway_integration.get_recommendations_integration,
     aws_api_gateway_integration.get_recommendations_by_topic_integration,
@@ -7,7 +7,7 @@ resource "aws_api_gateway_deployment" "soil_data_processing_recommendations_api_
     aws_api_gateway_integration.post_generate_recommendations_integration
   ]
 
-  rest_api_id = aws_api_gateway_rest_api.soil_data_processing_recommendations_api.id
+  rest_api_id = aws_api_gateway_rest_api.soil_moisture_data_processing_recommendations_api.id
   stage_name    = "prod"
 
   lifecycle {
@@ -34,7 +34,7 @@ resource "aws_api_gateway_deployment" "soil_data_processing_recommendations_api_
 
 # Estágio do API Gateway
 //resource "aws_api_gateway_stage" "prod" {
-//  deployment_id = aws_api_gateway_deployment.soil_data_processing_recommendations_api_deployment.id
-//  rest_api_id   = aws_api_gateway_rest_api.soil_data_processing_recommendations_api.id
+//  deployment_id = aws_api_gateway_deployment.soil_moisture_data_processing_recommendations_api_deployment.id
+//  rest_api_id   = aws_api_gateway_rest_api.soil_moisture_data_processing_recommendations_api.id
 //  stage_name    = "prod"
 //}

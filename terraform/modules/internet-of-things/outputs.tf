@@ -1,5 +1,5 @@
-output "parking_spot_iot_rule_arn" {
-  value = aws_iot_topic_rule.parking_iot_rule.arn
+output "moisture_iot_rule_arn" {
+  value = aws_iot_topic_rule.moisture_iot_rule.arn
 }
 
 # Output para o ARN do tópico SNS

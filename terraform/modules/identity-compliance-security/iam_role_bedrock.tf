@@ -1,6 +1,6 @@
-resource "aws_iam_role_policy" "soil_data_processing_recommendations_bedrock_full_access" {
+resource "aws_iam_role_policy" "soil_moisture_data_processing_recommendations_bedrock_full_access" {
   name = "bedrock-full-access"
-  role = aws_iam_role.soil_data_processing_recommendations_lambda_role.id
+  role = aws_iam_role.soil_moisture_data_processing_recommendations_lambda_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -34,9 +34,9 @@ resource "aws_iam_role_policy" "moisture_task_planner_bedrock_full_access" {
   })
 }
 
-resource "aws_iam_role_policy" "soil_data_processing_recommendations_bedrock_specific_model_access" {
+resource "aws_iam_role_policy" "soil_moisture_data_processing_recommendations_bedrock_specific_model_access" {
   name = "bedrock-specific-model-access"
-  role = aws_iam_role.soil_data_processing_recommendations_lambda_role.id
+  role = aws_iam_role.soil_moisture_data_processing_recommendations_lambda_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"

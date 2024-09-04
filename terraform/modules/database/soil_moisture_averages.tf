@@ -1,6 +1,6 @@
 # Tabela MoistureAverages
-resource "aws_dynamodb_table" "moisture_averages" {
-  name           = "MoistureAverages"
+resource "aws_dynamodb_table" "soil_moisture_averages" {
+  name           = "SoilMoistureAverages"
   billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "date"
 

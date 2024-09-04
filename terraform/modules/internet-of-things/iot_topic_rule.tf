@@ -5,7 +5,7 @@ resource "aws_iot_topic_rule" "moisture_iot_rule" {
   enabled     = true  // Adicione esta linha
 
   lambda {
-    function_arn = var.soil_data_processing_recommendations_lambda_arn
+    function_arn = var.soil_moisture_data_processing_recommendations_lambda_arn
   }
 
   lambda {
