@@ -10,8 +10,8 @@ output "website_bucket_id" {
   value = aws_s3_bucket.website_bucket.id
 }
 
-output "task_planner_media_bucket_arn" {
-  value = aws_s3_bucket.task_planner_media.arn
+output "s3_bucket_names" {
+  value = values(aws_s3_bucket.media_buckets)[*].id
 }
 
 output "tf_state_bucket_name" {

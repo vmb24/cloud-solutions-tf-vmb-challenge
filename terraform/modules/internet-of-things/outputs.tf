@@ -1,8 +1,4 @@
-output "moisture_iot_rule_arn" {
-  value = aws_iot_topic_rule.moisture_iot_rule.arn
-}
-
-# Output para o ARN do tópico SNS
+# Certificates
 output "sns_topic_arn" {
   value = aws_sns_topic.iot_topic.arn
 }
@@ -24,4 +20,25 @@ output "private_key" {
 
 output "iot_endpoint" {
   value = data.aws_iot_endpoint.endpoint.endpoint_address
+}
+
+# Topic ARNS
+output "air_moisture_iot_rule_arn" {
+  value = aws_iot_topic_rule.air_moisture_rule.arn
+}
+
+output "air_temperature_iot_rule_arn" {
+  value = aws_iot_topic_rule.air_temperature_rule.arn
+}
+
+output "brightness_iot_rule_arn" {
+  value = aws_iot_topic_rule.brightness_rule.arn
+}
+
+output "soil_moisture_iot_rule_arn" {
+  value = aws_iot_topic_rule.soil_moisture_rule.arn
+}
+
+output "soil_moisture_iot_rule_arn" {
+  value = aws_iot_topic_rule.soil_moisture_rule.arn
 }

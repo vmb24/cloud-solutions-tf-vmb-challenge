@@ -20,6 +20,8 @@ Componentes Principais
 11. AWS Certificate Manager (ACM)
 12. AWS Polly
 13. API Gateway
+14. AWS Step Functions
+15. AWS QuickSight
 
 Detalhamento dos Componentes
 
@@ -67,6 +69,50 @@ Regras do IoT Core:
     -   Trigger: S3 (quando novos vídeos são carregados)
     -   Função: Processa vídeos armazenados no S3 e atualiza o DynamoDB
     -   Integrações: DynamoDB, Bedrock (para análise de vídeo)
+
+* Funções lambda para geração de mídia:
+
+1.  Umidade do Solo:
+    -   Imagens de culturas ideais para o nível atual de umidade do solo.
+    -   Visualizações de técnicas de irrigação recomendadas (gotejamento, aspersão, etc.).
+    -   Representações de cobertura do solo adequada para reter umidade.
+
+2.  Temperatura do Solo:
+    -   Imagens de plantas que se desenvolvem bem na temperatura atual do solo.
+    -   Visualizações de técnicas de manejo do solo para regular a temperatura (mulching, cobertura vegetal).
+    -   Representações de sistemas de aquecimento/resfriamento do solo para estufas.
+
+3.  Umidade do Ar:
+    -   Imagens de culturas adaptadas às condições atuais de umidade do ar.
+    -   Visualizações de técnicas para controle de umidade (nebulização, ventilação).
+    -   Representações de estruturas de proteção contra excesso ou falta de umidade.
+
+4.  Temperatura do Ar:
+    -   Imagens de plantas resistentes à temperatura atual do ar.
+    -   Visualizações de estruturas de proteção (estufas, túneis, telas de sombreamento).
+    -   Representações de técnicas de plantio adequadas para a temperatura (consórcio, rotação).
+
+5.  Luminosidade (Sol ou Estufa):
+    -   Imagens de culturas que se desenvolvem bem no nível atual de luminosidade.
+    -   Visualizações de técnicas de manejo de luz (sistemas de iluminação artificial, telas de sombreamento).
+    -   Representações de disposições ideais de plantas para otimizar o uso da luz disponível.
+
+Para criar GIFs informativos para agricultores sobre os tópicos mencionados, podemos descrever como eles poderiam ser representados visualmente. Vou sugerir conceitos para cada tópico:
+
+1.  Umidade do Solo:
+    Um GIF mostrando um corte transversal do solo, com partículas de água se movendo. O nível de umidade poderia variar, indicando solo seco, ideal e encharcado. Uma planta poderia ser mostrada reagindo a essas mudanças.
+
+2.  Temperatura do Solo:
+    Um termômetro inserido no solo, com a temperatura variando. As cores do solo poderiam mudar de frio (azul) para quente (vermelho). Sementes ou raízes poderiam ser mostradas reagindo às mudanças de temperatura.
+
+3.  Umidade do Ar:
+    Um higrômetro simples com o ponteiro se movendo entre "seco" e "úmido". Gotas de água poderiam aparecer no ar quando a umidade aumenta, e desaparecer quando diminui.
+
+4.  Temperatura do Ar:
+    Um termômetro ao ar livre, com a temperatura subindo e descendo. O ambiente ao redor poderia mudar (por exemplo, plantas murchando com calor extremo ou geada formando-se com frio intenso).
+
+5.  Luminosidade (Sol ou Estufa):
+    Para o sol, um ciclo dia/noite com o sol se movendo no céu. Para estufa, lâmpadas de crescimento ligando e desligando. Em ambos os casos, uma planta poderia ser mostrada crescendo em resposta à luz.
 
 1.  Amazon DynamoDB
 

@@ -89,11 +89,36 @@ module "moisture_task_planner" {
   # task_planner_faces_rekognition_collection_id = module.machine_learning.task_planner_faces_rekognition_collection_id
 }
 
+module "application_integration" {
+  source = "./modules/application-integration"
+}
+
+module "air_moisture_data_processing_recommendations" {
+  source = "./modules/services/lambdas/air-moisture-data-processing-recommendations"
+
+  air_moisture_data_processing_recommendations_lambda_role_arn = module.identity_compliance_security.air_moisture_data_processing_recommendations_lambda_role_arn
+  air_moisture_iot_rule_arn                                         = module.internet_of_things.air_moisture_iot_rule_arn
+}
+
+module "air_temperature_data_processing_recommendations" {
+  source = "./modules/services/lambdas/air-temperature-data-processing-recommendations"
+
+  air_temperature_data_processing_recommendations_lambda_role_arn = module.identity_compliance_security.air_temperature_data_processing_recommendations_lambda_role_arn
+  air_temperature_iot_rule_arn                                         = module.internet_of_things.air_temperature_iot_rule_arn
+}
+
+module "brightness_data_processing_recommendations" {
+  source = "./modules/services/lambdas/soil-moisture-data-processing-recommendations"
+
+  brightness_data_processing_recommendations_lambda_role_arn = module.identity_compliance_security.brightness_data_processing_recommendations_lambda_role_arn
+  brightness_iot_rule_arn                                         = module.internet_of_things.brightness_iot_rule_arn
+}
+
 module "soil_moisture_data_processing_recommendations" {
   source = "./modules/services/lambdas/soil-moisture-data-processing-recommendations"
 
   soil_moisture_data_processing_recommendations_lambda_role_arn = module.identity_compliance_security.soil_moisture_data_processing_recommendations_lambda_role_arn
-  moisture_iot_rule_arn                                         = module.internet_of_things.moisture_iot_rule_arn
+  soil_moisture_iot_rule_arn                                         = module.internet_of_things.soil_moisture_iot_rule_arn
 }
 
 module "soil_temperature_data_processing_recommendations" {
@@ -103,10 +128,36 @@ module "soil_temperature_data_processing_recommendations" {
   temperature_iot_rule_arn                                         = module.internet_of_things.temperature_iot_rule_arn
 }
 
-module "database" {
-  source = "./modules/database"
+module "ai_agricultural_recommendations_database" {
+  source = "./modules/database/ai-agricultural-recommendations"
+}
 
-  moisture_task_planner_lambda_arn = module.moisture_task_planner.moisture_task_planner_lambda_arn
+module "average_value_database" {
+  source = "./modules/database/average-value"
+}
+
+module "average_value_history_database" {
+  source = "./modules/database/average-value"
+}
+
+module "average_value_history_stream_database" {
+  source = "./modules/database/average-value-history/stream"
+}
+
+module "environmental_database" {
+  source = "./modules/database/environmental"
+}
+
+module "general_database" {
+  source = "./modules/database/general"
+}
+
+module "media_database" {
+  source = "./modules/database/media"
+}
+
+module "task_planner" {
+  source = "./modules/database/task-planner"
 }
 
 module "website" {
