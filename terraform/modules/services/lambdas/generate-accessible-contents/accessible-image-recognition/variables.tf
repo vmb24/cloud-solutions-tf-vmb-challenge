@@ -1,0 +1,1 @@
+variable "accessible_image_recognition_lambda_role_arn" {}

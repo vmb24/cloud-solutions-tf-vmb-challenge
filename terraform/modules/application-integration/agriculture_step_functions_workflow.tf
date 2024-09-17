@@ -3,7 +3,7 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
   role_arn = aws_iam_role.step_function_role.arn
 
   definition = jsonencode({
-    Comment = "Agriculture Data Processing, Recommendations, Task Planning, and Content Generation Workflow"
+    Comment = "Agriculture Data Processing, Recommendations, Task Planning, Content Generation, and Accessibility Workflow"
     StartAt = "ProcessSensorsData"
     States = {
       ProcessSensorsData = {
@@ -12,25 +12,25 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
           {
             StartAt = "ProcessSoilMoisture"
             States = {
-              SoilMoistureDataProcessingRecommendations = {
+              ProcessSoilMoisture = {
                 Type     = "Task"
-                Resource = aws_lambda_function.processing_moisture_recommendations.arn
+                Resource = var.soil_moisture_data_processing_recommendations_lambda_arn
                 Next     = "SoilMoistureTaskPlanner"
               }
               SoilMoistureTaskPlanner = {
                 Type     = "Task"
-                Resource = aws_lambda_function.moisture_task_planner.arn
+                Resource = var.soil_moisture_task_planner_lambda_arn
                 Next     = "GenerateSoilMoistureContent"
               }
               GenerateSoilMoistureContent = {
                 Type = "Parallel"
                 Branches = [
                   {
-                    StartAt = "GenerateSoilMoistureVideo"
+                    StartAt = "GenerateSoilMoistureGifs"
                     States = {
-                      GenerateSoilMoistureVideo = {
+                      GenerateSoilMoistureGifs = {
                         Type     = "Task"
-                        Resource = aws_lambda_function.video_generation.arn
+                        Resource = var.generate_gifs_to_soil_moisture_metric_lambda_arn
                         End      = true
                       }
                     }
@@ -40,7 +40,7 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
                     States = {
                       GenerateSoilMoistureImage = {
                         Type     = "Task"
-                        Resource = aws_lambda_function.image_generation.arn
+                        Resource = var.generate_images_to_soil_moisture_metric_lambda_arn
                         End      = true
                       }
                     }
@@ -50,8 +50,58 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
                     States = {
                       GenerateSoilMoistureAccessibleContent = {
                         Type     = "Task"
-                        Resource = aws_lambda_function.generate_accessible_content.arn
-                        End      = true
+                        Resource = var.management_generate_accessible_contents_lambda_arn
+                        Next     = "AccessibilityChoice"
+                      }
+                      AccessibilityChoice = {
+                        Type = "Choice"
+                        Choices = [
+                          {
+                            Variable = "$.type"
+                            StringEquals = "text_to_speech"
+                            Next = "TextToSpeech"
+                          },
+                          {
+                            Variable = "$.type"
+                            StringEquals = "image_recognition"
+                            Next = "ImageRecognition"
+                          },
+                          {
+                            Variable = "$.type"
+                            StringEquals = "video_caption"
+                            Next = "VideoCaption"
+                          },
+                          {
+                            Variable = "$.type"
+                            StringEquals = "text_simplification"
+                            Next = "TextSimplification"
+                          }
+                        ]
+                        Default = "AccessibilityEnd"
+                      },
+                      TextToSpeech = {
+                        Type     = "Task"
+                        Resource = var.accessible_text_to_speech_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      ImageRecognition = {
+                        Type     = "Task"
+                        Resource = var.accessible_image_recognition_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      VideoCaption = {
+                        Type     = "Task"
+                        Resource = var.accessible_video_caption_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      TextSimplification = {
+                        Type     = "Task"
+                        Resource = var.accessible_text_simplification_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      AccessibilityEnd = {
+                        Type = "Pass"
+                        End  = true
                       }
                     }
                   }
@@ -63,25 +113,25 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
           {
             StartAt = "ProcessSoilTemperature"
             States = {
-              SoilTemperatureDataProcessingRecommendations = {
+              ProcessSoilTemperature = {
                 Type     = "Task"
-                Resource = aws_lambda_function.processing_temperature_recommendations.arn
+                Resource = var.soil_temperature_data_processing_recommendations_lambda_arn
                 Next     = "SoilTemperatureTaskPlanner"
               }
               SoilTemperatureTaskPlanner = {
                 Type     = "Task"
-                Resource = aws_lambda_function.temperature_task_planner.arn
+                Resource = var.soil_temperature_task_planner_lambda_arn
                 Next     = "GenerateSoilTemperatureContent"
               }
               GenerateSoilTemperatureContent = {
                 Type = "Parallel"
                 Branches = [
                   {
-                    StartAt = "GenerateSoilTemperatureVideo"
+                    StartAt = "GenerateSoilTemperatureGifs"
                     States = {
-                      GenerateSoilTemperatureVideo = {
+                      GenerateSoilTemperatureGifs = {
                         Type     = "Task"
-                        Resource = aws_lambda_function.video_generation.arn
+                        Resource = var.generate_gifs_to_soil_temperature_metric_lambda_arn
                         End      = true
                       }
                     }
@@ -91,7 +141,7 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
                     States = {
                       GenerateSoilTemperatureImage = {
                         Type     = "Task"
-                        Resource = aws_lambda_function.image_generation.arn
+                        Resource = var.generate_images_to_soil_temperature_metric_lambda_arn
                         End      = true
                       }
                     }
@@ -101,8 +151,58 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
                     States = {
                       GenerateSoilTemperatureAccessibleContent = {
                         Type     = "Task"
-                        Resource = aws_lambda_function.generate_accessible_content.arn
-                        End      = true
+                        Resource = var.management_generate_accessible_contents_lambda_arn
+                        Next     = "AccessibilityChoice"
+                      }
+                      AccessibilityChoice = {
+                        Type = "Choice"
+                        Choices = [
+                          {
+                            Variable = "$.type"
+                            StringEquals = "text_to_speech"
+                            Next = "TextToSpeech"
+                          },
+                          {
+                            Variable = "$.type"
+                            StringEquals = "image_recognition"
+                            Next = "ImageRecognition"
+                          },
+                          {
+                            Variable = "$.type"
+                            StringEquals = "video_caption"
+                            Next = "VideoCaption"
+                          },
+                          {
+                            Variable = "$.type"
+                            StringEquals = "text_simplification"
+                            Next = "TextSimplification"
+                          }
+                        ]
+                        Default = "AccessibilityEnd"
+                      },
+                      TextToSpeech = {
+                        Type     = "Task"
+                        Resource = var.accessible_text_to_speech_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      ImageRecognition = {
+                        Type     = "Task"
+                        Resource = var.accessible_image_recognition_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      VideoCaption = {
+                        Type     = "Task"
+                        Resource = var.accessible_video_caption_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      TextSimplification = {
+                        Type     = "Task"
+                        Resource = var.accessible_text_simplification_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      AccessibilityEnd = {
+                        Type = "Pass"
+                        End  = true
                       }
                     }
                   }
@@ -114,25 +214,25 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
           {
             StartAt = "ProcessAirMoisture"
             States = {
-              AirMoistureDataProcessingRecommendations = {
+              ProcessAirMoisture = {
                 Type     = "Task"
-                Resource = aws_lambda_function.processing_moisture_recommendations.arn
+                Resource = var.air_moisture_data_processing_recommendations_lambda_arn
                 Next     = "AirMoistureTaskPlanner"
               }
               AirMoistureTaskPlanner = {
                 Type     = "Task"
-                Resource = aws_lambda_function.moisture_task_planner.arn
+                Resource = var.air_moisture_task_planner_lambda_arn
                 Next     = "GenerateAirMoistureContent"
               }
               GenerateAirMoistureContent = {
                 Type = "Parallel"
                 Branches = [
                   {
-                    StartAt = "GenerateAirMoistureVideo"
+                    StartAt = "GenerateAirMoistureGifs"
                     States = {
-                      GenerateAirMoistureVideo = {
+                      GenerateAirMoistureGifs = {
                         Type     = "Task"
-                        Resource = aws_lambda_function.video_generation.arn
+                        Resource = var.generate_gifs_to_air_moisture_metric_lambda_arn
                         End      = true
                       }
                     }
@@ -142,7 +242,7 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
                     States = {
                       GenerateAirMoistureImage = {
                         Type     = "Task"
-                        Resource = aws_lambda_function.image_generation.arn
+                        Resource = var.generate_images_to_air_moisture_metric_lambda_arn
                         End      = true
                       }
                     }
@@ -152,8 +252,58 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
                     States = {
                       GenerateAirMoistureAccessibleContent = {
                         Type     = "Task"
-                        Resource = aws_lambda_function.generate_accessible_content.arn
-                        End      = true
+                        Resource = var.management_generate_accessible_contents_lambda_arn
+                        Next     = "AccessibilityChoice"
+                      }
+                      AccessibilityChoice = {
+                        Type = "Choice"
+                        Choices = [
+                          {
+                            Variable = "$.type"
+                            StringEquals = "text_to_speech"
+                            Next = "TextToSpeech"
+                          },
+                          {
+                            Variable = "$.type"
+                            StringEquals = "image_recognition"
+                            Next = "ImageRecognition"
+                          },
+                          {
+                            Variable = "$.type"
+                            StringEquals = "video_caption"
+                            Next = "VideoCaption"
+                          },
+                          {
+                            Variable = "$.type"
+                            StringEquals = "text_simplification"
+                            Next = "TextSimplification"
+                          }
+                        ]
+                        Default = "AccessibilityEnd"
+                      },
+                      TextToSpeech = {
+                        Type     = "Task"
+                        Resource = var.accessible_text_to_speech_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      ImageRecognition = {
+                        Type     = "Task"
+                        Resource = var.accessible_image_recognition_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      VideoCaption = {
+                        Type     = "Task"
+                        Resource = var.accessible_video_caption_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      TextSimplification = {
+                        Type     = "Task"
+                        Resource = var.accessible_text_simplification_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      AccessibilityEnd = {
+                        Type = "Pass"
+                        End  = true
                       }
                     }
                   }
@@ -165,25 +315,25 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
           {
             StartAt = "ProcessAirTemperature"
             States = {
-              AirTemperatureDataProcessingRecommendations = {
+              ProcessAirTemperature = {
                 Type     = "Task"
-                Resource = aws_lambda_function.processing_temperature_recommendations.arn
+                Resource = var.air_temperature_data_processing_recommendations_lambda_arn
                 Next     = "AirTemperatureTaskPlanner"
               }
               AirTemperatureTaskPlanner = {
                 Type     = "Task"
-                Resource = aws_lambda_function.temperature_task_planner.arn
+                Resource = var.air_temperature_task_planner_lambda_arn
                 Next     = "GenerateAirTemperatureContent"
               }
               GenerateAirTemperatureContent = {
                 Type = "Parallel"
                 Branches = [
                   {
-                    StartAt = "GenerateAirTemperatureVideo"
+                    StartAt = "GenerateAirTemperatureGifs"
                     States = {
-                      GenerateAirTemperatureVideo = {
+                      GenerateAirTemperatureGifs = {
                         Type     = "Task"
-                        Resource = aws_lambda_function.video_generation.arn
+                        Resource = var.generate_gifs_to_air_temperature_metric_lambda_arn
                         End      = true
                       }
                     }
@@ -193,7 +343,7 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
                     States = {
                       GenerateAirTemperatureImage = {
                         Type     = "Task"
-                        Resource = aws_lambda_function.image_generation.arn
+                        Resource = var.generate_images_to_air_temperature_metric_lambda_arn
                         End      = true
                       }
                     }
@@ -203,8 +353,58 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
                     States = {
                       GenerateAirTemperatureAccessibleContent = {
                         Type     = "Task"
-                        Resource = aws_lambda_function.generate_accessible_content.arn
-                        End      = true
+                        Resource = var.management_generate_accessible_contents_lambda_arn
+                        Next     = "AccessibilityChoice"
+                      }
+                      AccessibilityChoice = {
+                        Type = "Choice"
+                        Choices = [
+                          {
+                            Variable = "$.type"
+                            StringEquals = "text_to_speech"
+                            Next = "TextToSpeech"
+                          },
+                          {
+                            Variable = "$.type"
+                            StringEquals = "image_recognition"
+                            Next = "ImageRecognition"
+                          },
+                          {
+                            Variable = "$.type"
+                            StringEquals = "video_caption"
+                            Next = "VideoCaption"
+                          },
+                          {
+                            Variable = "$.type"
+                            StringEquals = "text_simplification"
+                            Next = "TextSimplification"
+                          }
+                        ]
+                        Default = "AccessibilityEnd"
+                      },
+                      TextToSpeech = {
+                        Type     = "Task"
+                        Resource = var.accessible_text_to_speech_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      ImageRecognition = {
+                        Type     = "Task"
+                        Resource = var.accessible_image_recognition_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      VideoCaption = {
+                        Type     = "Task"
+                        Resource = var.accessible_video_caption_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      TextSimplification = {
+                        Type     = "Task"
+                        Resource = var.accessible_text_simplification_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      AccessibilityEnd = {
+                        Type = "Pass"
+                        End  = true
                       }
                     }
                   }
@@ -214,48 +414,98 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
             }
           },
           {
-            StartAt = "ProcessLight"
+            StartAt = "ProcessBrightness"
             States = {
-              LightDataProcessingRecommendations = {
+              ProcessBrightness = {
                 Type     = "Task"
-                Resource = aws_lambda_function.processing_light_recommendations.arn
-                Next     = "LightTaskPlanner"
+                Resource = var.brightness_processing_recommendations_lambda_arn
+                Next     = "BrightnessTaskPlanner"
               }
-              LightTaskPlanner = {
+              BrightnessTaskPlanner = {
                 Type     = "Task"
-                Resource = aws_lambda_function.light_task_planner.arn
-                Next     = "GenerateLightContent"
+                Resource = var.brightness_task_planner_lambda_arn
+                Next     = "GenerateBrightnessContent"
               }
-              GenerateLightContent = {
+              GenerateBrightnessContent = {
                 Type = "Parallel"
                 Branches = [
                   {
-                    StartAt = "GenerateLightVideo"
+                    StartAt = "GenerateBrightnessGifs"
                     States = {
-                      GenerateLightVideo = {
+                      GenerateBrightnessGifs = {
                         Type     = "Task"
-                        Resource = aws_lambda_function.video_generation.arn
+                        Resource = var.generate_gifs_to_brightness_metric_lambda_arn
                         End      = true
                       }
                     }
                   },
                   {
-                    StartAt = "GenerateLightImage"
+                    StartAt = "GenerateBrightnessImage"
                     States = {
-                      GenerateLightImage = {
+                      GenerateBrightnessImage = {
                         Type     = "Task"
-                        Resource = aws_lambda_function.image_generation.arn
+                        Resource = var.generate_images_to_brightness_metric_lambda_arn
                         End      = true
                       }
                     }
                   },
                   {
-                    StartAt = "GenerateLightAccessibleContent"
+                    StartAt = "GenerateBrightnessAccessibleContent"
                     States = {
-                      GenerateLightAccessibleContent = {
+                      GenerateBrightnessAccessibleContent = {
                         Type     = "Task"
-                        Resource = aws_lambda_function.generate_accessible_content.arn
-                        End      = true
+                        Resource = var.management_generate_accessible_contents_lambda_arn
+                        Next     = "AccessibilityChoice"
+                      }
+                      AccessibilityChoice = {
+                        Type = "Choice"
+                        Choices = [
+                          {
+                            Variable = "$.type"
+                            StringEquals = "text_to_speech"
+                            Next = "TextToSpeech"
+                          },
+                          {
+                            Variable = "$.type"
+                            StringEquals = "image_recognition"
+                            Next = "ImageRecognition"
+                          },
+                          {
+                            Variable = "$.type"
+                            StringEquals = "video_caption"
+                            Next = "VideoCaption"
+                          },
+                          {
+                            Variable = "$.type"
+                            StringEquals = "text_simplification"
+                            Next = "TextSimplification"
+                          }
+                        ]
+                        Default = "AccessibilityEnd"
+                      },
+                      TextToSpeech = {
+                        Type     = "Task"
+                        Resource = var.accessible_text_to_speech_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      ImageRecognition = {
+                        Type     = "Task"
+                        Resource = var.accessible_image_recognition_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      VideoCaption = {
+                        Type     = "Task"
+                        Resource = var.accessible_video_caption_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      TextSimplification = {
+                        Type     = "Task"
+                        Resource = var.accessible_text_simplification_lambda_arn
+                        Next     = "AccessibilityEnd"
+                      },
+                      AccessibilityEnd = {
+                        Type = "Pass"
+                        End  = true
                       }
                     }
                   }
@@ -269,7 +519,7 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
             States = {
               ExecuteTasks = {
                 Type     = "Task"
-                Resource = aws_lambda_function.task_manager.arn
+                Resource = var.tasks_management_lambda_arn
                 End      = true
               }
             }
@@ -279,8 +529,83 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
       },
       MergeBranchResults = {
         Type     = "Task"
-        Resource = aws_lambda_function.tasks_results_merge.arn
-        End      = true
+        Resource = var.tasks_results_merge_lambda_arn
+        Next     = "HandleAgrixInteractions"
+      },
+      HandleAgrixInteractions = {
+        Type = "Task",
+        Resource = var.agrix_interaction_handler_feature_lambda_arn
+        Next = "ProcessAgrixFulfillments"
+      },
+      ProcessAgrixFulfillments = {
+        Type = "Task",
+        Resource = var.agrix_interaction_handler_feature_lambda_arn,
+        Parameters = {
+          "input.$": "$",
+          "handlers": {
+            "advanced_sensor_handler": {
+              "fulfillment": var.advanced_sensor_handler_feature_fulfillment_lambda_arn,
+              "main": var.advanced_sensor_handler_feature_lambda_arn
+            },
+            "ar_processor_handler": {
+              "fulfillment": var.ar_processor_handler_feature_fulfillment_lambda_arn,
+              "main": var.ar_processor_handler_feature_lambda_arn
+            },
+            "compliance_assistance_handler": {
+              "fulfillment": var.compliance_assistance_handler_feature_fulfillment_lambda_arn,
+              "main": var.compliance_assistance_handler_feature_lambda_arn
+            },
+            "crop_planning_handler": {
+              "fulfillment": var.crop_planning_handler_feature_fulfillment_lambda_arn,
+              "main": var.crop_planning_handler_feature_lambda_arn
+            },
+            "dynamic_personlization_handler": {
+              "fulfillment": var.dynamic_personlization_handler_feature_fulfillment_lambda_arn,
+              "main": var.dynamic_personlization_handler_feature_lambda_arn
+            },
+            "image_diagnosis_handler": {
+              "fulfillment": var.image_diagnosis_handler_feature_fulfillment_lambda_arn,
+              "main": var.image_diagnosis_handler_feature_lambda_arn
+            },
+            "knowledge_sharing_handler": {
+              "fulfillment": var.knowledge_sharing_handler_feature_fulfillment_lambda_arn,
+              "main": var.knowledge_sharing_handler_feature_lambda_arn
+            },
+            "learning_module_handler": {
+              "fulfillment": var.learning_module_handler_feature_fulfillment_lambda_arn,
+              "main": var.learning_module_handler_feature_lambda_arn
+            },
+            "marketing_assistant_handler": {
+              "fulfillment": var.marketing_assistant_handler_feature_fulfillment_lambda_arn,
+              "main": var.marketing_assistant_handler_feature_lambda_arn
+            },
+            "marketplace_handler": {
+              "fulfillment": var.marketplace_handler_feature_fulfillment_lambda_arn,
+              "main": var.marketplace_handler_feature_lambda_arn
+            },
+            "predictive_analysis_handler": {
+              "fulfillment": var.predictive_analysis_handler_feature_fulfillment_lambda_arn,
+              "main": var.predictive_analysis_handler_feature_lambda_arn
+            },
+            "report_generator_handler": {
+              "fulfillment": var.report_generator_handler_feature_fulfillment_lambda_arn,
+              "main": var.report_generator_handler_feature_lambda_arn
+            },
+            "scenario_simulator_handler": {
+              "fulfillment": var.scenario_simulator_handler_feature_fulfillment_lambda_arn,
+              "main": var.scenario_simulator_handler_feature_lambda_arn
+            },
+            "sustainability_assistant_handler": {
+              "fulfillment": var.sustainability_assistant_handler_feature_fulfillment_lambda_arn,
+              "main": var.sustainability_assistant_handler_feature_lambda_arn
+            },
+            "voice_assistant_handler": {
+              "fulfillment": var.voice_assistant_handler_feature_fulfillment_lambda_arn,
+              "main": var.voice_assistant_handler_feature_lambda_arn
+            }
+          }
+        },
+        End = true
       }
     }
   })

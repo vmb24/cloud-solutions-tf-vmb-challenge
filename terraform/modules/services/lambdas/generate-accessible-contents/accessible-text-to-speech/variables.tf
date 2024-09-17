@@ -1,0 +1,1 @@
+variable "accessible_text_to_speech_lambda_role_arn" {}

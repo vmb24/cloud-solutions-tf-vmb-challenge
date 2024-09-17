@@ -1,0 +1,1 @@
+variable "tasks_management_lambda_role_arn" {}

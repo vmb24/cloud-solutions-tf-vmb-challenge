@@ -1,13 +1,11 @@
 # Função auxiliar para configurar CORS
 resource "aws_api_gateway_method" "options_method" {
   for_each = {
-    "moisture_task_plan" = aws_api_gateway_resource.moisture_task_plan.id,
-    "images" = aws_api_gateway_resource.images.id,
-    "videos" = aws_api_gateway_resource.videos.id,
+    "soil_moisture_task_plan" = aws_api_gateway_resource.soil_moisture_task_plan.id,
     "generate_task_plan" = aws_api_gateway_resource.generate_task_plan.id
   }
 
-  rest_api_id   = aws_api_gateway_rest_api.moisture_task_planner_api.id
+  rest_api_id   = aws_api_gateway_rest_api.soil_moisture_task_planner_api.id
   resource_id   = each.value
   http_method   = "OPTIONS"
   authorization = "NONE"
@@ -16,7 +14,7 @@ resource "aws_api_gateway_method" "options_method" {
 resource "aws_api_gateway_integration" "options_integration" {
   for_each = aws_api_gateway_method.options_method
 
-  rest_api_id = aws_api_gateway_rest_api.moisture_task_planner_api.id
+  rest_api_id = aws_api_gateway_rest_api.soil_moisture_task_planner_api.id
   resource_id = each.value.resource_id
   http_method = each.value.http_method
   type        = "MOCK"
@@ -31,7 +29,7 @@ resource "aws_api_gateway_integration" "options_integration" {
 resource "aws_api_gateway_method_response" "options_200" {
   for_each = aws_api_gateway_method.options_method
 
-  rest_api_id = aws_api_gateway_rest_api.moisture_task_planner_api.id
+  rest_api_id = aws_api_gateway_rest_api.soil_moisture_task_planner_api.id
   resource_id = each.value.resource_id
   http_method = each.value.http_method
   status_code = "200"
@@ -46,7 +44,7 @@ resource "aws_api_gateway_method_response" "options_200" {
 resource "aws_api_gateway_integration_response" "options_integration_response" {
   for_each = aws_api_gateway_method.options_method
 
-  rest_api_id = aws_api_gateway_rest_api.moisture_task_planner_api.id
+  rest_api_id = aws_api_gateway_rest_api.soil_moisture_task_planner_api.id
   resource_id = each.value.resource_id
   http_method = each.value.http_method
   status_code = aws_api_gateway_method_response.options_200[each.key].status_code
@@ -64,12 +62,9 @@ resource "aws_api_gateway_integration_response" "options_integration_response" {
 resource "aws_api_gateway_method_response" "cors" {
   for_each = {
     "get_task_plan" = aws_api_gateway_method.get_task_plan,
-    "get_images" = aws_api_gateway_method.get_images,
-    "get_videos" = aws_api_gateway_method.get_videos,
-    "post_generate_task_plan" = aws_api_gateway_method.post_generate_task_plan
   }
 
-  rest_api_id = aws_api_gateway_rest_api.moisture_task_planner_api.id
+  rest_api_id = aws_api_gateway_rest_api.soil_moisture_task_planner_api.id
   resource_id = each.value.resource_id
   http_method = each.value.http_method
   status_code = "200"
@@ -82,7 +77,7 @@ resource "aws_api_gateway_method_response" "cors" {
 resource "aws_api_gateway_integration_response" "cors_integration_response" {
   for_each = aws_api_gateway_method_response.cors
 
-  rest_api_id = aws_api_gateway_rest_api.moisture_task_planner_api.id
+  rest_api_id = aws_api_gateway_rest_api.soil_moisture_task_planner_api.id
   resource_id = each.value.resource_id
   http_method = each.value.http_method
   status_code = each.value.status_code

@@ -1,0 +1,1 @@
+variable "tasks_results_merge_lambda_role_arn" {}

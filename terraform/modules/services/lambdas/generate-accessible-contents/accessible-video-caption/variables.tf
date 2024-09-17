@@ -1,0 +1,1 @@
+variable "accessible_video_caption_lambda_role_arn" {}

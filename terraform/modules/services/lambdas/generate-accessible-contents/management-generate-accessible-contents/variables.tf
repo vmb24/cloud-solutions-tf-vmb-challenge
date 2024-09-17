@@ -1,0 +1,1 @@
+variable "management_generate_accessible_contents_lambda_role_arn" {}

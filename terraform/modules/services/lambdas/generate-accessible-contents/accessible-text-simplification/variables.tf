@@ -1,0 +1,1 @@
+variable "accessible_text_simplification_lambda_role_arn" {}

@@ -39,6 +39,6 @@ output "soil_moisture_iot_rule_arn" {
   value = aws_iot_topic_rule.soil_moisture_rule.arn
 }
 
-output "soil_moisture_iot_rule_arn" {
-  value = aws_iot_topic_rule.soil_moisture_rule.arn
+output "soil_temperature_iot_rule_arn" {
+  value = aws_iot_topic_rule.soil_temperature_rule.arn
 }
