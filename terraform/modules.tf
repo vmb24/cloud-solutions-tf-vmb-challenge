@@ -1,3 +1,7 @@
+module "security" {
+  source = "./modules/identity-compliance-security/security"
+}
+
 module "internet_of_things" {
   source = "./modules/internet-of-things"
 
@@ -93,6 +97,10 @@ module "general_identity_compliance_security" {
   brightness_task_planner_lambda_role_id = module.task_planner_lambda_identity_compliance_security.brightness_task_planner_lambda_role_id
   soil_moisture_task_planner_lambda_role_id = module.task_planner_lambda_identity_compliance_security.soil_moisture_task_planner_lambda_role_id
   soil_temperature_task_planner_lambda_role_id = module.task_planner_lambda_identity_compliance_security.soil_temperature_task_planner_lambda_role_id
+}
+
+module "analisys_identity_compliance_security" {
+  source = "./modules/identity-compliance-security/analisys"
 }
 
 module "processing_data_lambda_identity_compliance_security" {
@@ -688,4 +696,10 @@ module "application_integration" {
 
   # Tasks results merge lambda arn
   tasks_results_merge_lambda_arn = module.tasks_results_merge_lambda.tasks_results_merge_lambda_arn
+}
+
+module "analisys" {
+  source = "./modules/analysis"
+
+  glue_role_arn = module.analisys_identity_compliance_security.glue_role_arn
 }

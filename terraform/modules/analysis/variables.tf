@@ -1,0 +1,1 @@
+variable "glue_role_arn" {}
