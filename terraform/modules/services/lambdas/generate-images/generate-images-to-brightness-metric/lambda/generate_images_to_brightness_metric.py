@@ -69,7 +69,7 @@ def lambda_handler(event, context):
     
     # Salvar as imagens em um bucket S3 (assumindo que você tem permissões)
     s3 = boto3.client('s3')
-    bucket_name = 'seu-bucket-s3'
+    bucket_name = 'brightness_media_bucket/images/brightness'
     
     s3.put_object(Bucket=bucket_name, Key='light_adapted_crops.png', Body=crop_image)
     s3.put_object(Bucket=bucket_name, Key='light_management_techniques.png', Body=light_management_image)

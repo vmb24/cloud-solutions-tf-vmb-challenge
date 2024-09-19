@@ -50,12 +50,12 @@ def lambda_handler(event, context):
         images.append(image)
     
     # Criar o GIF
-    gif_path = '/tmp/soil_temperature.gif'
+    gif_path = '/gif/soil_temperature/soil_temperature.gif'
     create_gif(images, gif_path)
     
     # Salvar o GIF em um bucket S3
     s3 = boto3.client('s3')
-    bucket_name = 'seu-bucket-s3'
+    bucket_name = 'soil_temperature_media_bucket'
     
     with open(gif_path, 'rb') as gif_file:
         s3.put_object(Bucket=bucket_name, Key='soil_temperature.gif', Body=gif_file)

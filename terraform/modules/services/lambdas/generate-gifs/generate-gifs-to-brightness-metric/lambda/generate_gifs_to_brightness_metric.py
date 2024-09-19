@@ -75,14 +75,14 @@ def lambda_handler(event, context):
         images_greenhouse.append(image_greenhouse)
     
     # Criar os GIFs
-    gif_path_sun = '/tmp/sun_luminosity.gif'
-    gif_path_greenhouse = '/tmp/greenhouse_luminosity.gif'
+    gif_path_sun = '/gif/sun_luminosity/sun_luminosity.gif'
+    gif_path_greenhouse = '/gif/greenhouse_luminosity/greenhouse_luminosity.gif'
     create_gif(images_sun, gif_path_sun)
     create_gif(images_greenhouse, gif_path_greenhouse)
     
     # Salvar os GIFs em um bucket S3
     s3 = boto3.client('s3')
-    bucket_name = 'seu-bucket-s3'
+    bucket_name = 'brightness_media_bucket'
     
     with open(gif_path_sun, 'rb') as gif_file:
         s3.put_object(Bucket=bucket_name, Key='sun_luminosity.gif', Body=gif_file)

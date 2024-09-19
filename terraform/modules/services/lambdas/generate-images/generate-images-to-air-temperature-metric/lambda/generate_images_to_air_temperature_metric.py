@@ -62,7 +62,7 @@ def lambda_handler(event, context):
     
     # Salvar as imagens em um bucket S3 (assumindo que você tem permissões)
     s3 = boto3.client('s3')
-    bucket_name = 'seu-bucket-s3'
+    bucket_name = 'air_temperature_media_bucket/images/air_temperature'
     
     s3.put_object(Bucket=bucket_name, Key='air_temperature_plants.png', Body=plant_image)
     s3.put_object(Bucket=bucket_name, Key='temperature_protection.png', Body=protection_image)

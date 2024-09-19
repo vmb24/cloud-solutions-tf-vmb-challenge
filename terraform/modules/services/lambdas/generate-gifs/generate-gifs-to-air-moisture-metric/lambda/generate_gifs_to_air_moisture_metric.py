@@ -34,34 +34,34 @@ def create_gif(images, output_path):
     frames[0].save(output_path, save_all=True, append_images=frames[1:], duration=1000, loop=0)
 
 def lambda_handler(event, context):
-    humidity_levels = [10, 30, 50, 70, 90]  # Diferentes níveis de umidade do ar em porcentagem
+    moisture_levels = [10, 30, 50, 70, 90]  # Diferentes níveis de umidade do ar em porcentagem
     
     images = []
-    for humidity in humidity_levels:
-        if humidity < 30:
+    for moisture in moisture_levels:
+        if moisture < 30:
             condition = "seco"
             drops = "sem gotas de água no ar"
-        elif humidity < 60:
+        elif moisture < 60:
             condition = "moderado"
             drops = "poucas gotas de água no ar"
         else:
             condition = "úmido"
             drops = "muitas gotas de água no ar"
         
-        prompt = f"Higrômetro simples mostrando {humidity}% de umidade do ar. Ponteiro entre 'seco' e 'úmido' apontando para {condition}. {drops}. Fundo claro. Estilo fotorrealista."
+        prompt = f"Higrômetro simples mostrando {moisture}% de umidade do ar. Ponteiro entre 'seco' e 'úmido' apontando para {condition}. {drops}. Fundo claro. Estilo fotorrealista."
         image = generate_image(prompt)
         images.append(image)
     
     # Criar o GIF
-    gif_path = '/tmp/air_humidity.gif'
+    gif_path = '/gif/air_moisture/air_moisture.gif'
     create_gif(images, gif_path)
     
     # Salvar o GIF em um bucket S3
     s3 = boto3.client('s3')
-    bucket_name = 'seu-bucket-s3'
+    bucket_name = 'air_moisture_media_bucket'
     
     with open(gif_path, 'rb') as gif_file:
-        s3.put_object(Bucket=bucket_name, Key='air_humidity.gif', Body=gif_file)
+        s3.put_object(Bucket=bucket_name, Key='air_moisture.gif', Body=gif_file)
     
     return {
         'statusCode': 200,
