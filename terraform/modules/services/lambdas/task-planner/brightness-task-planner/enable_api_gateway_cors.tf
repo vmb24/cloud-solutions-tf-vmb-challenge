@@ -88,8 +88,5 @@ resource "aws_api_gateway_integration_response" "cors_integration_response" {
 
   depends_on = [
     aws_api_gateway_integration.lambda_task_plan,
-    aws_api_gateway_integration.lambda_images,
-    aws_api_gateway_integration.lambda_videos,
-    aws_api_gateway_integration.lambda_generate_task_plan
   ]
 }

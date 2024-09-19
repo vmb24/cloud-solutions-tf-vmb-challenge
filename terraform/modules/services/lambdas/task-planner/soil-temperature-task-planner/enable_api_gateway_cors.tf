@@ -62,8 +62,6 @@ resource "aws_api_gateway_integration_response" "options_integration_response" {
 resource "aws_api_gateway_method_response" "cors" {
   for_each = {
     "get_task_plan" = aws_api_gateway_method.get_task_plan,
-    "get_images" = aws_api_gateway_method.get_images,
-    "get_videos" = aws_api_gateway_method.get_videos,
     "post_generate_task_plan" = aws_api_gateway_method.post_generate_task_plan
   }
 
@@ -90,9 +88,6 @@ resource "aws_api_gateway_integration_response" "cors_integration_response" {
   }
 
   depends_on = [
-    aws_api_gateway_integration.lambda_task_plan,
-    aws_api_gateway_integration.lambda_images,
-    aws_api_gateway_integration.lambda_videos,
-    aws_api_gateway_integration.lambda_generate_task_plan
+    aws_api_gateway_integration.lambda_task_plan
   ]
 }

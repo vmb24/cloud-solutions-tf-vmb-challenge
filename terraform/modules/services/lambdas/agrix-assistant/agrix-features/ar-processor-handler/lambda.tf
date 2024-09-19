@@ -7,7 +7,7 @@ data "archive_file" "lambda_zip" {
 
 resource "aws_lambda_function" "ar_processor_handler" {
   function_name    = "ar_processor_handler"
-  role             = var.agrix_interaction_lambdas_roles_iam_arn
+  role             = var.agrix_interaction_features_lambdas_roles_iam_arn
   handler          = "ar_processor_handler.lambda_handler"
   runtime          = "python3.9"
   filename         = data.archive_file.lambda_zip.output_path

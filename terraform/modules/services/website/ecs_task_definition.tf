@@ -2,9 +2,18 @@ resource "aws_ecs_task_definition" "ecs_website_task" {
   family                   = "ecs-website-task"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = "256"
-  memory                   = "512"
+  cpu                      = "1024"  # 1 vCPU
+  memory                   = "2048"  # 2 GB
   execution_role_arn       = var.ecs_task_execution_role_arn
+
+  volume {
+    name = "website-storage"
+    efs_volume_configuration {
+      file_system_id = var.website_efs_id
+      root_directory = "/"
+    }
+  }
+
   container_definitions    = jsonencode([
     {
       name      = "website"
@@ -20,6 +29,12 @@ resource "aws_ecs_task_definition" "ecs_website_task" {
         {
           name  = "NODE_ENV"
           value = "production"
+        }
+      ]
+      mountPoints = [
+        {
+          sourceVolume  = "website-storage",
+          containerPath = "/app/storage"  # Ajuste conforme necessário
         }
       ]
       logConfiguration = {

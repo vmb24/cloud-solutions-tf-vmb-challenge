@@ -26,5 +26,6 @@ resource "aws_lambda_permission" "allow_iot" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.soil_moisture_data_processing_recommendations.function_name
   principal     = "iot.amazonaws.com"
-  source_arn    = var.moisture_iot_rule_arn
+  source_arn    = var.soil_moisture_iot_rule_arn
 }
+

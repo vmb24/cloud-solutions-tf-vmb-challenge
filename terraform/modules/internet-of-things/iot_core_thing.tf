@@ -1,3 +1,21 @@
+resource "aws_iot_thing" "agricultural_sensor" {
+  name = "agricultural_sensor"
+
+  attributes = {
+    sensor_type = "agricultural"
+    location    = "field_1"  # Você pode ajustar isso conforme necessário
+  }
+}
+
+resource "aws_iot_thing_type" "agricultural_sensor_type" {
+  name = "agricultural_sensor_type"
+
+  properties {
+    description = "Sensor type for agricultural monitoring"
+    searchable_attributes = ["sensor_type", "location"]
+  }
+}
+
 resource "null_resource" "iot_initialize_shadow" {
   depends_on = [aws_iot_thing.agricultural_sensor]
 

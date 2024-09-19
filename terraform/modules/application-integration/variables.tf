@@ -1,3 +1,6 @@
+# IAM role arn
+variable "step_function_role_arn" {}
+
 # Processing data lambda arn
 variable "air_moisture_data_processing_recommendations_lambda_arn" {}
 variable "air_temperature_data_processing_recommendations_lambda_arn" {}
@@ -37,7 +40,6 @@ variable "generate_images_to_soil_temperature_metric_lambda_arn" {}
 variable "agrix_interaction_handler_feature_lambda_arn" {}
 
 # Ágrix assistant features fulfillments lambdas arn
-variable "advanced_sensor_handler_feature_fulfillment_lambda_arn" {}
 variable "ar_processor_handler_feature_fulfillment_lambda_arn" {}
 variable "compliance_assistance_handler_feature_fulfillment_lambda_arn" {}
 variable "crop_planning_handler_feature_fulfillment_lambda_arn" {}
@@ -54,7 +56,6 @@ variable "sustainability_assistant_handler_feature_fulfillment_lambda_arn" {}
 variable "voice_assistant_handler_feature_fulfillment_lambda_arn" {}
 
 # Ágrix assistant features lambdas arn
-variable "advanced_sensor_handler_feature_lambda_arn" {}
 variable "ar_processor_handler_feature_lambda_arn" {}
 variable "compliance_assistance_handler_feature_lambda_arn" {}
 variable "crop_planning_handler_feature_lambda_arn" {}

@@ -1,13 +1,9 @@
-output "api_load_balancer_arn" {
-  value = aws_lb.api_lb.arn
-}
-
-output "api_load_balancer_dns_name" {
-  value = aws_lb.api_lb.dns_name
-}
-
 output "website_load_balancer_arn" {
   value = aws_lb.website_lb.arn
+}
+
+output "website_load_balancer_arn_suffix" {
+  value = aws_lb.website_lb.arn_suffix
 }
 
 output "website_load_balancer_dns_name" {
@@ -34,10 +30,6 @@ output "website_lb_id" {
   value = aws_lb.website_lb.id
 }
 
-# output "autoscaling_group_web_asg_name" {
-#   value = aws_autoscaling_group.web_asg.name
-# }
-
-# output "website_autoscaling_group_name" {
-#   value = aws_autoscaling_group.web_asg.name
-# }
+output "efs_security_group_id" {
+  value = aws_security_group.efs_sg.id
+}

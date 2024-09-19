@@ -1,6 +1,6 @@
 resource "aws_sfn_state_machine" "agriculture_workflow" {
   name     = "AgricultureWorkflow"
-  role_arn = aws_iam_role.step_function_role.arn
+  role_arn = var.step_function_role_arn
 
   definition = jsonencode({
     Comment = "Agriculture Data Processing, Recommendations, Task Planning, Content Generation, and Accessibility Workflow"
@@ -543,10 +543,6 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
         Parameters = {
           "input.$": "$",
           "handlers": {
-            "advanced_sensor_handler": {
-              "fulfillment": var.advanced_sensor_handler_feature_fulfillment_lambda_arn,
-              "main": var.advanced_sensor_handler_feature_lambda_arn
-            },
             "ar_processor_handler": {
               "fulfillment": var.ar_processor_handler_feature_fulfillment_lambda_arn,
               "main": var.ar_processor_handler_feature_lambda_arn

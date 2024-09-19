@@ -1,7 +1,7 @@
 # Role IAM para as funções Lambda
 # ESSA PRÁTICA NÃO É RECOMENDADA! CADA FUNÇÃO DEVE TER SUAS PRÓPRIAS PERMISSÕES
-resource "aws_iam_role" "accessible_video_caption_handler_lambda_role" {
-  name = "accessible_video_caption_handler_lambda_role"
+resource "aws_iam_role" "accessible_text_simplification_handler_lambda_role" {
+  name = "accessible_text_simplification_handler_lambda_role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -18,9 +18,9 @@ resource "aws_iam_role" "accessible_video_caption_handler_lambda_role" {
 }
 
 # Política IAM para acesso ao DynamoDB
-resource "aws_iam_role_policy" "dynamodb_access" {
-  name = "dynamodb_access"
-  role = aws_iam_role.accessible_video_caption_handler_lambda_role.id
+resource "aws_iam_role_policy" "accessible_text_simplification_handler_lambda_dynamodb_access" {
+  name = "accessible_text_simplification_handler_lambda_dynamodb_access"
+  role = aws_iam_role.accessible_text_simplification_handler_lambda_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -42,9 +42,9 @@ resource "aws_iam_role_policy" "dynamodb_access" {
 }
 
 # Política IAM para acesso ao Amazon Polly
-resource "aws_iam_role_policy" "polly_access" {
-  name = "polly_access"
-  role = aws_iam_role.accessible_video_caption_handler_lambda_role.id
+resource "aws_iam_role_policy" "accessible_text_simplification_handler_polly_access" {
+  name = "accessible_text_simplification_handler_polly_access"
+  role = aws_iam_role.accessible_text_simplification_handler_lambda_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -61,9 +61,9 @@ resource "aws_iam_role_policy" "polly_access" {
 }
 
 # Política IAM para acesso ao Amazon Rekognition
-resource "aws_iam_role_policy" "rekognition_access" {
-  name = "rekognition_access"
-  role = aws_iam_role.accessible_video_caption_handler_lambda_role.id
+resource "aws_iam_role_policy" "accessible_text_simplification_handler_rekognition_access" {
+  name = "accessible_text_simplification_handler_rekognition_access"
+  role = aws_iam_role.accessible_text_simplification_handler_lambda_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -81,9 +81,9 @@ resource "aws_iam_role_policy" "rekognition_access" {
 }
 
 # Política IAM para acesso ao Amazon SageMaker
-resource "aws_iam_role_policy" "sagemaker_access" {
-  name = "sagemaker_access"
-  role = aws_iam_role.accessible_video_caption_handler_lambda_role.id
+resource "aws_iam_role_policy" "accessible_text_simplification_handler_sagemaker_access" {
+  name = "accessible_text_simplification_handler_sagemaker_access"
+  role = aws_iam_role.accessible_text_simplification_handler_lambda_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -100,9 +100,9 @@ resource "aws_iam_role_policy" "sagemaker_access" {
 }
 
 # Política IAM para acesso ao AWS IoT
-resource "aws_iam_role_policy" "iot_access" {
-  name = "iot_access"
-  role = aws_iam_role.accessible_video_caption_handler_lambda_role.id
+resource "aws_iam_role_policy" "accessible_text_simplification_handler_iot_access" {
+  name = "accessible_text_simplification_handler_iot_access"
+  role = aws_iam_role.accessible_text_simplification_handler_lambda_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -121,9 +121,9 @@ resource "aws_iam_role_policy" "iot_access" {
 }
 
 # Política IAM para acesso ao Amazon S3 (caso necessário para armazenamento de dados ou arquivos)
-resource "aws_iam_role_policy" "s3_access" {
-  name = "s3_access"
-  role = aws_iam_role.accessible_video_caption_handler_lambda_role.id
+resource "aws_iam_role_policy" "accessible_text_simplification_handler_s3_access" {
+  name = "accessible_text_simplification_handler_s3_access"
+  role = aws_iam_role.accessible_text_simplification_handler_lambda_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -145,7 +145,7 @@ resource "aws_iam_role_policy" "s3_access" {
 }
 
 # Anexar a política de execução básica do Lambda
-resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
+resource "aws_iam_role_policy_attachment" "accessible_text_simplification_handler_lambda_basic_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  role       = aws_iam_role.accessible_video_caption_handler_lambda_role.name
+  role       = aws_iam_role.accessible_text_simplification_handler_lambda_role.name
 }

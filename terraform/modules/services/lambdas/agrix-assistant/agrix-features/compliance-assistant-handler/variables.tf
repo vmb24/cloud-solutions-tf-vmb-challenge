@@ -2,4 +2,4 @@
 
 /* variable "compliance_assistant_handler_lambda_role_arn" {} */
 
-variable "agrix_interaction_lambdas_roles_iam_arn" {}
+variable "agrix_interaction_features_lambdas_roles_iam_arn" {}
