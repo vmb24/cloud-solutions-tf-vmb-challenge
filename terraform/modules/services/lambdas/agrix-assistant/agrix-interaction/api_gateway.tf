@@ -27,7 +27,7 @@ resource "aws_api_gateway_integration" "get_recommendations_integration" {
 
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.get_recommendations.invoke_arn
+  uri                     = aws_lambda_function.agrix_interaction_handler.invoke_arn
 }
 
 # Recurso para interações
@@ -53,7 +53,7 @@ resource "aws_api_gateway_integration" "post_interact_integration" {
 
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.post_interact.invoke_arn
+  uri                     = aws_lambda_function.agrix_interaction_handler.invoke_arn
 }
 
 # Implantação do API Gateway

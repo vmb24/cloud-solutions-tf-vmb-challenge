@@ -4,54 +4,78 @@ from datetime import datetime, timezone
 import uuid
 import logging
 import time
-import re
+from decimal import Decimal
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 bedrock = boto3.client('bedrock-runtime')
 dynamodb = boto3.resource('dynamodb')
-lambda_client = boto3.client('lambda')
 iot_client = boto3.client('iot-data')
 
-task_plan_table = dynamodb.Table('SoilTemperatureTaskPlans')
+task_plan_table = dynamodb.Table('AISoilTemperatureTaskPlans')
 temperature_history_table = dynamodb.Table('SoilTemperatureHistory')
 
-IOT_THING_NAME = "soil_temperature_sensor"
+IOT_THING_NAME = "agricultural_sensor"
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super(CustomJSONEncoder, self).default(obj)
 
 def lambda_handler(event, context):
     logger.info(f"Evento recebido: {json.dumps(event)}")
     
     try:
-        if event['httpMethod'] == 'GET':
-            if 'taskId' in event['queryStringParameters']:
-                return get_task_plan(event['queryStringParameters']['taskId'])
-            elif 'recommendations' in event['queryStringParameters']:
-                return get_recommendations(event['queryStringParameters']['recommendations'])
+        if 'httpMethod' in event:
+            if event['httpMethod'] == 'GET':
+                return handle_get_request(event)
             else:
-                return get_all_task_plans()
+                return create_response(405, "Método HTTP não permitido.")
         elif 'Records' in event:
-            for record in event['Records']:
-                if record['eventName'] == 'INSERT':
-                    new_image = record['dynamodb']['NewImage']
-                    logger.info(f"Novo registro inserido na tabela SoilTemperatureHistory: {json.dumps(new_image)}")
-                    return process_temperature_data(new_image)
+            return handle_dynamodb_event(event['Records'])
         elif 'temperature' in event:
             logger.info("Processando dados de temperatura do solo do evento")
             return process_temperature_data(event)
         else:
             logger.info("Coletando dados de temperatura do solo do IoT Core")
-            iot_data = get_latest_temperature()
-            if iot_data['statusCode'] == 200:
-                temperature_data = json.loads(iot_data['body'])
-                return process_temperature_data(temperature_data)
-            else:
-                logger.error(f"Falha ao obter dados do IoT Core: {iot_data['body']}")
-                return iot_data
-
+            return handle_iot_event()
     except Exception as e:
         logger.error(f"Erro no lambda_handler: {str(e)}")
         return create_response(500, f"Erro interno: {str(e)}")
+
+def handle_get_request(event):
+    path = event.get('path', '')
+    query_params = event.get('queryStringParameters', {})
+    
+    if path.endswith('/task-plan'):
+        return get_all_task_plans()
+    
+    if query_params:
+        if 'taskId' in query_params:
+            return get_task_plan(query_params['taskId'])
+        elif 'recommendations' in query_params:
+            return get_recommendations(query_params['recommendations'])
+    
+    return get_latest_task_plans()
+
+def handle_dynamodb_event(records):
+    for record in records:
+        if record['eventName'] == 'INSERT':
+            new_image = record['dynamodb']['NewImage']
+            logger.info(f"Novo registro inserido na tabela SoilTemperatureHistory: {json.dumps(new_image)}")
+            return process_temperature_data(new_image)
+    return create_response(200, "Eventos processados com sucesso.")
+
+def handle_iot_event():
+    iot_data = get_latest_temperature()
+    if iot_data['statusCode'] == 200:
+        temperature_data = json.loads(iot_data['body'])
+        return process_temperature_data(temperature_data)
+    else:
+        logger.error(f"Falha ao obter dados do IoT Core: {iot_data['body']}")
+        return iot_data
 
 def get_latest_temperature():
     try:
@@ -74,27 +98,38 @@ def get_latest_temperature():
             'statusCode': 500,
             'body': json.dumps({'error': f"Ocorreu um erro ao chamar a operação GetThingShadow: {str(e)}"})
         }
-        
+
 def get_task_plan(task_id):
     try:
         response = task_plan_table.get_item(Key={'planId': task_id})
         item = response.get('Item')
         if item:
-            return create_response(200, json.dumps(item))
+            return create_response(200, json.dumps(item, cls=CustomJSONEncoder), get_cors_headers())
         else:
-            return create_response(404, "Plano de tarefas não encontrado")
+            return create_response(404, "Plano de tarefas não encontrado", get_cors_headers())
     except Exception as e:
         logger.error(f"Erro ao obter plano de tarefas: {str(e)}")
-        return create_response(500, f"Erro ao obter plano de tarefas: {str(e)}")
+        return create_response(500, f"Erro ao obter plano de tarefas: {str(e)}", get_cors_headers())
 
 def get_all_task_plans():
     try:
         response = task_plan_table.scan()
         items = response.get('Items', [])
-        return create_response(200, json.dumps(items))
+        return create_response(200, json.dumps(items, cls=CustomJSONEncoder), get_cors_headers())
     except Exception as e:
         logger.error(f"Erro ao obter todos os planos de tarefas: {str(e)}")
-        return create_response(500, f"Erro ao obter todos os planos de tarefas: {str(e)}")
+        return create_response(500, f"Erro ao obter todos os planos de tarefas: {str(e)}", get_cors_headers())
+
+def get_latest_task_plans():
+    try:
+        response = task_plan_table.scan()
+        items = response.get('Items', [])
+        latest_plans = sorted(items, key=lambda x: x['createdAt'], reverse=True)[:5]
+
+        return create_response(200, json.dumps(latest_plans, cls=CustomJSONEncoder), get_cors_headers())
+    except Exception as e:
+        logger.error(f"Erro ao obter as últimas tarefas: {str(e)}")
+        return create_response(500, f"Erro ao obter as últimas tarefas: {str(e)}", get_cors_headers())
 
 def process_temperature_data(data):
     try:
@@ -106,30 +141,14 @@ def process_temperature_data(data):
         
         if not isinstance(data, dict):
             logger.error(f"Formato de dados inesperado: {type(data)}")
-            return {
-                'statusCode': 400,
-                'body': json.dumps('Formato de dados inválido')
-            }
+            return create_response(400, 'Formato de dados inválido')
         
         temperature = data.get('temperature')
         status = data.get('status')
         
         if temperature is None:
             logger.error("Dados de temperatura ausentes")
-            return {
-                'statusCode': 400,
-                'body': json.dumps('Dados de temperatura ausentes')
-            }
-        
-        try:
-            if not temperature:
-                raise ValueError("Valor de temperatura vazio")
-        except ValueError:
-            logger.error(f"Valor de temperatura inválido: {temperature}")
-            return {
-                'statusCode': 400,
-                'body': json.dumps('Valor de temperatura inválido')
-            }
+            return create_response(400, 'Dados de temperatura ausentes')
         
         logger.info(f"Processando dados de temperatura: temperature={temperature}, status={status}")
         
@@ -143,16 +162,10 @@ def process_temperature_data(data):
         else:
             logger.error("Falha ao gerar o plano de tarefas")
         
-        return {
-            'statusCode': 200,
-            'body': json.dumps('Novo plano de tarefas gerado e armazenado')
-        }
+        return create_response(200, 'Novo plano de tarefas gerado e armazenado')
     except Exception as e:
         logger.error(f"Erro ao processar dados de temperatura: {str(e)}")
-        return {
-            'statusCode': 500,
-            'body': json.dumps(f"Erro ao processar dados de temperatura: {str(e)}")
-        }
+        return create_response(500, f"Erro ao processar dados de temperatura: {str(e)}")
 
 def get_recommendations(topic):
     try:
@@ -160,11 +173,9 @@ def get_recommendations(topic):
         
         prompt = "Human: " + recommendation_prompt + "\n\nAssistant:"
         
-        logger.info("Enviando prompt para o modelo de IA para o auxilio recomendação das tarefas...")
+        logger.info("Enviando prompt para o modelo de IA para o auxílio recomendação das tarefas...")
         response = bedrock.invoke_model(
             modelId="anthropic.claude-v2",
-            contentType="application/json",
-            accept="application/json",
             body=json.dumps({
                 "prompt": prompt,
                 "max_tokens_to_sample": 300,
@@ -180,268 +191,113 @@ def get_recommendations(topic):
         logger.error(f"Erro ao obter recomendações para {topic}: {str(e)}")
         return create_response(500, f"Não foi possível obter recomendações para {topic} devido a um erro.")
 
-def generate_task_plan_with_ai(realtime_temperature, realtime_timestamp):
+def generate_task_plan_with_ai(temperature, status):
+    timestamp = time.time()
+    logger.info(f"[{timestamp}] Iniciando geração do plano de tarefas")
+    logger.info(f"[{timestamp}] Parâmetros recebidos - Temperatura: {temperature}°C, Status: {status}")
+    
     try:
-        # Obter recomendações para cada tópico
-        soil_management_recommendations = get_recommendations("manejo do solo baseado na temperatura")
-        planting_recommendations = get_recommendations("plantio considerando a temperatura do solo")
-        crop_care_recommendations = get_recommendations("cuidados com as culturas baseados na temperatura do solo")
-        irrigation_recommendations = get_recommendations("irrigação baseada na temperatura do solo")
+        topics = ["manejo do solo baseado na temperatura",
+                  "plantio considerando a temperatura do solo",
+                  "cuidados com as culturas baseados na temperatura do solo",
+                  "irrigação baseada na temperatura do solo"]
         
-        task_plan_prompt = f"""
+        recommendations = {topic: get_recommendations(topic)['body'] for topic in topics}
+        logger.info(f"[{timestamp}] Recomendações obtidas para todos os tópicos")
+        
+        task_plan_prompt = f'''Human:
         Com base nos seguintes dados de temperatura do solo e recomendações:
-        Temperatura em Tempo Real: {realtime_temperature}°C
+        Temperatura em Tempo Real: {temperature}°C
 
         Recomendações de Manejo do Solo:
-        {soil_management_recommendations}
+        {recommendations["manejo do solo baseado na temperatura"]}
 
         Recomendações de Plantio:
-        {planting_recommendations}
+        {recommendations["plantio considerando a temperatura do solo"]}
 
         Recomendações de Cuidados com as Culturas:
-        {crop_care_recommendations}
+        {recommendations["cuidados com as culturas baseados na temperatura do solo"]}
 
         Recomendações de Irrigação:
-        {irrigation_recommendations}
+        {recommendations["irrigação baseada na temperatura do solo"]}
 
         Gere um plano detalhado de tarefas para as próximas 4 semanas, incluindo:
         1. Atividades de manejo do solo baseadas na temperatura
         2. Datas e horários recomendados para plantio
         3. Cuidados específicos com as culturas considerando a temperatura do solo
-        4. Recomendações de irrigação ajustadas à temperatura do solo
-
-        Forneça um plano estruturado com datas específicas e descrições das tarefas.
-        Se não houver dados do último plano ou dados em tempo real, faça as melhores recomendações possíveis com base nas informações disponíveis e nas recomendações gerais.
-        """
+        4. Recomendações de irrigação ajustadas às condições climáticas
+        Assistant:'''
         
-        prompt = "Human: " + task_plan_prompt + "\n\nAssistant:"
-
-        logger.info("Enviando prompt para o modelo de IA para recomendação das tarefas...")
+        logger.info(f"[{timestamp}] Enviando prompt para a IA para gerar plano de tarefas...")
         response = bedrock.invoke_model(
             modelId="anthropic.claude-v2",
-            contentType="application/json",
-            accept="application/json",
             body=json.dumps({
-                "prompt": prompt,
-                "max_tokens_to_sample": 2000,
-                "temperature": 0.5,
+                "prompt": task_plan_prompt,
+                "max_tokens_to_sample": 500,
+                "temperature": 0.7,
                 "top_p": 0.9,
-                "stop_sequences": ["\n\nHuman:"]
+                "stop_sequences": ["Human:"]
             })
         )
         
         response_body = json.loads(response['body'].read())
-        task_plan_text = response_body['completion']
-        
-        logger.info("Plano de tarefas gerado com sucesso")
-        logger.info(f"Texto do plano de tarefas: {task_plan_text}")
-        return task_plan_text
-    
+        task_plan = response_body['completion'].strip()
+        logger.info(f"[{timestamp}] Plano de tarefas gerado com sucesso")
+        return task_plan
     except Exception as e:
-        logger.error(f"Erro ao gerar plano de tarefas com IA: {str(e)}")
+        logger.error(f"[{timestamp}] Erro ao gerar plano de tarefas com IA: {str(e)}")
         return None
 
-def format_plan(raw_json):
-    # Parse o JSON
-    data = json.loads(raw_json)
+def store_task_plan(new_plan, temperature, status):
+    timestamp = datetime.now(timezone.utc).isoformat()
+    logger.info(f"[{timestamp}] Iniciando armazenamento do plano de tarefas")
+    logger.info(f"[{timestamp}] Parâmetros recebidos - Temperatura: {temperature}, Status: {status}")
     
-    # Obtenha o plano e remova as sequências de escape
-    plan = data['plan'].encode().decode('unicode_escape')
-    
-    # Corrija a formatação do campo 'plan'
-    lines = plan.split('\n')
-    formatted_lines = []
-    for line in lines:
-        line = line.strip()
-        if line:
-            if re.match(r'^[0-9]+\.', line):  # Se a linha começa com um número seguido de ponto
-                formatted_lines.append(line)
-            elif re.match(r'^-', line):  # Se a linha já começa com hífen
-                formatted_lines.append(line)
-            elif re.match(r'^[A-Z]', line):  # Se a linha começa com letra maiúscula
-                formatted_lines.append(line)
-            else:
-                formatted_lines.append('- ' + line)
-    
-    # Atualize o campo 'plan' no JSON original
-    data['plan'] = '\n'.join(formatted_lines)
-    
-    # Use json.dumps com indent=2 e ensure_ascii=False para manter a formatação
-    return json.dumps(data, ensure_ascii=False, indent=2)
-
-def parse_task_plan(task_plan_text):
-    logger.info(f"Texto do plano de tarefas recebido:\n{task_plan_text}")
-
-    # Primeiro, formate o JSON
-    formatted_data = format_plan(task_plan_text)
-    
-    # Extraia o plano de tarefas do JSON formatado
-    plan_text = formatted_data['plan']
-
-    categories = {
-        'manejo_solo': ['preparar', 'arar', 'gradear'],
-        'plantio': ['plantar', 'semear'],
-        'cuidados_culturas': ['monitorar', 'aplicar', 'podar', 'fertilizar'],
-        'irrigação': ['irrigar', 'regar', 'ajustar']
-    }
-    parsed_task_plan = {key: {} for key in categories.keys()}
-    parsed_task_plan['tarefas_avulsas'] = []
-    
-    lines = plan_text.split('\n')
-    current_week = None
-    
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-        
-        if line.lower().startswith("semana") or line.lower() == "semanalmente:":
-            current_week = line.rstrip(':')
-            for category in categories.keys():
-                if current_week not in parsed_task_plan[category]:
-                    parsed_task_plan[category][current_week] = []
-        elif line[0] == '-' or any(line.lower().startswith(day) for day in ['segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado', 'domingo']):
-            task = line.lstrip('- ')
-            if current_week is None:
-                parsed_task_plan['tarefas_avulsas'].append(task)
-            else:
-                category_found = False
-                for category, keywords in categories.items():
-                    if any(keyword in task.lower() for keyword in keywords):
-                        parsed_task_plan[category][current_week].append(task)
-                        category_found = True
-                        break
-                
-                if not category_found:
-                    parsed_task_plan['cuidados_culturas'][current_week].append(task)
-        else:
-            if current_week:
-                parsed_task_plan['cuidados_culturas'][current_week].append(line)
-            else:
-                parsed_task_plan['tarefas_avulsas'].append(line)
-    
-    # Remove empty weeks and categories
-    for category in list(parsed_task_plan.keys()):
-        if category != 'tarefas_avulsas':
-            parsed_task_plan[category] = {week: tasks for week, tasks in parsed_task_plan[category].items() if tasks}
-            if not parsed_task_plan[category]:
-                del parsed_task_plan[category]
-    
-    if not parsed_task_plan['tarefas_avulsas']:
-        del parsed_task_plan['tarefas_avulsas']
-    
-    # Atualiza o plano no JSON formatado
-    formatted_data['plan'] = parsed_task_plan
-
-    logger.info(f"Plano de tarefas após parseamento e formatação: {json.dumps(formatted_data, indent=2)}")
-    return formatted_data
-
-def extract_plan_data(plan_text):
-    # Decodificar caracteres escapados
-    plan_text = plan_text.encode().decode('unicode_escape')
-
-    # Extrair tarefas e culturas
-    tasks = re.findall(r'- ([^-]+)', plan_text)
-    crops = re.findall(r'(Plantio|Cuidados) (?:com|de) ([^\.]+)', plan_text)
-
-    # Processar tarefas
-    processed_tasks = []
-    for task in tasks:
-        task = task.strip()
-        match = re.match(r'(\w+),?\s*(\d+h)?\s*-?\s*(.+)', task)
-        if match:
-            day, time, description = match.groups()
-            processed_tasks.append({
-                "day": day,
-                "time": time if time else "N/A",
-                "description": description.strip()
-            })
-        else:
-            logger.warning(f"Formato de tarefa não reconhecido: {task}")
-            processed_tasks.append({
-                "day": "N/A",
-                "time": "N/A",
-                "description": task
-            })
-
-    # Processar culturas
-    processed_crops = [crop[1] for crop in crops]
-
-    logger.info(f"Tarefas processadas: {processed_tasks}")
-    logger.info(f"Culturas processadas: {processed_crops}")
-
-    return {
-        'tasks': processed_tasks,
-        'crops': list(set(processed_crops))  # Remove duplicatas
-    }
-
-def store_task_plan(task_plan, average_temperature, status):
     try:
         plan_id = str(uuid.uuid4())
-        created_at = str(time.time() * 1000)  # Timestamp atual em milissegundos
-        timestamp = datetime.now(timezone.utc).isoformat()
+        logger.info(f"[{timestamp}] UUID gerado para o plano: {plan_id}")
         
-        # Extrair dados do plano
-        extracted_data = extract_plan_data(task_plan)
+        logger.info(f"[{timestamp}] Convertendo temperatura para Decimal")
+        temp_decimal = Decimal(str(temperature))
+        logger.info(f"[{timestamp}] Temperatura convertida: {temp_decimal}")
         
-        task_plan_item = {
+        task_item = {
             'planId': plan_id,
-            'createdAt': created_at,
-            'timestamp': timestamp,
-            'averageTemperature': average_temperature,
+            'plan': new_plan,
+            'temperature': temp_decimal,
             'status': status,
-            'userId': 'default_user',
-            'plan': json.dumps(task_plan),
-            'extractedTasks': json.dumps(extracted_data['tasks']),
-            'extractedCrops': json.dumps(extracted_data['crops'])
+            'createdAt': timestamp,
+            'updatedAt': timestamp
         }
         
-        history_temperature_item = {
-            'timestamp': timestamp,
-            'averageTemperature': average_temperature,
-            'planGenerated': 'Yes',
-            'status': status
-        }
+        logger.info(f"[{timestamp}] Item do plano de tarefas criado")
+        logger.debug(f"[{timestamp}] Detalhes do item: {json.dumps(task_item, default=str)}")
         
-        logger.info(f"Dados do task plan: {json.dumps(task_plan_item, default=str)}")
-        logger.info(f"Dados do temperature history: {json.dumps(history_temperature_item, default=str)}")
-        logger.info(f"Dados extraídos: {json.dumps(extracted_data, default=str)}")
+        logger.info(f"[{timestamp}] Iniciando operação de put_item no DynamoDB")
+        response = task_plan_table.put_item(Item=task_item)
+        logger.info(f"[{timestamp}] Operação put_item concluída")
+        logger.debug(f"[{timestamp}] Resposta do DynamoDB: {json.dumps(response, default=str)}")
         
-        temperature_history_table.put_item(Item=history_temperature_item)
-        temperature_history_table.put_item(Item=task_plan_item)
-        task_plan_table.put_item(Item=task_plan_item)
-        logger.info(f"Plano de tarefas armazenado com sucesso. ID: {plan_id}")
-        
+        logger.info(f"[{timestamp}] Plano de tarefas armazenado com sucesso. ID: {plan_id}")
         return plan_id
     except Exception as e:
-        logger.error(f"Erro ao armazenar plano de tarefas: {str(e)}")
-        raise
+        logger.error(f"[{timestamp}] Erro ao armazenar plano de tarefas: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        return None
+    finally:
+        logger.info(f"[{timestamp}] Finalizando operação de armazenamento do plano de tarefas")
 
-def get_last_task_plan():
-    try:
-        response = task_plan_table.scan(
-            Limit=1,
-            ScanIndexForward=False
-        )
-        items = response.get('Items', [])
-        if items:
-            logger.info("Último plano de tarefas recuperado com sucesso")
-            return items[0]
-        else:
-            logger.info("Nenhum plano de tarefas anterior encontrado")
-            return {}
-    except Exception as e:
-        logger.error(f"Erro ao obter o último plano de tarefas: {str(e)}")
-        return {}
-    
-def create_response(status_code, body):
-    return {
+def create_response(status_code, body, headers=None):
+    response = {
         'statusCode': status_code,
-        'headers': {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-        },
-        'body': body
+        'body': body,
+        'headers': headers or {'Content-Type': 'application/json'}
+    }
+    return response
+
+def get_cors_headers():
+    return {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET,OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
     }

@@ -10,7 +10,10 @@ resource "aws_iam_role" "air_temperature_task_planner_lambda_role" {
         Action = "sts:AssumeRole",
         Effect = "Allow",
         Principal = {
-          Service = "lambda.amazonaws.com"
+          "Service": [
+            "lambda.amazonaws.com",
+            "apigateway.amazonaws.com"
+          ]
         }
       }
     ]
@@ -28,7 +31,7 @@ resource "aws_iam_role_policy" "air_temperature_task_planner_lambda_policy" {
       {
         Effect = "Allow"
         Action = [
-          "dynamodb:ScanItem",
+          "dynamodb:Scan",
           "dynamodb:PutItem",
           "dynamodb:GetItem",
           "dynamodb:Query",
@@ -66,6 +69,15 @@ resource "aws_iam_role_policy" "air_temperature_task_planner_lambda_policy" {
           "bedrock:*"
         ]
         Resource = "*",
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "iot:GetThingShadow",
+          "iot:UpdateThingShadow",
+          "iot:DeleteThingShadow"
+        ]
+        Resource = "arn:aws:iot:${var.aws_region}:${data.aws_caller_identity.air_temperature_processing_data_current_caller_identity.account_id}:thing/*"
       }
     ]
   })

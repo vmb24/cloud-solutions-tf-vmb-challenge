@@ -14,10 +14,10 @@ dynamodb = boto3.resource('dynamodb')
 lambda_client = boto3.client('lambda')
 iot_client = boto3.client('iot-data')
 
-task_plan_table = dynamodb.Table('BrightnessTaskPlans')
+brightness_task_plan_table = dynamodb.Table('AIBrightnessTaskPlans')
 brightness_history_table = dynamodb.Table('BrightnessHistory')
 
-IOT_THING_NAME = "luminosity_sensor"
+IOT_THING_NAME = "agricultural_sensor"
 
 def lambda_handler(event, context):
     logger.info(f"Evento recebido: {json.dumps(event)}")
@@ -35,16 +35,16 @@ def lambda_handler(event, context):
                 if record['eventName'] == 'INSERT':
                     new_image = record['dynamodb']['NewImage']
                     logger.info(f"Novo registro inserido na tabela BrightnessHistory: {json.dumps(new_image)}")
-                    return process_luminosity_data(new_image)
+                    return process_brightness_data(new_image)
         elif 'brightness' in event:
             logger.info("Processando dados de luminosidade do evento")
-            return process_luminosity_data(event)
+            return process_brightness_data(event)
         else:
             logger.info("Coletando dados de luminosidade do IoT Core")
-            iot_data = get_latest_luminosity()
+            iot_data = get_latest_brightness()
             if iot_data['statusCode'] == 200:
-                luminosity_data = json.loads(iot_data['body'])
-                return process_luminosity_data(luminosity_data)
+                brightness_data = json.loads(iot_data['body'])
+                return process_brightness_data(brightness_data)
             else:
                 logger.error(f"Falha ao obter dados do IoT Core: {iot_data['body']}")
                 return iot_data
@@ -53,7 +53,7 @@ def lambda_handler(event, context):
         logger.error(f"Erro no lambda_handler: {str(e)}")
         return create_response(500, f"Erro interno: {str(e)}")
 
-def get_latest_luminosity():
+def get_latest_brightness():
     try:
         logger.info(f"Tentando obter shadow para o dispositivo: {IOT_THING_NAME}")
         response = iot_client.get_thing_shadow(thingName=IOT_THING_NAME)
@@ -77,7 +77,7 @@ def get_latest_luminosity():
 
 def get_task_plan(task_id):
     try:
-        response = task_plan_table.get_item(Key={'planId': task_id})
+        response = brightness_task_plan_table.get_item(Key={'planId': task_id})
         item = response.get('Item')
         if item:
             return create_response(200, json.dumps(item))
@@ -89,14 +89,14 @@ def get_task_plan(task_id):
 
 def get_all_task_plans():
     try:
-        response = task_plan_table.scan()
+        response = brightness_task_plan_table.scan()
         items = response.get('Items', [])
         return create_response(200, json.dumps(items))
     except Exception as e:
         logger.error(f"Erro ao obter todos os planos de tarefas: {str(e)}")
         return create_response(500, f"Erro ao obter todos os planos de tarefas: {str(e)}")
 
-def process_luminosity_data(data):
+def process_brightness_data(data):
     try:
         logger.info(f"Dados recebidos para processamento: {data}")
         
@@ -180,7 +180,7 @@ def get_recommendations(topic):
         logger.error(f"Erro ao obter recomendações para {topic}: {str(e)}")
         return create_response(500, f"Não foi possível obter recomendações para {topic} devido a um erro.")
 
-def generate_task_plan_with_ai(realtime_luminosity, realtime_timestamp):
+def generate_task_plan_with_ai(realtime_brightness, realtime_timestamp):
     try:
         # Obter recomendações para cada tópico
         light_management_recommendations = get_recommendations("gestão de iluminação")
@@ -190,7 +190,7 @@ def generate_task_plan_with_ai(realtime_luminosity, realtime_timestamp):
         
         task_plan_prompt = f"""
         Com base nos seguintes dados de luminosidade e recomendações:
-        Luminosidade em Tempo Real: {realtime_luminosity}
+        Luminosidade em Tempo Real: {realtime_brightness}
 
         Recomendações de Gestão de Iluminação:
         {light_management_recommendations}
@@ -377,7 +377,7 @@ def extract_plan_data(plan_text):
         'actions': list(set(processed_actions))  # Remove duplicatas
     }
 
-def store_task_plan(task_plan, average_luminosity, status):
+def store_task_plan(task_plan, average_brightness, status):
     try:
         plan_id = str(uuid.uuid4())
         created_at = str(time.time() * 1000)  # Timestamp atual em milissegundos
@@ -390,7 +390,7 @@ def store_task_plan(task_plan, average_luminosity, status):
             'planId': plan_id,
             'createdAt': created_at,
             'timestamp': timestamp,
-            'averageBrightness': average_luminosity,
+            'averageBrightness': average_brightness,
             'status': status,
             'userId': 'default_user',
             'plan': json.dumps(task_plan),
@@ -398,20 +398,20 @@ def store_task_plan(task_plan, average_luminosity, status):
             'extractedActions': json.dumps(extracted_data['actions'])
         }
         
-        history_luminosity_item = {
+        history_brightness_item = {
             'timestamp': timestamp,
-            'averageBrightness': average_luminosity,
+            'averageBrightness': average_brightness,
             'planGenerated': 'Yes',
             'status': status
         }
         
         logger.info(f"Dados do task plan: {json.dumps(task_plan_item, default=str)}")
-        logger.info(f"Dados do brightness history: {json.dumps(history_luminosity_item, default=str)}")
+        logger.info(f"Dados do brightness history: {json.dumps(history_brightness_item, default=str)}")
         logger.info(f"Dados extraídos: {json.dumps(extracted_data, default=str)}")
         
-        luminosity_history_table.put_item(Item=history_luminosity_item)
-        luminosity_history_table.put_item(Item=task_plan_item)
-        task_plan_table.put_item(Item=task_plan_item)
+        brightness_history_table.put_item(Item=history_brightness_item)
+        brightness_history_table.put_item(Item=task_plan_item)
+        brightness_task_plan_table.put_item(Item=task_plan_item)
         logger.info(f"Plano de tarefas armazenado com sucesso. ID: {plan_id}")
         
         return plan_id
@@ -421,7 +421,7 @@ def store_task_plan(task_plan, average_luminosity, status):
 
 def get_last_task_plan():
     try:
-        response = task_plan_table.scan(
+        response = brightness_task_plan_table.scan(
             Limit=1,
             ScanIndexForward=False
         )

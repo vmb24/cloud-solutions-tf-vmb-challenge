@@ -10,7 +10,10 @@ resource "aws_iam_role" "air_temperature_data_processing_recommendations_lambda_
         Action = "sts:AssumeRole",
         Effect = "Allow",
         Principal = {
-          Service = "lambda.amazonaws.com"
+          "Service": [
+            "lambda.amazonaws.com",
+            "apigateway.amazonaws.com"
+          ]
         }
       }
     ]
@@ -31,7 +34,8 @@ resource "aws_iam_role_policy" "air_temperature_data_processing_recommendations_
           "dynamodb:PutItem",
           "dynamodb:GetItem",
           "dynamodb:Query",
-          "dynamodb:UpdateItem",      
+          "dynamodb:UpdateItem",
+          "dynamodb:Scan"   
         ]
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.air_temperature_processing_data_current_caller_identity.account_id}:table/*"
       },

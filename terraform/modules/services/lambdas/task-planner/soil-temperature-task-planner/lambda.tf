@@ -6,7 +6,7 @@ data "archive_file" "lambda_zip" {
 }
 
 resource "aws_lambda_function" "soil_temperature_task_planner" {
-  function_name    = "soil_soil_temperature_task_planner"
+  function_name    = "soil_temperature_task_planner"
   role             = var.soil_temperature_task_planner_lambda_role_arn
   handler          = "soil_temperature_task_planner.lambda_handler"
   runtime          = "python3.9"

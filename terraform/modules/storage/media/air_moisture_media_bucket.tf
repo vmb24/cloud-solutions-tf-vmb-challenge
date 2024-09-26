@@ -1,15 +1,26 @@
 # S3 Buckets
 resource "aws_s3_bucket" "air_moisture_media_bucket" {
-  bucket = "air_moisture_media_bucket"
+  bucket = "air-moisture-media-bucket"
 
   tags = {
-    Name        = "air_moisture_media_bucket"
+    Name        = "air-moisture-media-bucket"
     Environment = "Production"
+  }
+}
+
+# S3 Bucket Ownership Controls
+resource "aws_s3_bucket_ownership_controls" "air_moisture_media_bucket_ownership" {
+  bucket = aws_s3_bucket.air_moisture_media_bucket.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
   }
 }
 
 # S3 Bucket ACL
 resource "aws_s3_bucket_acl" "air_moisture_media_bucket_acl" {
+  depends_on = [aws_s3_bucket_ownership_controls.air_moisture_media_bucket_ownership]
+
   bucket = aws_s3_bucket.air_moisture_media_bucket.id
   acl    = "private"
 }

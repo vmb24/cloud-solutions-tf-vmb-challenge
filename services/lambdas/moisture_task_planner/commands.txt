@@ -1,4 +1,0 @@
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 590184100199.dkr.ecr.us-east-1.amazonaws.com
-docker build --platform linux/amd64 -t moisture_task_planner .
-docker tag moisture_task_planner:latest 590184100199.dkr.ecr.us-east-1.amazonaws.com/moisture_task_planner:latest
-docker push 590184100199.dkr.ecr.us-east-1.amazonaws.com/moisture_task_planner:latest

@@ -3,7 +3,7 @@ data "aws_caller_identity" "soil_moisture_processing_data_current_caller_identit
 
 # Criar a política IAM
 resource "aws_iam_policy" "soil_moisture_processing_data_iot_get_thing_shadow_policy" {
-  name        = "IoTGetThingShadowPolicy"
+  name        = "SoilMoistureProcessingIoTGetThingShadowPolicy"
   path        = "/"
   description = "Permite a ação GetThingShadow no IoT Core"
 

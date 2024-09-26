@@ -1,1 +1,1 @@
-variable "glue_role_arn" {}
+# variable "glue_role_arn" {}

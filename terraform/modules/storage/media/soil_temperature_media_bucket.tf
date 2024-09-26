@@ -1,15 +1,26 @@
 # S3 Buckets
 resource "aws_s3_bucket" "soil_temperature_media_bucket" {
-  bucket = "soil_temperature_media_bucket"
+  bucket = "soil-temperature-media-bucket"
 
   tags = {
-    Name        = "soil_temperature_media_bucket"
+    Name        = "soil-temperature-media-bucket"
     Environment = "Production"
+  }
+}
+
+# S3 Bucket Ownership Controls
+resource "aws_s3_bucket_ownership_controls" "soil_temperature_media_bucket_ownership" {
+  bucket = aws_s3_bucket.soil_temperature_media_bucket.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
   }
 }
 
 # S3 Bucket ACL
 resource "aws_s3_bucket_acl" "soil_temperature_media_bucket_acl" {
+  depends_on = [aws_s3_bucket_ownership_controls.soil_temperature_media_bucket_ownership]
+
   bucket = aws_s3_bucket.soil_temperature_media_bucket.id
   acl    = "private"
 }

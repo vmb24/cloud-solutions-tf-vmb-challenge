@@ -12,7 +12,7 @@ resource "aws_dynamodb_table" "ai_agricultural_soil_moisture_recommendations" {
   }
 
   attribute {
-    name = "thing_name"
+    name = "topic_name"
     type = "S"
   }
 
@@ -23,7 +23,7 @@ resource "aws_dynamodb_table" "ai_agricultural_soil_moisture_recommendations" {
 
   global_secondary_index {
     name               = "ThingNameIndex"
-    hash_key           = "thing_name"
+    hash_key           = "topic_name"
     range_key          = "last_update"
     projection_type    = "ALL"
   }

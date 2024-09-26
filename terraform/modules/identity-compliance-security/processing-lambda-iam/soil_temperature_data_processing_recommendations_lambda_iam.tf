@@ -10,7 +10,10 @@ resource "aws_iam_role" "soil_temperature_data_processing_recommendations_lambda
         Action = "sts:AssumeRole",
         Effect = "Allow",
         Principal = {
-          Service = "lambda.amazonaws.com"
+          "Service": [
+            "lambda.amazonaws.com",
+            "apigateway.amazonaws.com"
+          ]
         }
       }
     ]
@@ -31,7 +34,8 @@ resource "aws_iam_role_policy" "soil_temperature_data_processing_recommendations
           "dynamodb:PutItem",
           "dynamodb:GetItem",
           "dynamodb:Query",
-          "dynamodb:UpdateItem",      
+          "dynamodb:UpdateItem",
+          "dynamodb:Scan"      
         ]
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.soil_temperature_processing_data_current_caller_identity.account_id}:table/*"
       },

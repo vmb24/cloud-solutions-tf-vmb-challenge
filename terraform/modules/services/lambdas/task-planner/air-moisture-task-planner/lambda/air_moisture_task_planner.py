@@ -14,10 +14,10 @@ dynamodb = boto3.resource('dynamodb')
 lambda_client = boto3.client('lambda')
 iot_client = boto3.client('iot-data')
 
-task_plan_table = dynamodb.Table('AirHumidityTaskPlans')
-air_humidity_history_table = dynamodb.Table('AirHumidityHistory')
+air_moisture_task_plan_table = dynamodb.Table('AIAirMoistureTaskPlans')
+air_moisture_history_table = dynamodb.Table('AirMoistureHistory')
 
-IOT_THING_NAME = "air_humidity_sensor"
+IOT_THING_NAME = "agricultural_sensor"
 
 def lambda_handler(event, context):
     logger.info(f"Evento recebido: {json.dumps(event)}")
@@ -34,17 +34,17 @@ def lambda_handler(event, context):
             for record in event['Records']:
                 if record['eventName'] == 'INSERT':
                     new_image = record['dynamodb']['NewImage']
-                    logger.info(f"Novo registro inserido na tabela AirHumidityHistory: {json.dumps(new_image)}")
-                    return process_air_humidity_data(new_image)
-        elif 'airHumidity' in event:
+                    logger.info(f"Novo registro inserido na tabela AirMoistureHistory: {json.dumps(new_image)}")
+                    return process_air_moisture_data(new_image)
+        elif 'airMoisture' in event:
             logger.info("Processando dados de umidade do ar do evento")
-            return process_air_humidity_data(event)
+            return process_air_moisture_data(event)
         else:
             logger.info("Coletando dados de umidade do ar do IoT Core")
-            iot_data = get_latest_air_humidity()
+            iot_data = get_latest_air_moisture()
             if iot_data['statusCode'] == 200:
-                air_humidity_data = json.loads(iot_data['body'])
-                return process_air_humidity_data(air_humidity_data)
+                air_moisture_data = json.loads(iot_data['body'])
+                return process_air_moisture_data(air_moisture_data)
             else:
                 logger.error(f"Falha ao obter dados do IoT Core: {iot_data['body']}")
                 return iot_data
@@ -53,7 +53,7 @@ def lambda_handler(event, context):
         logger.error(f"Erro no lambda_handler: {str(e)}")
         return create_response(500, f"Erro interno: {str(e)}")
 
-def get_latest_air_humidity():
+def get_latest_air_moisture():
     try:
         logger.info(f"Tentando obter shadow para o dispositivo: {IOT_THING_NAME}")
         response = iot_client.get_thing_shadow(thingName=IOT_THING_NAME)
@@ -63,7 +63,7 @@ def get_latest_air_humidity():
         return {
             'statusCode': 200,
             'body': json.dumps({
-                'airHumidity': state['airHumidity'],
+                'airMoisture': state['airMoisture'],
                 'status': state['status'],
                 'timestamp': datetime.now(timezone.utc).isoformat()
             })
@@ -77,7 +77,7 @@ def get_latest_air_humidity():
         
 def get_task_plan(task_id):
     try:
-        response = task_plan_table.get_item(Key={'planId': task_id})
+        response = air_moisture_task_plan_table.get_item(Key={'planId': task_id})
         item = response.get('Item')
         if item:
             return create_response(200, json.dumps(item))
@@ -89,14 +89,14 @@ def get_task_plan(task_id):
 
 def get_all_task_plans():
     try:
-        response = task_plan_table.scan()
+        response = air_moisture_task_plan_table.scan()
         items = response.get('Items', [])
         return create_response(200, json.dumps(items))
     except Exception as e:
         logger.error(f"Erro ao obter todos os planos de tarefas: {str(e)}")
         return create_response(500, f"Erro ao obter todos os planos de tarefas: {str(e)}")
 
-def process_air_humidity_data(data):
+def process_air_moisture_data(data):
     try:
         logger.info(f"Dados recebidos para processamento: {data}")
         
@@ -111,10 +111,10 @@ def process_air_humidity_data(data):
                 'body': json.dumps('Formato de dados inválido')
             }
         
-        air_humidity = data.get('airHumidity')
+        air_moisture = data.get('airMoisture')
         status = data.get('status')
         
-        if air_humidity is None:
+        if air_moisture is None:
             logger.error("Dados de umidade do ar ausentes")
             return {
                 'statusCode': 400,
@@ -122,20 +122,20 @@ def process_air_humidity_data(data):
             }
         
         try:
-            if not air_humidity:
+            if not air_moisture:
                 raise ValueError("Valor de umidade do ar vazio")
         except ValueError:
-            logger.error(f"Valor de umidade do ar inválido: {air_humidity}")
+            logger.error(f"Valor de umidade do ar inválido: {air_moisture}")
             return {
                 'statusCode': 400,
                 'body': json.dumps('Valor de umidade do ar inválido')
             }
         
-        logger.info(f"Processando dados de umidade do ar: airHumidity={air_humidity}, status={status}")
+        logger.info(f"Processando dados de umidade do ar: airMoisture={air_moisture}, status={status}")
         
-        new_plan = generate_task_plan_with_ai(air_humidity, status)
+        new_plan = generate_task_plan_with_ai(air_moisture, status)
         if new_plan:
-            plan_id = store_task_plan(new_plan, air_humidity, status)
+            plan_id = store_task_plan(new_plan, air_moisture, status)
             if plan_id:
                 logger.error("Sucesso ao armazenar o plano de tarefas")
             else:
@@ -180,7 +180,7 @@ def get_recommendations(topic):
         logger.error(f"Erro ao obter recomendações para {topic}: {str(e)}")
         return create_response(500, f"Não foi possível obter recomendações para {topic} devido a um erro.")
 
-def generate_task_plan_with_ai(realtime_air_humidity, realtime_timestamp):
+def generate_task_plan_with_ai(realtime_air_moisture, realtime_timestamp):
     try:
         # Obter recomendações para cada tópico
         ventilation_recommendations = get_recommendations("ventilação")
@@ -190,7 +190,7 @@ def generate_task_plan_with_ai(realtime_air_humidity, realtime_timestamp):
         
         task_plan_prompt = f"""
         Com base nos seguintes dados de umidade do ar e recomendações:
-        Umidade do Ar em Tempo Real: {realtime_air_humidity}
+        Umidade do Ar em Tempo Real: {realtime_air_moisture}
 
         Recomendações de Ventilação:
         {ventilation_recommendations}
@@ -375,7 +375,7 @@ def extract_plan_data(plan_text):
         'actions': list(set(processed_actions))  # Remove duplicatas
     }
 
-def store_task_plan(task_plan, average_air_humidity, status):
+def store_task_plan(task_plan, average_air_moisture, status):
     try:
         plan_id = str(uuid.uuid4())
         created_at = str(time.time() * 1000)  # Timestamp atual em milissegundos
@@ -388,7 +388,7 @@ def store_task_plan(task_plan, average_air_humidity, status):
             'planId': plan_id,
             'createdAt': created_at,
             'timestamp': timestamp,
-            'averageAirHumidity': average_air_humidity,
+            'averageAirMoisture': average_air_moisture,
             'status': status,
             'userId': 'default_user',
             'plan': json.dumps(task_plan),
@@ -396,20 +396,20 @@ def store_task_plan(task_plan, average_air_humidity, status):
             'extractedActions': json.dumps(extracted_data['actions'])
         }
         
-        history_air_humidity_item = {
+        history_air_moisture_item = {
             'timestamp': timestamp,
-            'averageAirHumidity': average_air_humidity,
+            'averageAirMoisture': average_air_moisture,
             'planGenerated': 'Yes',
             'status': status
         }
         
         logger.info(f"Dados do task plan: {json.dumps(task_plan_item, default=str)}")
-        logger.info(f"Dados do air humidity history: {json.dumps(history_air_humidity_item, default=str)}")
+        logger.info(f"Dados do air moisture history: {json.dumps(history_air_moisture_item, default=str)}")
         logger.info(f"Dados extraídos: {json.dumps(extracted_data, default=str)}")
         
-        air_humidity_history_table.put_item(Item=history_air_humidity_item)
-        air_humidity_history_table.put_item(Item=task_plan_item)
-        task_plan_table.put_item(Item=task_plan_item)
+        air_moisture_history_table.put_item(Item=history_air_moisture_item)
+        air_moisture_history_table.put_item(Item=task_plan_item)
+        air_moisture_task_plan_table.put_item(Item=task_plan_item)
         logger.info(f"Plano de tarefas armazenado com sucesso. ID: {plan_id}")
         
         return plan_id
@@ -419,7 +419,7 @@ def store_task_plan(task_plan, average_air_humidity, status):
 
 def get_last_task_plan():
     try:
-        response = task_plan_table.scan(
+        response = air_moisture_task_plan_table.scan(
             Limit=1,
             ScanIndexForward=False
         )

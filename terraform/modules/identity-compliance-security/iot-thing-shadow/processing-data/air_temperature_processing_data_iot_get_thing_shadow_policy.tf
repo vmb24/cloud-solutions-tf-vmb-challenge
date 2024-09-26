@@ -3,7 +3,7 @@ data "aws_caller_identity" "air_temperature_processing_data_current_caller_ident
 
 # Criar a política IAM
 resource "aws_iam_policy" "air_temperature_processing_data_iot_get_thing_shadow_policy" {
-  name        = "IoTGetThingShadowPolicy"
+  name        = "AirTemperatureProcessingIoTGetThingShadowPolicy"
   path        = "/"
   description = "Permite a ação GetThingShadow no IoT Core"
 

@@ -3,7 +3,7 @@ data "aws_caller_identity" "brightness_processing_data_current_caller_identity" 
 
 # Criar a política IAM
 resource "aws_iam_policy" "brightness_processing_data_iot_get_thing_shadow_policy" {
-  name        = "IoTGetThingShadowPolicy"
+  name        = "BrightnessProcessingIoTGetThingShadowPolicy"
   path        = "/"
   description = "Permite a ação GetThingShadow no IoT Core"
 

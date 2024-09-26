@@ -14,10 +14,10 @@ dynamodb = boto3.resource('dynamodb')
 lambda_client = boto3.client('lambda')
 iot_client = boto3.client('iot-data')
 
-task_plan_table = dynamodb.Table('AirTemperatureTaskPlans')
+air_temperature_task_plan_table = dynamodb.Table('AIAirTemperatureTaskPlans')
 air_temperature_history_table = dynamodb.Table('AirTemperatureHistory')
 
-IOT_THING_NAME = "air_temperature_sensor"
+IOT_THING_NAME = "agricultural_sensor"
 
 def lambda_handler(event, context):
     logger.info(f"Evento recebido: {json.dumps(event)}")
@@ -77,7 +77,7 @@ def get_latest_air_temperature():
         
 def get_task_plan(task_id):
     try:
-        response = task_plan_table.get_item(Key={'planId': task_id})
+        response = air_temperature_task_plan_table.get_item(Key={'planId': task_id})
         item = response.get('Item')
         if item:
             return create_response(200, json.dumps(item))
@@ -89,7 +89,7 @@ def get_task_plan(task_id):
 
 def get_all_task_plans():
     try:
-        response = task_plan_table.scan()
+        response = air_temperature_task_plan_table.scan()
         items = response.get('Items', [])
         return create_response(200, json.dumps(items))
     except Exception as e:
@@ -409,7 +409,7 @@ def store_task_plan(task_plan, average_air_temperature, status):
         
         air_temperature_history_table.put_item(Item=history_air_temperature_item)
         air_temperature_history_table.put_item(Item=task_plan_item)
-        task_plan_table.put_item(Item=task_plan_item)
+        air_temperature_task_plan_table.put_item(Item=task_plan_item)
         logger.info(f"Plano de tarefas armazenado com sucesso. ID: {plan_id}")
         
         return plan_id
@@ -419,7 +419,7 @@ def store_task_plan(task_plan, average_air_temperature, status):
 
 def get_last_task_plan():
     try:
-        response = task_plan_table.scan(
+        response = air_temperature_task_plan_table.scan(
             Limit=1,
             ScanIndexForward=False
         )
