@@ -1,5 +1,6 @@
 variable "aws_region" {}
 variable "vpc_id" {}
+variable "ecs_website_service_name" {}
 variable "public_subnet_id1" {}
 variable "public_subnet_id2" {}
 variable "website_load_balancer_arn" {}

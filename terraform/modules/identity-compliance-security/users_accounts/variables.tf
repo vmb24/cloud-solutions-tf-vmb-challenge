@@ -1,0 +1,1 @@
+variable "users_accounts_table_arn" {}

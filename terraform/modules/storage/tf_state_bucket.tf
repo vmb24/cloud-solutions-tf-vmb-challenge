@@ -2,7 +2,7 @@ resource "aws_s3_bucket" "terraform_state" {
   bucket = "terrafarming-terraform-state-bucket"
 
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
 }
 

@@ -99,6 +99,12 @@ module "general_identity_compliance_security" {
   soil_temperature_task_planner_lambda_role_id = module.task_planner_lambda_identity_compliance_security.soil_temperature_task_planner_lambda_role_id
 }
 
+module "users_accounts_identity_compliance_security" {
+  source = "./modules/identity-compliance-security/users_accounts"
+
+  users_accounts_table_arn = module.users_accounts_database.users_accounts_table_arn
+}
+
 module "analisys_identity_compliance_security" {
   source = "./modules/identity-compliance-security/analisys"
 }
@@ -191,6 +197,10 @@ module "accessible_contents_lambdas_identity_compliance_security" {
 }
 
 # DATABASES
+module "users_accounts_database" {
+  source = "./modules/database/users_accounts"
+}
+
 module "ai_agricultural_recommendations_database" {
   source = "./modules/database/ai-agricultural-recommendations"
 }
@@ -231,6 +241,7 @@ module "website" {
 
   aws_region                     = var.aws_region
   vpc_id                         = module.network.vpc_id
+  ecs_website_service_name       = var.ecs_website_service_name
   public_subnet_id1              = module.network.public_subnet_ids[0]
   public_subnet_id2              = module.network.public_subnet_ids[1]
   website_load_balancer_arn      = module.compute.website_load_balancer_arn
@@ -249,6 +260,15 @@ module "website" {
 }
 
 # LAMBDAS
+
+# USERS ACCOUNTS LAMBDA
+module "users_accounts_lambda" {
+  source = "./modules/services/lambdas/users_accounts"
+
+  users_account_name_table = module.users_accounts_database.users_accounts_table_arn
+  users_accounts_lambdas_roles_iam_arn = module.users_accounts_identity_compliance_security.users_accounts_lambdas_roles_iam_arn
+}
+
 # PROCESSING DATA LAMBDAS
 module "air_moisture_data_processing_recommendations" {
   source = "./modules/services/lambdas/processing-data/air-moisture-data-processing-recommendations"
