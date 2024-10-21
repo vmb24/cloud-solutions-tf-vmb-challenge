@@ -1,127 +1,127 @@
-# Ágrix Application
+# TerraFarming Application
 
 # Visão Geral
 O TerraFarming é um sistema de agricultura inteligente que utiliza IoT, análise de dados e inteligência artificial para otimizar as práticas agrícolas. O sistema coleta dados de sensores de umidade do solo, processa imagens e vídeos armazenados, e fornece recomendações personalizadas para os agricultores através de uma aplicação web moderna.
 
-Este repositório contém o código para os microserviços e funções Lambda do aplicativo tech4parking, junto com a configuração da infraestrutura AWS usando Terraform. O tech4parking é um aplicativo de agricultura inteligente que utiliza inteligência artificial para fornecer recomendações aos agricultores com base em métricas do solo e condições climáticas.
+Este repositório contém o código para os microserviços e funções Lambda do aplicativo TerraFarming, junto com a configuração da infraestrutura AWS usando Terraform. O TerraFarming é um aplicativo de agricultura inteligente que utiliza inteligência artificial para fornecer recomendações aos agricultores com base em métricas do solo e condições climáticas.
 
 Componentes Principais
 
 1.  AWS Lambda
     -   Função: Executa código serverless para as funções de fulfillment e lógica de negócios.
-    -   Uso no Ágrix: Processa solicitações dos usuários, realiza cálculos e interage com outros serviços AWS.
+    -   Uso no TerraFarming: Processa solicitações dos usuários, realiza cálculos e interage com outros serviços AWS.
 
 2.  Amazon API Gateway
     -   Função: Gerencia e roteia as requisições da API.
-    -   Uso no Ágrix: Direciona as solicitações dos usuários para os serviços apropriados.
+    -   Uso no TerraFarming: Direciona as solicitações dos usuários para os serviços apropriados.
 
 3.  Amazon DynamoDB
     -   Função: Banco de dados NoSQL altamente escalável.
-    -   Uso no Ágrix: Armazena dados não-relacionais, como informações de sensores e perfis de usuários.
+    -   Uso no TerraFarming: Armazena dados não-relacionais, como informações de sensores e perfis de usuários.
 
 4.  Amazon Lex
     -   Função: Serviço de processamento de linguagem natural e chatbot.
-    -   Uso no Ágrix: Processa entradas de texto e voz dos usuários, identifica intenções e extrai informações relevantes.
+    -   Uso no TerraFarming: Processa entradas de texto e voz dos usuários, identifica intenções e extrai informações relevantes.
 
 5.  Amazon SageMaker
     -   Função: Plataforma de aprendizado de máquina.
-    -   Uso no Ágrix: Treina e implanta modelos de ML para previsões agrícolas, análise de imagens e recomendações personalizadas.
+    -   Uso no TerraFarming: Treina e implanta modelos de ML para previsões agrícolas, análise de imagens e recomendações personalizadas.
 
 6.  AWS Rekognition
     -   Função: Serviço de análise de imagens e vídeos.
-    -   Uso no Ágrix: Analisa imagens de culturas para detecção de doenças, pragas e estágio de crescimento.
+    -   Uso no TerraFarming: Analisa imagens de culturas para detecção de doenças, pragas e estágio de crescimento.
 
 7.  AWS IoT Core
     -   Função: Plataforma para conectar e gerenciar dispositivos IoT.
-    -   Uso no Ágrix: Gerencia a conexão e os dados dos sensores agrícolas.
+    -   Uso no TerraFarming: Gerencia a conexão e os dados dos sensores agrícolas.
 
 8.  Amazon Kinesis
     -   Função: Processamento de dados em tempo real.
-    -   Uso no Ágrix: Analisa streams de dados dos sensores em tempo real para alertas e insights imediatos.
+    -   Uso no TerraFarming: Analisa streams de dados dos sensores em tempo real para alertas e insights imediatos.
 
 9.  Amazon Redshift
     -   Função: Data warehouse em nuvem.
-    -   Uso no Ágrix: Realiza análises complexas em grandes volumes de dados históricos.
+    -   Uso no TerraFarming: Realiza análises complexas em grandes volumes de dados históricos.
 
 10. Amazon S3
     -   Função: Armazenamento de objetos.
-    -   Uso no Ágrix: Armazena arquivos, imagens e backups de dados.
+    -   Uso no TerraFarming: Armazena arquivos, imagens e backups de dados.
 
 11. AWS Greengrass
     -   Função: Estende capacidades de nuvem para dispositivos edge.
-    -   Uso no Ágrix: Permite processamento local em dispositivos agrícolas para operações offline e redução de latência.
+    -   Uso no TerraFarming: Permite processamento local em dispositivos agrícolas para operações offline e redução de latência.
 
 12. Amazon SNS
     -   Função: Serviço de notificações.
-    -   Uso no Ágrix: Envia alertas e notificações push para os usuários.
+    -   Uso no TerraFarming: Envia alertas e notificações push para os usuários.
 
 13. Amazon SES
     -   Função: Serviço de e-mail.
-    -   Uso no Ágrix: Envia e-mails transacionais e relatórios aos usuários.
+    -   Uso no TerraFarming: Envia e-mails transacionais e relatórios aos usuários.
 
 14. Amazon CloudFront
     -   Função: Rede de entrega de conteúdo (CDN).
-    -   Uso no Ágrix: Distribui conteúdo estático e protege contra ataques DDoS.
+    -   Uso no TerraFarming: Distribui conteúdo estático e protege contra ataques DDoS.
 
 15. Amazon Route 53
     -   Função: Serviço de DNS e roteamento de tráfego.
-    -   Uso no Ágrix: Gerencia o DNS do aplicativo e implementa estratégias de failover.
+    -   Uso no TerraFarming: Gerencia o DNS do aplicativo e implementa estratégias de failover.
 
 16. Amazon Elasticsearch Service
     -   Função: Serviço de busca e análise.
-    -   Uso no Ágrix: Implementa busca avançada e análise de logs.
+    -   Uso no TerraFarming: Implementa busca avançada e análise de logs.
 
 17. Amazon Translate
     -   Função: Serviço de tradução automática.
-    -   Uso no Ágrix: Traduz conteúdo para diferentes idiomas, facilitando a colaboração internacional.
+    -   Uso no TerraFarming: Traduz conteúdo para diferentes idiomas, facilitando a colaboração internacional.
 
 18. Amazon Transcribe
     -   Função: Serviço de transcrição de fala para texto.
-    -   Uso no Ágrix: Transcreve comandos de voz dos usuários para processamento textual.
+    -   Uso no TerraFarming: Transcreve comandos de voz dos usuários para processamento textual.
 
 19. Amazon Cognito
     -   Função: Serviço de autenticação e gerenciamento de identidade.
-    -   Uso no Ágrix: Gerencia a autenticação e autorização dos usuários.
+    -   Uso no TerraFarming: Gerencia a autenticação e autorização dos usuários.
 
 20. AWS KMS
     -   Função: Serviço de gerenciamento de chaves.
-    -   Uso no Ágrix: Gerencia chaves de criptografia para proteger dados sensíveis.
+    -   Uso no TerraFarming: Gerencia chaves de criptografia para proteger dados sensíveis.
 
 21. AWS Shield e WAF
     -   Função: Serviços de segurança e firewall de aplicações web.
-    -   Uso no Ágrix: Protege contra ataques DDoS e ameaças web.
+    -   Uso no TerraFarming: Protege contra ataques DDoS e ameaças web.
 
 22. AWS Config
     -   Função: Serviço de avaliação, auditoria e avaliação de conformidade.
-    -   Uso no Ágrix: Monitora a conformidade da configuração dos recursos AWS.
+    -   Uso no TerraFarming: Monitora a conformidade da configuração dos recursos AWS.
 
 23. AWS CloudTrail
     -   Função: Serviço de auditoria e logging.
-    -   Uso no Ágrix: Registra todas as atividades da conta AWS para fins de auditoria.
+    -   Uso no TerraFarming: Registra todas as atividades da conta AWS para fins de auditoria.
 
 24. Amazon ElastiCache
     -   Função: Serviço de cache in-memory.
-    -   Uso no Ágrix: Melhora o desempenho armazenando dados frequentemente acessados em cache.
+    -   Uso no TerraFarming: Melhora o desempenho armazenando dados frequentemente acessados em cache.
 
 25. AWS X-Ray
     -   Função: Serviço de análise e depuração de aplicações distribuídas.
-    -   Uso no Ágrix: Ajuda a identificar gargalos de desempenho e resolver problemas.
+    -   Uso no TerraFarming: Ajuda a identificar gargalos de desempenho e resolver problemas.
 
 26. AWS Systems Manager
     -   Função: Serviço de gerenciamento de recursos operacionais.
-    -   Uso no Ágrix: Automatiza tarefas de manutenção e aplica patches de segurança.
+    -   Uso no TerraFarming: Automatiza tarefas de manutenção e aplica patches de segurança.
 
 27. AWS Backup
     -   Função: Serviço de backup centralizado.
-    -   Uso no Ágrix: Realiza e gerencia backups de diversos serviços AWS usados no aplicativo.
+    -   Uso no TerraFarming: Realiza e gerencia backups de diversos serviços AWS usados no aplicativo.
 
 28. AWS Step Functions
     -   Função: Serviço de orquestração de fluxos de trabalho.
-    -   Uso no Ágrix: Coordena a execução de múltiplos serviços AWS em workflows complexos.
+    -   Uso no TerraFarming: Coordena a execução de múltiplos serviços AWS em workflows complexos.
 
 29. AWS Bedrock
     -   Função: Plataforma de IA generativa que oferece acesso a múltiplos modelos de linguagem e imagem de ponta.
-    -   Uso no Ágrix: Fornece capacidades avançadas de IA para várias aplicações agrícolas.
+    -   Uso no TerraFarming: Fornece capacidades avançadas de IA para várias aplicações agrícolas.
     -   Modelos utilizados:
         A. Claude
         -   Uso: Geração de recomendações detalhadas e análise de texto complexo.
@@ -148,27 +148,27 @@ Componentes Principais
             - Detecção automatizada de problemas nas plantações, como estresse hídrico ou deficiências nutricionais.\
             - Geração de visualizações preditivas do desenvolvimento da safra baseadas em dados atuais.\
             - Criação de imagens ilustrativas para relatórios e materiais educativos sobre práticas agrícolas.
-    -   Integração no Ágrix: Estes modelos trabalham em conjunto para fornecer uma solução completa de IA para agricultura, combinando análise textual, processamento de linguagem natural e visão computacional para otimizar todas as facetas da produção agrícola.
+    -   Integração no TerraFarming: Estes modelos trabalham em conjunto para fornecer uma solução completa de IA para agricultura, combinando análise textual, processamento de linguagem natural e visão computacional para otimizar todas as facetas da produção agrícola.
 
-Esta explicação expandida do AWS Bedrock destaca como cada modelo específico (Claude, Jurassic Mid e Stable Diffusion) é utilizado no contexto do Ágrix, fornecendo exemplos concretos de suas aplicações na agricultura de precisão.
+Esta explicação expandida do AWS Bedrock destaca como cada modelo específico (Claude, Jurassic Mid e Stable Diffusion) é utilizado no contexto do TerraFarming, fornecendo exemplos concretos de suas aplicações na agricultura de precisão.
 
 30. Amazon ECR
     -   Função: Registro de contêineres.
-    -   Uso no Ágrix: Armazena, gerencia e implanta imagens de contêineres Docker.
+    -   Uso no TerraFarming: Armazena, gerencia e implanta imagens de contêineres Docker.
 
 31. Amazon Polly
     -   Função: Serviço de conversão de texto em fala.
-    -   Uso no Ágrix: Gera saídas de áudio para instruções e alertas aos usuários.
+    -   Uso no TerraFarming: Gera saídas de áudio para instruções e alertas aos usuários.
 
 32. AWS Certificate Manager
     -   Função: Gerenciamento de certificados SSL/TLS.
-    -   Uso no Ágrix: Provisiona, gerencia e implanta certificados para conexões seguras.
+    -   Uso no TerraFarming: Provisiona, gerencia e implanta certificados para conexões seguras.
 
 33. Amazon QuickSight
     -   Função: Serviço de business intelligence.
-    -   Uso no Ágrix: Cria visualizações e dashboards interativos para análise de dados agrícolas.
+    -   Uso no TerraFarming: Cria visualizações e dashboards interativos para análise de dados agrícolas.
 
-# Ágrix (Amazon Lex)
+# TerraFarming (Amazon Lex)
 
 1.  SOIL_MOISTURE_FULFILLMENT_ARN (SoilMoistureIntent):\
     Esta função de fulfillment recebe solicitações relacionadas à umidade do solo. Ela chama o serviço apropriado que acessa os dados dos sensores de umidade do solo, processa as leituras atuais e históricas, e retorna informações sobre o nível de umidade do solo. A função então formata essas informações para apresentação ao usuário, incluindo possíveis recomendações sobre irrigação.
@@ -404,8 +404,8 @@ Configuração e Implantação
 
     Copiar código
 
-    `git clone https://github.com/seu-usuario/tech4parking.git
-    cd tech4parking`
+    `git clone https://github.com/seu-usuario/TerraFarmingparking.git
+    cd TerraFarmingparking`
 
 2.  Configure suas credenciais AWS e inicialize o Terraform:
 
