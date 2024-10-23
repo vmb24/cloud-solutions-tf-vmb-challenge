@@ -3,38 +3,53 @@ import random
 import time
 import boto3
 from datetime import datetime, timedelta
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
+import traceback
 from decimal import Decimal
+import urllib.parse
+from datetime import timezone
+import logging
 
+# Configurar logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+# Inicializa clientes do boto3
 bedrock = boto3.client('bedrock-runtime')
 dynamodb = boto3.resource('dynamodb')
 iot_client = boto3.client('iot-data', endpoint_url=f"https://a3bw5rp1377npv-ats.iot.us-east-1.amazonaws.com")
 
-IOT_THING_NAME = 'luminosity_sensor'
-AGRICULTURAL_LUMINOSITY_RECOMMENDATIONS_DYNAMODB_TABLE_NAME = 'AIAgriculturalLuminosityRecommendations'
-LUMINOSITY_AVERAGES_DATA_TABLE_NAME = 'LuminosityAverages'
+# Constantes
+TOPIC_NAME = 'agriculture/brightness'
+AGRICULTURAL_BRIGHTNESS_RECOMMENDATIONS_DYNAMODB_TABLE_NAME = 'AIAgriculturalBrightnessRecommendations'
+BRIGHTNESS_AVERAGES_DATA_TABLE_NAME = 'BrightnessAverages'
 
+# Tópicos para recomendações
 TOPICS = [
-    "Gerenciamento de Culturas",
-    "Fotossíntese e Crescimento",
-    "Floração e Polinização",
-    "Maturação e Colheita",
-    "Manejo de Sombra",
-    "Eficiência Energética",
-    "Qualidade da Produção",
-    "Ciclo Circadiano das Plantas",
-    "Controle de Pragas e Doenças",
-    "Planejamento de Plantio"
+    "Necessidade de Irrigação",
+    "Índice de Estresse Hídrico",
+    "Prevenção de Doenças",
+    "Eficiência no Uso da Água",
+    "Análise de Retenção de Água do Solo",
+    "Previsão de Colheita",
+    "Planejamento de Plantio",
+    "Avaliação do Impacto das Chuvas",
+    "Modelagem de Crescimento das Plantas",
+    "Detecção de Zonas de Solo Deficiente"
 ]
 
+def encode_string(s):
+    return s.encode('utf-8').decode('utf-8')
+
+# Função principal
 def lambda_handler(event, context):
     print("Evento recebido:", json.dumps(event, indent=2))
 
     if 'httpMethod' in event and 'path' in event:
         return handle_api_gateway_event(event)
-    elif 'luminosity' in event:
-        return process_luminosity_data(event)
+    elif 'brightness' in event:
+        return process_brightness_data(event)
     
     return {
         'statusCode': 400,
@@ -42,15 +57,16 @@ def lambda_handler(event, context):
         'headers': get_cors_headers()
     }
 
+# Função para lidar com eventos da API Gateway
 def handle_api_gateway_event(event):
     http_method = event['httpMethod']
     path = event['path']
 
     if http_method == 'GET':
-        if path == '/luminosity':
-            return get_latest_luminosity()
-        elif path == '/luminosity/history':
-            return get_luminosity_history()
+        if path == '/brightness':
+            return get_latest_brightness()
+        elif path == '/brightness/history':
+            return get_brightness_history()
         elif path == '/recommendations':
             return get_all_recommendations()
         elif path.startswith('/recommendation/'):
@@ -63,15 +79,15 @@ def handle_api_gateway_event(event):
         'headers': get_cors_headers()
     }
 
-def get_latest_luminosity():
+# Função para obter a última leitura de luminosidade
+def get_latest_brightness():
     try:
-        table = dynamodb.Table(LUMINOSITY_AVERAGES_DATA_TABLE_NAME)
+        table = dynamodb.Table(BRIGHTNESS_AVERAGES_DATA_TABLE_NAME)
         
         response = table.scan(
             ProjectionExpression="#date, readings",
             ExpressionAttributeNames={"#date": "date"},
-            Limit=1,
-            ScanIndexForward=False
+            Limit=1
         )
         
         items = response.get('Items', [])
@@ -83,24 +99,42 @@ def get_latest_luminosity():
                 'headers': get_cors_headers()
             }
         
-        latest_item = items[0]
+        latest_item = max(items, key=lambda x: x['date'])
         readings = latest_item.get('readings', [])
         
-        if not readings:
+        if not readings or not isinstance(readings, list):
             return {
                 'statusCode': 404,
-                'body': json.dumps({'error': 'Nenhuma leitura encontrada para o último registro'}),
+                'body': json.dumps({'error': 'Nenhuma leitura encontrada para o último registro ou formato inválido'}),
                 'headers': get_cors_headers()
             }
         
-        latest_reading = readings[-1]
+        latest_reading = max(readings, key=lambda x: x.get('timestamp', ''))
+        
+        if not isinstance(latest_reading, dict):
+            return {
+                'statusCode': 500,
+                'body': json.dumps({'error': 'Formato de leitura inválido'}),
+                'headers': get_cors_headers()
+            }
+        
+        brightness = latest_reading.get('brightness')
+        status = latest_reading.get('status')
+        timestamp = latest_reading.get('timestamp')
+        
+        if brightness is None or status is None or timestamp is None:
+            return {
+                'statusCode': 500,
+                'body': json.dumps({'error': 'Dados de leitura incompletos'}),
+                'headers': get_cors_headers()
+            }
         
         return {
             'statusCode': 200,
             'body': json.dumps({
-                'luminosity': float(latest_reading['luminosity']),
-                'status': latest_reading['status'],
-                'timestamp': latest_reading['timestamp']
+                'brightness': float(brightness),
+                'status': status,
+                'timestamp': timestamp
             }),
             'headers': get_cors_headers()
         }
@@ -112,15 +146,22 @@ def get_latest_luminosity():
             'headers': get_cors_headers()
         }
 
-def process_luminosity_data(event):
+# Função para processar dados de luminosidade recebidos
+def process_brightness_data(event):
     try:
-        luminosity = event['luminosity']
+        brightness = event['brightness']
         status = event['status']
+        crops = event['crops']  # Coleta o array crops corretamente
         timestamp = datetime.now().isoformat()
 
-        store_luminosity_data(luminosity, status, timestamp)
+        # Verifica se crops é uma lista
+        if not isinstance(crops, list):
+            raise ValueError("Crops deve ser uma lista de culturas.")
 
-        recommendations_result = generate_all_recommendations(luminosity, status)
+        store_brightness_data(brightness, status, timestamp)
+
+        # Gera recomendações passando também as culturas (crops)
+        recommendations_result = generate_agriculture_recommendations(brightness, status, crops)
 
         return recommendations_result
     except Exception as e:
@@ -131,19 +172,32 @@ def process_luminosity_data(event):
             'headers': get_cors_headers()
         }
 
-def store_luminosity_data(luminosity, status, timestamp):
-    table = dynamodb.Table(LUMINOSITY_AVERAGES_DATA_TABLE_NAME)
+# Função para armazenar dados de luminosidade no DynamoDB
+def store_brightness_data(brightness, status, timestamp):
+    table = dynamodb.Table(BRIGHTNESS_AVERAGES_DATA_TABLE_NAME)
     date = timestamp.split('T')[0]
     
     try:
+        existing_readings = table.get_item(
+            Key={'date': date},
+            ProjectionExpression="readings",
+        ).get('Item', {}).get('readings', [])
+        
+        if existing_readings:
+            last_reading = existing_readings[-1]
+            if last_reading['timestamp'] == timestamp:
+                print(f"Leitura duplicada detectada para o timestamp {timestamp}. Ignorando armazenamento.")
+                return
+
+        # Armazena a nova leitura de luminosidade
         response = table.update_item(
             Key={'date': date},
             UpdateExpression="SET thing_name = :tn, readings = list_append(if_not_exists(readings, :empty_list), :r), last_update = :lu",
             ExpressionAttributeValues={
-                ':tn': IOT_THING_NAME,
+                ':tn': TOPIC_NAME,
                 ':r': [{
                     'timestamp': timestamp,
-                    'luminosity': Decimal(str(luminosity)),
+                    'brightness': Decimal(str(brightness)),  # Mantemos o Decimal aqui para o DynamoDB
                     'status': status
                 }],
                 ':lu': timestamp,
@@ -152,16 +206,11 @@ def store_luminosity_data(luminosity, status, timestamp):
             ReturnValues="UPDATED_NEW"
         )
         
-        if response.get('Attributes', {}).get('readings', []):
-            print(f"Dados de luminosidade atualizados para a data {date}")
-        else:
-            print(f"Novo item criado para a data {date}")
-        
         print(f"Dados de luminosidade armazenados com sucesso para a data {date}")
     except ClientError as e:
         error_code = e.response['Error']['Code']
         if error_code == 'ResourceNotFoundException':
-            print(f"A tabela {LUMINOSITY_AVERAGES_DATA_TABLE_NAME} não foi encontrada. Verifique o nome da tabela e a região.")
+            print(f"A tabela {BRIGHTNESS_AVERAGES_DATA_TABLE_NAME} não foi encontrada. Verifique o nome da tabela e a região.")
         elif error_code == 'ConditionalCheckFailedException':
             print(f"Erro de condição ao atualizar o item para a data {date}. Verifique as condições de atualização.")
         else:
@@ -171,211 +220,375 @@ def store_luminosity_data(luminosity, status, timestamp):
         print(f"Erro inesperado ao armazenar dados de luminosidade: {str(e)}")
         raise
 
-def get_luminosity_history(days=30):
-    table = dynamodb.Table(LUMINOSITY_AVERAGES_DATA_TABLE_NAME)
-    end_date = datetime.now().date()
-    start_date = end_date - timedelta(days=days)
-
-    response = table.scan(
-        FilterExpression=Key('date').between(start_date.isoformat(), end_date.isoformat())
-    )
-
-    return {
-        'statusCode': 200,
-        'body': json.dumps(response['Items']),
-        'headers': get_cors_headers()
-    }
-
-def generate_all_recommendations(luminosity, status):
+# Função para gerar recomendações agrícolas
+def generate_agriculture_recommendations(brightness, status, crops):
     timestamp = datetime.now().isoformat()
-    
-    print(f"Gerando recomendações para todos os tópicos. Luminosidade: {luminosity}, Status: {status}")
-    
-    topics_prompt = "\n".join([f"- {topic}" for topic in TOPICS])
-    
-    prompt = f'''Human: Você é um especialista em agricultura. Forneça recomendações detalhadas para otimizar a saúde e produção das plantas com base nos seguintes dados:
-    - Luminosidade atual: {luminosity} lux
+    print(f"[{timestamp}] Iniciando geração de recomendações")
+    print(f"[{timestamp}] Parâmetros recebidos - Umidade: {brightness}%, Status: {status}, Culturas: {crops}")
+
+    crops_str = ", ".join(crops)
+    print(f"[{timestamp}] Culturas para o prompt: {crops_str}")
+
+    prompt = encode_string(f'''Human: Você é um especialista em agricultura. Forneça recomendações detalhadas para as próximas quatro semanas, com base nas culturas plantadas e na luminosidade atual do solo. 
+    Considere os seguintes dados:
+    - Umidade atual do solo: {brightness}%
     - Status atual: {status}
+    - Culturas plantadas: {crops_str}
 
-    Forneça uma recomendação prática e acionável para cada um dos seguintes tópicos:
-    {topics_prompt}
+    O plano deve incluir:
+    1. Sugestões de melhorias nas práticas de plantio.
+    2. Recomendações de novas culturas que possam ser mais adequadas para o solo e condições climáticas.
+    3. Orientações para cada semana com base na evolução esperada do solo e condições climáticas.
 
-    Cada recomendação deve ser específica, detalhada e diretamente relacionada ao nível de luminosidade atual. Responda em português.
-    Formate sua resposta como um dicionário JSON, onde a chave é o tópico e o valor é a recomendação correspondente.
-
-    Assistant: Aqui está um dicionário JSON com recomendações para cada tópico baseado nos dados fornecidos:
+    Formate sua resposta como um dicionário JSON, onde as chaves são as semanas e os valores são recomendações específicas para cada semana.
 
     {{
-        "Gerenciamento de Culturas": "Recomendação para Gerenciamento de Culturas...",
-        "Fotossíntese e Crescimento": "Recomendação para Fotossíntese e Crescimento...",
+        "Semana 1": {{
+            "recomendações": "Recomendações específicas para a semana 1..."
+        }},
+        "Semana 2": {{
+            "recomendações": "Recomendações específicas para a semana 2..."
+        }},
         ...
     }}
 
     Human: Obrigado. Por favor, forneça apenas o dicionário JSON com as recomendações, sem incluir nenhum texto introdutório ou conclusivo.
-    
-    Assistant:'''
 
-    print(f"Enviando requisição para o Bedrock com o prompt para todos os tópicos")
-    
+    Assistant:''')
+
+    print(f"[{timestamp}] Prompt preparado para envio ao Bedrock!!!!")
+
     max_retries = 5
     base_delay = 1  # segundo
     for attempt in range(max_retries):
         try:
+            print(f"[{timestamp}] Tentativa {attempt + 1} de {max_retries} para invocar o modelo Bedrock")
             response = bedrock.invoke_model(
-                modelId="anthropic.claude-v2",
+                modelId="anthropic.claude-v2:1",
                 body=json.dumps({
                     "prompt": prompt,
                     "max_tokens_to_sample": 3000,
-                    "temperature": 0.5,
-                    "top_p": 1,
-                    "stop_sequences": ["\n\nHuman:"]
-                })
+                    "top_p": 0.9,
+                    "stop_sequences": ["Human:"]
+                }),
+                contentType="application/json"
             )
-            print(f"Resposta do Bedrock recebida com sucesso")
-            break
+            print(f"[{timestamp}] Resposta recebida do Bedrock")
+            
+            result = json.loads(response['body'].read().decode('utf-8'))
+            print(f"[{timestamp}] Resposta decodificada: {result}")
+
+            recommendations = {encode_string(key): encode_string(value) for key, value in result.items() if isinstance(value, str)}
+            print(f"[{timestamp}] Recomendações extraídas: {recommendations}")
+
+            recommendations = {topic: float(rec) if isinstance(rec, Decimal) else rec for topic, rec in recommendations.items()}
+            print(f"[{timestamp}] Recomendações processadas: {recommendations}")
+
+            save_recommendations(recommendations, brightness, status, timestamp)
+
+            response_body = {
+                'brightness': float(brightness),
+                'status': status,
+                'crops': crops,
+                'recommendations': recommendations,
+                'timestamp': timestamp
+            }
+            print(f"[{timestamp}] Corpo da resposta preparado: {response_body}")
+
+            return {
+                'statusCode': 200,
+                'body': json.dumps(response_body, ensure_ascii=False),
+                'headers': get_cors_headers()
+            }
         except ClientError as e:
-            if e.response['Error']['Code'] == 'ThrottlingException':
-                if attempt == max_retries - 1:
-                    print(f"Erro ao chamar o Bedrock após {max_retries} tentativas: {str(e)}")
-                    return {
-                        'statusCode': 500,
-                        'body': json.dumps({'error': f'Falha ao gerar recomendações após {max_retries} tentativas: {str(e)}'}),
-                        'headers': get_cors_headers()
-                    }
-                delay = (2 ** attempt * base_delay) + (random.randint(0, 1000) / 1000.0)
-                print(f"Throttling detectado. Tentativa {attempt + 1} de {max_retries}. Aguardando {delay:.2f} segundos.")
+            print(f"[{timestamp}] Erro do cliente Bedrock (Tentativa {attempt + 1}): {str(e)}")
+            if attempt < max_retries - 1:
+                delay = base_delay * (2 ** attempt)
+                print(f"[{timestamp}] Aguardando {delay} segundos antes da próxima tentativa")
                 time.sleep(delay)
             else:
+                print(f"[{timestamp}] Todas as tentativas falharam")
                 raise
-    else:
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error': f'Falha ao gerar recomendações após {max_retries} tentativas'}),
-            'headers': get_cors_headers()
-        }
+        except json.JSONDecodeError as e:
+            print(f"[{timestamp}] Erro ao decodificar JSON da resposta do Bedrock: {str(e)}")
+            raise
+        except Exception as e:
+            print(f"[{timestamp}] Erro inesperado na chamada ao Bedrock: {str(e)}")
+            raise
 
-    recommendations = json.loads(response['body'].read())['completion'].strip()
-    print(f"Recomendações geradas: {recommendations}")
-
-    try:
-        recommendations_dict = json.loads(recommendations)
-    except json.JSONDecodeError:
-        print("Erro ao decodificar as recomendações como JSON")
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error': 'Falha ao decodificar as recomendações como JSON'}),
-            'headers': get_cors_headers()
-        }
-
-    try:
-        store_recommendation(recommendations_dict, luminosity, status, timestamp)
-        print("Todas as recomendações armazenadas com sucesso")
-    except Exception as e:
-        print(f"Erro ao armazenar recomendações: {str(e)}")
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error': f'Falha ao armazenar recomendações: {str(e)}'}),
-            'headers': get_cors_headers()
-        }
-
+    print(f"[{timestamp}] Retornando resposta de erro após falhas múltiplas")
     return {
-        'statusCode': 200,
-        'body': json.dumps(recommendations_dict),
+        'statusCode': 500,
+        'body': json.dumps({'error': 'Falha ao gerar recomendações'}, ensure_ascii=False),
         'headers': get_cors_headers()
     }
 
-def store_recommendation(recommendations_dict, luminosity, status, timestamp):
+def save_recommendations(recommendations, brightness, status, timestamp):
+    table = dynamodb.Table(AGRICULTURAL_BRIGHTNESS_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
+    
+    print(f"[{timestamp}] Iniciando salvamento das recomendações no DynamoDB")
+
     try:
-        print("Tentando armazenar recomendações")
-        print(f"Nome da tabela DynamoDB: {AGRICULTURAL_LUMINOSITY_RECOMMENDATIONS_DYNAMODB_TABLE_NAME}")
-        
-        table = dynamodb.Table(AGRICULTURAL_LUMINOSITY_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
-        date = timestamp.split('T')[0]
-        
-        recommendations = []
-        for topic, recommendation in recommendations_dict.items():
-            recommendations.append({
-                'topic': topic,
-                'recommendation': recommendation,
-                'luminosity': Decimal(str(luminosity)),
-                'status': status,
-                'timestamp': timestamp
-            })
-        
-        response = table.update_item(
-            Key={'date': date},
-            UpdateExpression="SET thing_name = :tn, recommendations = list_append(if_not_exists(recommendations, :empty_list), :r), last_update = :lu",
-            ExpressionAttributeValues={
-                ':tn': IOT_THING_NAME,
-                ':r': recommendations,
-                ':lu': timestamp,
-                ':empty_list': []
-            },
-            ReturnValues="UPDATED_NEW"
-        )
-        
-        if response.get('Attributes', {}).get('recommendations', []):
-            print(f"Recomendações atualizadas para a data {date}")
-        else:
-            print(f"Novo item de recomendações criado para a data {date}")
-        
-        print(f"Recomendações armazenadas com sucesso para a data {date}")
+        items = []
+        for topic, recommendation in recommendations.items():
+            item = {
+                'M': {
+                    'topic': {'S': topic},
+                    'recommendation': {'S': recommendation},
+                    'brightness': {'N': str(brightness)},
+                    'status': {'S': status},
+                    'timestamp': {'S': timestamp}
+                }
+            }
+            items.append(item)
+
+        # Criar o item principal
+        main_item = {
+            'date': timestamp.split('T')[0],  # Chave primária
+            'topic_name': TOPIC_NAME,
+            'last_update': timestamp,
+            'recommendations': {'L': items}
+        }
+
+        response = table.put_item(Item=main_item)
+        print(f"[{timestamp}] Recomendações salvas com sucesso. Resposta do DynamoDB: {response}")
+
     except ClientError as e:
         error_code = e.response['Error']['Code']
-        if error_code == 'ResourceNotFoundException':
-            print(f"A tabela {AGRICULTURAL_LUMINOSITY_RECOMMENDATIONS_DYNAMODB_TABLE_NAME} não foi encontrada. Verifique o nome da tabela e a região.")
-        elif error_code == 'ConditionalCheckFailedException':
-            print(f"Erro de condição ao atualizar o item para a data {date}. Verifique as condições de atualização.")
-        else:
-            print(f"Erro ao armazenar recomendações: {str(e)}")
+        error_message = e.response['Error']['Message']
+        print(f"[{timestamp}] Erro ao salvar recomendações. Código de erro: {error_code}, Mensagem: {error_message}")
         raise
     except Exception as e:
-        print(f"Erro inesperado ao armazenar recomendações: {str(e)}")
+        print(f"[{timestamp}] Erro inesperado ao salvar recomendações: {str(e)}")
         raise
 
-def get_all_recommendations():
-    table = dynamodb.Table(AGRICULTURAL_LUMINOSITY_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
-    response = table.scan()
-    recommendations = []
-    for item in response['Items']:
-        recommendations.extend(item.get('recommendations', []))
-    return {
-        'statusCode': 200,
-        'body': json.dumps(recommendations),
-        'headers': get_cors_headers()
-    }
+def decimal_default(obj):
+    if isinstance(obj, Decimal):
+        return float(obj)
+    raise TypeError
 
-def get_latest_recommendation(topic):
-    table = dynamodb.Table(AGRICULTURAL_LUMINOSITY_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
-    response = table.scan(
-        ProjectionExpression="recommendations",
-        FilterExpression="contains(recommendations, :topic)",
-        ExpressionAttributeValues={':topic': topic}
-    )
-    
-    all_recommendations = []
-    for item in response['Items']:
-        all_recommendations.extend(item.get('recommendations', []))
-    
-    topic_recommendations = [r for r in all_recommendations if r['topic'] == topic]
-    topic_recommendations.sort(key=lambda x: x['timestamp'], reverse=True)
-    
-    if topic_recommendations:
+def get_all_recommendations():
+    try:
+        logger.info("Iniciando a obtenção de todas as recomendações")
+        table = dynamodb.Table(AGRICULTURAL_BRIGHTNESS_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
+        
+        seven_days_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime('%Y-%m-%d')
+        
+        response = table.scan(
+            FilterExpression=Key('last_update').gte(seven_days_ago)
+        )
+        
+        items = response.get('Items', [])
+        logger.info(f"Número de itens recuperados do DynamoDB: {len(items)}")
+        
+        recommendations = {}
+        
+        for item in items:
+            logger.debug(f"Processando item: {json.dumps(item, default=decimal_default)}")
+            
+            topic_name = item.get('topic_name')
+            recommendations_list = item.get('recommendations', {}).get('L', [])
+            last_update = item.get('last_update')
+            
+            if not all([topic_name, recommendations_list, last_update]):
+                logger.warning(f"Item incompleto encontrado: {item}")
+                continue
+            
+            latest_recommendation = None
+            for rec in recommendations_list:
+                rec_data = rec.get('M', {})
+                if rec_data.get('topic', {}).get('S') == 'completion':
+                    recommendation_text = rec_data.get('recommendation', {}).get('S')
+                    if recommendation_text:
+                        latest_recommendation = recommendation_text
+                        break
+            
+            if latest_recommendation:
+                if topic_name not in recommendations or last_update > recommendations[topic_name]['last_update']:
+                    recommendations[topic_name] = {
+                        'recommendation': latest_recommendation,
+                        'last_update': last_update
+                    }
+        
+        result = {topic: data['recommendation'] for topic, data in recommendations.items()}
+        
+        logger.info(f"Número de recomendações processadas: {len(result)}")
+        logger.debug(f"Recomendações processadas: {json.dumps(result, default=decimal_default)}")
+        
         return {
             'statusCode': 200,
-            'body': json.dumps(topic_recommendations[0]),
+            'body': json.dumps(result, default=decimal_default),
             'headers': get_cors_headers()
         }
-    else:
+    except Exception as e:
+        logger.error(f"Erro ao obter recomendações: {str(e)}", exc_info=True)
         return {
-            'statusCode': 404,
-            'body': json.dumps({'error': 'Recomendação não encontrada'}),
+            'statusCode': 500,
+            'body': json.dumps({'error': f'Falha ao obter recomendações: {str(e)}'}, default=decimal_default),
             'headers': get_cors_headers()
         }
 
+def get_recommendations_by_topic(event):
+    try:
+        print(f"Evento recebido: {json.dumps(event)}")  # Log do evento completo
+        
+        encoded_topic = event.get('queryStringParameters', {}).get('topic')
+        print(f"Tópico codificado: {encoded_topic}")  # Log do tópico codificado
+        
+        if not encoded_topic:
+            error_response = create_response(400, {'error': 'O parâmetro "topic" é obrigatório'})
+            print(f"Resposta de erro 400: {json.dumps(error_response)}")
+            return error_response
+
+        # Tente decodificar o tópico de várias maneiras
+        topic_utf8 = urllib.parse.unquote(encoded_topic)
+        topic_latin1 = urllib.parse.unquote(encoded_topic, encoding='latin-1')
+        topic_raw = encoded_topic.replace('\\u00e7', 'ç').replace('\\u00e3', 'ã')
+
+        print(f"Tópico decodificado UTF-8: {topic_utf8}")
+        print(f"Tópico decodificado Latin-1: {topic_latin1}")
+        print(f"Tópico decodificado Raw: {topic_raw}")
+
+        # Use o tópico raw para a consulta
+        topic = topic_raw
+
+        table = dynamodb.Table(AGRICULTURAL_BRIGHTNESS_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
+        print(f"Nome da tabela DynamoDB: {AGRICULTURAL_BRIGHTNESS_RECOMMENDATIONS_DYNAMODB_TABLE_NAME}")
+        
+        response = table.query(
+            KeyConditionExpression=Key('topic').eq(topic),
+            ScanIndexForward=False
+        )
+        print(f"Resposta do DynamoDB: {json.dumps(response, default=str)}")
+        
+        items = response.get('Items', [])
+
+        if not items:
+            error_response = create_response(404, {'error': f'Nenhuma recomendação encontrada para o tópico: {topic}'})
+            print(f"Resposta de erro 404: {json.dumps(error_response)}")
+            return error_response
+
+        formatted_items = [{
+            'topic': item['topic'],
+            'recommendation': item['recommendation'],
+            'timestamp': item['timestamp']
+        } for item in items]
+
+        success_response = create_response(200, {
+            'topic': topic,
+            'recommendations': formatted_items
+        })
+        print(f"Resposta de sucesso 200: {json.dumps(success_response)}")
+        return success_response
+
+    except Exception as e:
+        error_message = f"Falha ao obter recomendações por tópico: {str(e)}"
+        error_response = create_response(500, {'error': error_message})
+        print(f"Resposta de erro 500: {json.dumps(error_response)}")
+        print(f"Traceback: {traceback.format_exc()}")
+        return error_response
+
+# Função para obter a última recomendação por tópico
+def get_latest_recommendation(topic):
+    try:
+        table = dynamodb.Table(AGRICULTURAL_BRIGHTNESS_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
+        response = table.query(
+            KeyConditionExpression=Key('topic').eq(topic),
+            ScanIndexForward=False,
+            Limit=1
+        )
+        
+        items = response.get('Items', [])
+        
+        if not items:
+            return {
+                'statusCode': 404,
+                'body': json.dumps({'error': f'Nenhuma recomendação encontrada para o tópico: {topic}'}),
+                'headers': get_cors_headers()
+            }
+        
+        latest_recommendation = items[0]
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'topic': topic,
+                'recommendation': latest_recommendation['recommendation'],
+                'timestamp': latest_recommendation['timestamp']
+            }),
+            'headers': get_cors_headers()
+        }
+    except Exception as e:
+        print(f"Erro ao obter a última recomendação para {topic}: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': f'Falha ao obter a recomendação para {topic}: {str(e)}'}),
+            'headers': get_cors_headers()
+        }
+        
+def create_response(status_code, body):
+    return {
+        'statusCode': status_code,
+        'body': json.dumps(body, ensure_ascii=False, default=str),
+        'headers': get_cors_headers()
+    }
+    
+# Função para obter cabeçalhos CORS
 def get_cors_headers():
     return {
-        'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'OPTIONS, POST, GET'
     }
+
+# Função para obter o histórico de luminosidade
+def get_brightness_history():
+    try:
+        table = dynamodb.Table(BRIGHTNESS_AVERAGES_DATA_TABLE_NAME)
+        
+        # Definir o período de tempo para buscar o histórico (por exemplo, últimos 7 dias)
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=7)
+        
+        response = table.query(
+            KeyConditionExpression=Key('date').between(start_date.isoformat(), end_date.isoformat()),
+            ScanIndexForward=False  # Para obter os resultados mais recentes primeiro
+        )
+        
+        items = response.get('Items', [])
+        
+        if not items:
+            return {
+                'statusCode': 404,
+                'body': json.dumps({'error': 'Nenhum dado de histórico encontrado'}),
+                'headers': get_cors_headers()
+            }
+        
+        # Processar e formatar os dados do histórico
+        history = []
+        for item in items:
+            date = item['date']
+            readings = item.get('readings', [])
+            for reading in readings:
+                history.append({
+                    'date': date,
+                    'timestamp': reading['timestamp'],
+                    'brightness': float(reading['brightness']),
+                    'status': reading['status']
+                })
+        
+        # Ordenar o histórico por timestamp
+        history.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps(history),
+            'headers': get_cors_headers()
+        }
+    except Exception as e:
+        print(f"Erro ao obter o histórico de luminosidade: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': f"Ocorreu um erro ao obter o histórico de luminosidade: {str(e)}"}),
+            'headers': get_cors_headers()
+        }

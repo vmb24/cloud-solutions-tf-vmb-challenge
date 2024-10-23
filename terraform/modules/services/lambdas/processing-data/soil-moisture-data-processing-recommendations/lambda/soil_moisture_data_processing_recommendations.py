@@ -79,7 +79,7 @@ def handle_api_gateway_event(event):
         'headers': get_cors_headers()
     }
 
-# Função para obter a última leitura de umidade
+# Função para obter a última leitura de umidade do solo
 def get_latest_moisture():
     try:
         table = dynamodb.Table(SOIL_MOISTURE_AVERAGES_DATA_TABLE_NAME)
@@ -95,7 +95,7 @@ def get_latest_moisture():
         if not items:
             return {
                 'statusCode': 404,
-                'body': json.dumps({'error': 'Nenhum dado de umidade encontrado'}),
+                'body': json.dumps({'error': 'Nenhum dado de umidade do solo encontrado'}),
                 'headers': get_cors_headers()
             }
         
@@ -139,34 +139,40 @@ def get_latest_moisture():
             'headers': get_cors_headers()
         }
     except Exception as e:
-        print(f"Erro ao obter a última leitura de umidade: {str(e)}")
+        print(f"Erro ao obter a última leitura de umidade do solo: {str(e)}")
         return {
             'statusCode': 500,
-            'body': json.dumps({'error': f"Ocorreu um erro ao obter a última leitura de umidade: {str(e)}"}),
+            'body': json.dumps({'error': f"Ocorreu um erro ao obter a última leitura de umidade do solo: {str(e)}"}),
             'headers': get_cors_headers()
         }
 
-# Função para processar dados de umidade recebidos
+# Função para processar dados de umidade do solo recebidos
 def process_moisture_data(event):
     try:
         moisture = event['moisture']
         status = event['status']
+        crops = event['crops']  # Coleta o array crops corretamente
         timestamp = datetime.now().isoformat()
+
+        # Verifica se crops é uma lista
+        if not isinstance(crops, list):
+            raise ValueError("Crops deve ser uma lista de culturas.")
 
         store_moisture_data(moisture, status, timestamp)
 
-        recommendations_result = generate_all_recommendations(moisture, status)
+        # Gera recomendações passando também as culturas (crops)
+        recommendations_result = generate_agriculture_recommendations(moisture, status, crops)
 
         return recommendations_result
     except Exception as e:
-        print(f"Erro ao processar dados de umidade: {str(e)}")
+        print(f"Erro ao processar dados de umidade do solo: {str(e)}")
         return {
             'statusCode': 500,
-            'body': json.dumps({'error': f"Falha ao processar dados de umidade: {str(e)}"}),
+            'body': json.dumps({'error': f"Falha ao processar dados de umidade do solo: {str(e)}"}),
             'headers': get_cors_headers()
         }
 
-# Função para armazenar dados de umidade no DynamoDB
+# Função para armazenar dados de umidade do solo no DynamoDB
 def store_moisture_data(moisture, status, timestamp):
     table = dynamodb.Table(SOIL_MOISTURE_AVERAGES_DATA_TABLE_NAME)
     date = timestamp.split('T')[0]
@@ -183,7 +189,7 @@ def store_moisture_data(moisture, status, timestamp):
                 print(f"Leitura duplicada detectada para o timestamp {timestamp}. Ignorando armazenamento.")
                 return
 
-        # Armazena a nova leitura de umidade
+        # Armazena a nova leitura de umidade do solo
         response = table.update_item(
             Key={'date': date},
             UpdateExpression="SET thing_name = :tn, readings = list_append(if_not_exists(readings, :empty_list), :r), last_update = :lu",
@@ -200,7 +206,7 @@ def store_moisture_data(moisture, status, timestamp):
             ReturnValues="UPDATED_NEW"
         )
         
-        print(f"Dados de umidade armazenados com sucesso para a data {date}")
+        print(f"Dados de umidade do solo armazenados com sucesso para a data {date}")
     except ClientError as e:
         error_code = e.response['Error']['Code']
         if error_code == 'ResourceNotFoundException':
@@ -208,34 +214,43 @@ def store_moisture_data(moisture, status, timestamp):
         elif error_code == 'ConditionalCheckFailedException':
             print(f"Erro de condição ao atualizar o item para a data {date}. Verifique as condições de atualização.")
         else:
-            print(f"Erro ao armazenar dados de umidade: {str(e)}")
+            print(f"Erro ao armazenar dados de umidade do solo: {str(e)}")
         raise
     except Exception as e:
-        print(f"Erro inesperado ao armazenar dados de umidade: {str(e)}")
+        print(f"Erro inesperado ao armazenar dados de umidade do solo: {str(e)}")
         raise
 
-# Função para gerar recomendações para todos os tópicos
-def generate_all_recommendations(moisture, status):
+# Função para gerar recomendações agrícolas
+def generate_agriculture_recommendations(moisture, status, crops):
     timestamp = datetime.now().isoformat()
     print(f"[{timestamp}] Iniciando geração de recomendações")
-    print(f"[{timestamp}] Parâmetros recebidos - Umidade: {moisture}%, Status: {status}")
+    print(f"[{timestamp}] Parâmetros recebidos - Umidade: {moisture}%, Status: {status}, Culturas: {crops}")
 
-    topics_prompt = "\n".join([f"- {encode_string(topic)}" for topic in TOPICS])
-    print(f"[{timestamp}] Tópicos preparados: {topics_prompt}")
+    # Transforma o array de culturas (crops) em uma string separada por vírgulas
+    crops_str = ", ".join(crops)
+    print(f"[{timestamp}] Culturas para o prompt: {crops_str}")
 
-    prompt = encode_string(f'''Human: Você é um especialista em agricultura. Forneça recomendações detalhadas para otimizar a saúde e produção das plantas com base nos seguintes dados:
+    # Prepara o prompt de IA com todos os valores (incluindo crops)
+    prompt = encode_string(f'''Human: Você é um especialista em agricultura. Forneça recomendações detalhadas para as próximas quatro semanas, com base nas culturas plantadas e na umidade do solo atual do solo. 
+    Considere os seguintes dados:
     - Umidade atual do solo: {moisture}%
     - Status atual: {status}
+    - Culturas plantadas: {crops_str}
 
-    Forneça uma recomendação prática e acionável para cada um dos seguintes tópicos:
-    {topics_prompt}
+    O plano deve incluir:
+    1. Sugestões de melhorias nas práticas de plantio.
+    2. Recomendações de novas culturas que possam ser mais adequadas para o solo e condições climáticas.
+    3. Orientações para cada semana com base na evolução esperada do solo e condições climáticas.
 
-    Cada recomendação deve ser específica, detalhada e diretamente relacionada ao nível de umidade atual. Responda em português.
-    Formate sua resposta como um dicionário JSON, onde a chave é o tópico e o valor é a recomendação correspondente.
+    Formate sua resposta como um dicionário JSON, onde as chaves são as semanas e os valores são recomendações específicas para cada semana.
 
     {{
-        "Necessidade de Irrigação": "Recomendação para Necessidade de Irrigação...",
-        "Índice de Estresse Hídrico": "Recomendação para Índice de Estresse Hídrico...",
+        "Semana 1": {{
+            "recomendações": "Recomendações específicas para a semana 1..."
+        }},
+        "Semana 2": {{
+            "recomendações": "Recomendações específicas para a semana 2..."
+        }},
         ...
     }}
 
@@ -243,7 +258,7 @@ def generate_all_recommendations(moisture, status):
 
     Assistant:''')
 
-    print(f"[{timestamp}] Prompt preparado para envio ao Bedrock")
+    print(f"[{timestamp}] Prompt preparado para envio ao Bedrock!!!!")
 
     max_retries = 5
     base_delay = 1  # segundo
@@ -251,7 +266,7 @@ def generate_all_recommendations(moisture, status):
         try:
             print(f"[{timestamp}] Tentativa {attempt + 1} de {max_retries} para invocar o modelo Bedrock")
             response = bedrock.invoke_model(
-                modelId="anthropic.claude-v2",
+                modelId="anthropic.claude-v2:1",
                 body=json.dumps({
                     "prompt": prompt,
                     "max_tokens_to_sample": 3000,
@@ -281,6 +296,7 @@ def generate_all_recommendations(moisture, status):
             response_body = {
                 'moisture': float(moisture),
                 'status': status,
+                'crops': crops,
                 'recommendations': recommendations,
                 'timestamp': timestamp
             }
@@ -532,7 +548,7 @@ def get_cors_headers():
         'Access-Control-Allow-Methods': 'OPTIONS, POST, GET'
     }
 
-# Função para obter o histórico de umidade
+# Função para obter o histórico de umidade do solo
 def get_moisture_history():
     try:
         table = dynamodb.Table(SOIL_MOISTURE_AVERAGES_DATA_TABLE_NAME)
@@ -577,9 +593,9 @@ def get_moisture_history():
             'headers': get_cors_headers()
         }
     except Exception as e:
-        print(f"Erro ao obter o histórico de umidade: {str(e)}")
+        print(f"Erro ao obter o histórico de umidade do solo: {str(e)}")
         return {
             'statusCode': 500,
-            'body': json.dumps({'error': f"Ocorreu um erro ao obter o histórico de umidade: {str(e)}"}),
+            'body': json.dumps({'error': f"Ocorreu um erro ao obter o histórico de umidade do solo: {str(e)}"}),
             'headers': get_cors_headers()
         }

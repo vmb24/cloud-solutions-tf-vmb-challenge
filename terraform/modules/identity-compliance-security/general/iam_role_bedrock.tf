@@ -27,7 +27,8 @@ resource "aws_iam_role_policy" "bedrock_full_access" {
         Resource = [
           "arn:aws:bedrock:${var.aws_region}::foundation-model/ai21.j2-mid-v1",
           "arn:aws:bedrock:${var.aws_region}::foundation-model/stability.stable-diffusion-xl-v1",
-          "arn:aws:bedrock:${var.aws_region}::foundation-model/anthropic.claude-v2:1"
+          "arn:aws:bedrock:${var.aws_region}::foundation-model/anthropic.claude-v2:1",
+          "arn:aws:bedrock:${var.aws_region}::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0"
         ]
       }
     ]

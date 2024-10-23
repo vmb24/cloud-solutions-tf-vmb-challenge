@@ -3,18 +3,19 @@ import random
 import time
 import boto3
 from datetime import datetime, timedelta
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
+import traceback
 from decimal import Decimal
 import urllib.parse
-import traceback
+from datetime import timezone
 import logging
 
 # Configurar logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# Inicialização dos clientes
+# Inicializa clientes do boto3
 bedrock = boto3.client('bedrock-runtime')
 dynamodb = boto3.resource('dynamodb')
 iot_client = boto3.client('iot-data', endpoint_url=f"https://a3bw5rp1377npv-ats.iot.us-east-1.amazonaws.com")
@@ -23,52 +24,63 @@ iot_client = boto3.client('iot-data', endpoint_url=f"https://a3bw5rp1377npv-ats.
 TOPIC_NAME = 'agriculture/soil/temperature'
 AGRICULTURAL_SOIL_TEMPERATURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME = 'AIAgriculturalSoilTemperatureRecommendations'
 SOIL_TEMPERATURE_AVERAGES_DATA_TABLE_NAME = 'SoilTemperatureAverages'
+
+# Tópicos para recomendações
 TOPICS = [
-    "Gerenciamento de Estresse Térmico",
-    "Otimização de Irrigação",
-    "Proteção contra Geadas",
-    "Manejo de Culturas em Altas Temperaturas",
-    "Ajuste de Cronograma de Plantio",
-    "Ventilação e Sombreamento",
-    "Monitoramento de Doenças Relacionadas à Temperatura",
-    "Eficiência Energética em Estufas",
-    "Adaptação de Variedades de Culturas",
-    "Práticas de Conservação do Solo"
+    "Necessidade de Irrigação",
+    "Índice de Estresse Hídrico",
+    "Prevenção de Doenças",
+    "Eficiência no Uso da Água",
+    "Análise de Retenção de Água do Solo",
+    "Previsão de Colheita",
+    "Planejamento de Plantio",
+    "Avaliação do Impacto das Chuvas",
+    "Modelagem de Crescimento das Plantas",
+    "Detecção de Zonas de Solo Deficiente"
 ]
 
 def encode_string(s):
     return s.encode('utf-8').decode('utf-8')
 
+# Função principal
 def lambda_handler(event, context):
-    print("Evento recebido:", json.dumps(event, indent=2, default=str))
+    print("Evento recebido:", json.dumps(event, indent=2))
 
     if 'httpMethod' in event and 'path' in event:
         return handle_api_gateway_event(event)
     elif 'temperature' in event:
-        return process_temperature_data(event)
+        return process_moisture_data(event)
     
-    return create_response(400, {'error': 'Requisição inválida'})
+    return {
+        'statusCode': 400,
+        'body': json.dumps({'error': 'Requisição inválida'}),
+        'headers': get_cors_headers()
+    }
 
+# Função para lidar com eventos da API Gateway
 def handle_api_gateway_event(event):
     http_method = event['httpMethod']
     path = event['path']
 
     if http_method == 'GET':
         if path == '/temperature':
-            return get_latest_temperature()
+            return get_latest_moisture()
         elif path == '/temperature/history':
-            return get_temperature_history()
+            return get_moisture_history()
         elif path == '/recommendations':
             return get_all_recommendations()
-        elif path == '/recommendations/by-topic':
-            return get_recommendations_by_topic(event)
         elif path.startswith('/recommendation/'):
             topic = path.split('/')[-1]
             return get_latest_recommendation(topic)
 
-    return create_response(400, {'error': 'Requisição inválida'})
+    return {
+        'statusCode': 400,
+        'body': json.dumps({'error': 'Requisição inválida'}),
+        'headers': get_cors_headers()
+    }
 
-def get_latest_temperature():
+# Função para obter a última leitura de temperatura do solo
+def get_latest_moisture():
     try:
         table = dynamodb.Table(SOIL_TEMPERATURE_AVERAGES_DATA_TABLE_NAME)
         
@@ -83,7 +95,7 @@ def get_latest_temperature():
         if not items:
             return {
                 'statusCode': 404,
-                'body': json.dumps({'error': 'Nenhum dado de umidade encontrado'}),
+                'body': json.dumps({'error': 'Nenhum dado de temperatura do solo encontrado'}),
                 'headers': get_cors_headers()
             }
         
@@ -127,32 +139,57 @@ def get_latest_temperature():
             'headers': get_cors_headers()
         }
     except Exception as e:
-        print(f"Erro ao obter a última leitura de umidade: {str(e)}")
+        print(f"Erro ao obter a última leitura de temperatura do solo: {str(e)}")
         return {
             'statusCode': 500,
-            'body': json.dumps({'error': f"Ocorreu um erro ao obter a última leitura de umidade: {str(e)}"}),
+            'body': json.dumps({'error': f"Ocorreu um erro ao obter a última leitura de temperatura do solo: {str(e)}"}),
             'headers': get_cors_headers()
         }
 
-def process_temperature_data(event):
+# Função para processar dados de temperatura do solo recebidos
+def process_moisture_data(event):
     try:
         temperature = event['temperature']
         status = event['status']
+        crops = event['crops']  # Coleta o array crops corretamente
         timestamp = datetime.now().isoformat()
 
-        store_temperature_data(temperature, status, timestamp)
-        recommendations_result = generate_all_recommendations(temperature, status)
+        # Verifica se crops é uma lista
+        if not isinstance(crops, list):
+            raise ValueError("Crops deve ser uma lista de culturas.")
+
+        store_moisture_data(temperature, status, timestamp)
+
+        # Gera recomendações passando também as culturas (crops)
+        recommendations_result = generate_agriculture_recommendations(temperature, status, crops)
 
         return recommendations_result
     except Exception as e:
-        print(f"Erro ao processar dados de temperatura: {str(e)}")
-        return create_response(500, {'error': f"Falha ao processar dados de temperatura: {str(e)}"})
+        print(f"Erro ao processar dados de temperatura do solo: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': f"Falha ao processar dados de temperatura do solo: {str(e)}"}),
+            'headers': get_cors_headers()
+        }
 
-def store_temperature_data(temperature, status, timestamp):
+# Função para armazenar dados de temperatura do solo no DynamoDB
+def store_moisture_data(temperature, status, timestamp):
     table = dynamodb.Table(SOIL_TEMPERATURE_AVERAGES_DATA_TABLE_NAME)
     date = timestamp.split('T')[0]
     
     try:
+        existing_readings = table.get_item(
+            Key={'date': date},
+            ProjectionExpression="readings",
+        ).get('Item', {}).get('readings', [])
+        
+        if existing_readings:
+            last_reading = existing_readings[-1]
+            if last_reading['timestamp'] == timestamp:
+                print(f"Leitura duplicada detectada para o timestamp {timestamp}. Ignorando armazenamento.")
+                return
+
+        # Armazena a nova leitura de temperatura do solo
         response = table.update_item(
             Key={'date': date},
             UpdateExpression="SET thing_name = :tn, readings = list_append(if_not_exists(readings, :empty_list), :r), last_update = :lu",
@@ -160,7 +197,7 @@ def store_temperature_data(temperature, status, timestamp):
                 ':tn': TOPIC_NAME,
                 ':r': [{
                     'timestamp': timestamp,
-                    'temperature': Decimal(str(temperature)),
+                    'temperature': Decimal(str(temperature)),  # Mantemos o Decimal aqui para o DynamoDB
                     'status': status
                 }],
                 ':lu': timestamp,
@@ -169,12 +206,7 @@ def store_temperature_data(temperature, status, timestamp):
             ReturnValues="UPDATED_NEW"
         )
         
-        if response.get('Attributes', {}).get('readings', []):
-            print(f"Dados de temperatura atualizados para a data {date}")
-        else:
-            print(f"Novo item criado para a data {date}")
-        
-        print(f"Dados de temperatura armazenados com sucesso para a data {date}")
+        print(f"Dados de temperatura do solo armazenados com sucesso para a data {date}")
     except ClientError as e:
         error_code = e.response['Error']['Code']
         if error_code == 'ResourceNotFoundException':
@@ -182,87 +214,43 @@ def store_temperature_data(temperature, status, timestamp):
         elif error_code == 'ConditionalCheckFailedException':
             print(f"Erro de condição ao atualizar o item para a data {date}. Verifique as condições de atualização.")
         else:
-            print(f"Erro ao armazenar dados de temperatura: {str(e)}")
+            print(f"Erro ao armazenar dados de temperatura do solo: {str(e)}")
         raise
     except Exception as e:
-        print(f"Erro inesperado ao armazenar dados de temperatura: {str(e)}")
+        print(f"Erro inesperado ao armazenar dados de temperatura do solo: {str(e)}")
         raise
 
-def get_temperature_history(days=30):
-    try:
-        table = dynamodb.Table(SOIL_TEMPERATURE_AVERAGES_DATA_TABLE_NAME)
-        end_date = datetime.now().date()
-        start_date = end_date - timedelta(days=days)
-
-        response = table.scan(
-            FilterExpression=Key('date').between(start_date.isoformat(), end_date.isoformat())
-        )
-
-        return create_response(200, response['Items'])
-    except Exception as e:
-        print(f"Erro ao obter histórico de temperatura: {str(e)}")
-        return create_response(500, {'error': f"Falha ao obter histórico de temperatura: {str(e)}"})
-    
-def get_latest_recommendation(topic):
-    try:
-        table = dynamodb.Table(AGRICULTURAL_SOIL_TEMPERATURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
-        response = table.query(
-            KeyConditionExpression=Key('topic').eq(topic),
-            ScanIndexForward=False,
-            Limit=1
-        )
-        
-        items = response.get('Items', [])
-        
-        if not items:
-            return {
-                'statusCode': 404,
-                'body': json.dumps({'error': f'Nenhuma recomendação encontrada para o tópico: {topic}'}),
-                'headers': get_cors_headers()
-            }
-        
-        latest_recommendation = items[0]
-        
-        return {
-            'statusCode': 200,
-            'body': json.dumps({
-                'topic': topic,
-                'recommendation': latest_recommendation['recommendation'],
-                'timestamp': latest_recommendation['timestamp']
-            }),
-            'headers': get_cors_headers()
-        }
-    except Exception as e:
-        print(f"Erro ao obter a última recomendação para {topic}: {str(e)}")
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error': f'Falha ao obter a recomendação para {topic}: {str(e)}'}),
-            'headers': get_cors_headers()
-        }
-
-def generate_all_recommendations(temperature, status):
+# Função para gerar recomendações agrícolas
+def generate_agriculture_recommendations(temperature, status, crops):
     timestamp = datetime.now().isoformat()
     print(f"[{timestamp}] Iniciando geração de recomendações")
-    print(f"[{timestamp}] Parâmetros recebidos - Temperatura: {temperature}%, Status: {status}")
+    print(f"[{timestamp}] Parâmetros recebidos - Umidade: {temperature}%, Status: {status}, Culturas: {crops}")
 
-    topics_prompt = "\n".join([f"- {encode_string(topic)}" for topic in TOPICS])
-    print(f"[{timestamp}] Tópicos preparados: {topics_prompt}")
+    # Transforma o array de culturas (crops) em uma string separada por vírgulas
+    crops_str = ", ".join(crops)
+    print(f"[{timestamp}] Culturas para o prompt: {crops_str}")
 
-    prompt = encode_string(f'''Human: Você é um especialista em agricultura. Forneça recomendações detalhadas para otimizar a saúde e produção das plantas com base nos seguintes dados:
-    - Temperatura atual: {temperature}°C
+    # Prepara o prompt de IA com todos os valores (incluindo crops)
+    prompt = encode_string(f'''Human: Você é um especialista em agricultura. Forneça recomendações detalhadas para as próximas quatro semanas, com base nas culturas plantadas e na temperatura do solo atual do solo. 
+    Considere os seguintes dados:
+    - Umidade atual do solo: {temperature}%
     - Status atual: {status}
+    - Culturas plantadas: {crops_str}
 
-    Forneça uma recomendação prática e acionável para cada um dos seguintes tópicos:
-    {topics_prompt}
+    O plano deve incluir:
+    1. Sugestões de melhorias nas práticas de plantio.
+    2. Recomendações de novas culturas que possam ser mais adequadas para o solo e condições climáticas.
+    3. Orientações para cada semana com base na evolução esperada do solo e condições climáticas.
 
-    Cada recomendação deve ser específica, detalhada e diretamente relacionada à temperatura atual. Responda em português.
-    Formate sua resposta como um dicionário JSON, onde a chave é o tópico e o valor é a recomendação correspondente.
-
-    Assistant: Aqui está um dicionário JSON com recomendações para cada tópico baseado nos dados fornecidos:
+    Formate sua resposta como um dicionário JSON, onde as chaves são as semanas e os valores são recomendações específicas para cada semana.
 
     {{
-        "Gerenciamento de Estresse Térmico": "Recomendação para Gerenciamento de Estresse Térmico...",
-        "Otimização de Irrigação": "Recomendação para Otimização de Irrigação...",
+        "Semana 1": {{
+            "recomendações": "Recomendações específicas para a semana 1..."
+        }},
+        "Semana 2": {{
+            "recomendações": "Recomendações específicas para a semana 2..."
+        }},
         ...
     }}
 
@@ -270,7 +258,7 @@ def generate_all_recommendations(temperature, status):
 
     Assistant:''')
 
-    print(f"[{timestamp}] Prompt preparado para envio ao Bedrock")
+    print(f"[{timestamp}] Prompt preparado para envio ao Bedrock!!!!")
 
     max_retries = 5
     base_delay = 1  # segundo
@@ -278,7 +266,7 @@ def generate_all_recommendations(temperature, status):
         try:
             print(f"[{timestamp}] Tentativa {attempt + 1} de {max_retries} para invocar o modelo Bedrock")
             response = bedrock.invoke_model(
-                modelId="anthropic.claude-v2",
+                modelId="anthropic.claude-v2:1",
                 body=json.dumps({
                     "prompt": prompt,
                     "max_tokens_to_sample": 3000,
@@ -308,6 +296,7 @@ def generate_all_recommendations(temperature, status):
             response_body = {
                 'temperature': float(temperature),
                 'status': status,
+                'crops': crops,
                 'recommendations': recommendations,
                 'timestamp': timestamp
             }
@@ -350,11 +339,13 @@ def save_recommendations(recommendations, temperature, status, timestamp):
         items = []
         for topic, recommendation in recommendations.items():
             item = {
-                'topic': topic,
-                'recommendation': recommendation,
-                'temperature': str(temperature),
-                'status': status,
-                'timestamp': timestamp
+                'M': {
+                    'topic': {'S': topic},
+                    'recommendation': {'S': recommendation},
+                    'temperature': {'N': str(temperature)},
+                    'status': {'S': status},
+                    'timestamp': {'S': timestamp}
+                }
             }
             items.append(item)
 
@@ -363,7 +354,7 @@ def save_recommendations(recommendations, temperature, status, timestamp):
             'date': timestamp.split('T')[0],  # Chave primária
             'topic_name': TOPIC_NAME,
             'last_update': timestamp,
-            'recommendations': items
+            'recommendations': {'L': items}
         }
 
         response = table.put_item(Item=main_item)
@@ -387,46 +378,49 @@ def get_all_recommendations():
     try:
         logger.info("Iniciando a obtenção de todas as recomendações")
         table = dynamodb.Table(AGRICULTURAL_SOIL_TEMPERATURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
-        response = table.scan()
+        
+        seven_days_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime('%Y-%m-%d')
+        
+        response = table.scan(
+            FilterExpression=Key('last_update').gte(seven_days_ago)
+        )
         
         items = response.get('Items', [])
-        logger.info(f"Itens recuperados do DynamoDB: {json.dumps(items, default=decimal_default)}")
+        logger.info(f"Número de itens recuperados do DynamoDB: {len(items)}")
         
         recommendations = {}
         
         for item in items:
-            if not isinstance(item, dict):
-                logger.warning(f"Item inesperado encontrado: {item}")
+            logger.debug(f"Processando item: {json.dumps(item, default=decimal_default)}")
+            
+            topic_name = item.get('topic_name')
+            recommendations_list = item.get('recommendations', {}).get('L', [])
+            last_update = item.get('last_update')
+            
+            if not all([topic_name, recommendations_list, last_update]):
+                logger.warning(f"Item incompleto encontrado: {item}")
                 continue
             
-            recommendations_list = item.get('recommendations', [])
-            
-            if not isinstance(recommendations_list, list):
-                logger.warning(f"recommendations não é uma lista: {recommendations_list}")
-                continue
-            
+            latest_recommendation = None
             for rec in recommendations_list:
-                if not isinstance(rec, dict):
-                    logger.warning(f"Recomendação inválida encontrada: {rec}")
-                    continue
-                
-                topic = rec.get('topic', '')
-                recommendation_text = rec.get('recommendation', '')
-                timestamp = rec.get('timestamp', '')
-                
-                if not all([topic, recommendation_text, timestamp]):
-                    logger.warning(f"Recomendação incompleta encontrada: {rec}")
-                    continue
-                
-                if topic not in recommendations or timestamp > recommendations[topic]['timestamp']:
-                    recommendations[topic] = {
-                        'recommendation': recommendation_text,
-                        'timestamp': timestamp
+                rec_data = rec.get('M', {})
+                if rec_data.get('topic', {}).get('S') == 'completion':
+                    recommendation_text = rec_data.get('recommendation', {}).get('S')
+                    if recommendation_text:
+                        latest_recommendation = recommendation_text
+                        break
+            
+            if latest_recommendation:
+                if topic_name not in recommendations or last_update > recommendations[topic_name]['last_update']:
+                    recommendations[topic_name] = {
+                        'recommendation': latest_recommendation,
+                        'last_update': last_update
                     }
         
         result = {topic: data['recommendation'] for topic, data in recommendations.items()}
         
-        logger.info(f"Recomendações processadas: {json.dumps(result, default=decimal_default)}")
+        logger.info(f"Número de recomendações processadas: {len(result)}")
+        logger.debug(f"Recomendações processadas: {json.dumps(result, default=decimal_default)}")
         
         return {
             'statusCode': 200,
@@ -501,17 +495,107 @@ def get_recommendations_by_topic(event):
         print(f"Traceback: {traceback.format_exc()}")
         return error_response
 
+# Função para obter a última recomendação por tópico
+def get_latest_recommendation(topic):
+    try:
+        table = dynamodb.Table(AGRICULTURAL_SOIL_TEMPERATURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
+        response = table.query(
+            KeyConditionExpression=Key('topic').eq(topic),
+            ScanIndexForward=False,
+            Limit=1
+        )
+        
+        items = response.get('Items', [])
+        
+        if not items:
+            return {
+                'statusCode': 404,
+                'body': json.dumps({'error': f'Nenhuma recomendação encontrada para o tópico: {topic}'}),
+                'headers': get_cors_headers()
+            }
+        
+        latest_recommendation = items[0]
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'topic': topic,
+                'recommendation': latest_recommendation['recommendation'],
+                'timestamp': latest_recommendation['timestamp']
+            }),
+            'headers': get_cors_headers()
+        }
+    except Exception as e:
+        print(f"Erro ao obter a última recomendação para {topic}: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': f'Falha ao obter a recomendação para {topic}: {str(e)}'}),
+            'headers': get_cors_headers()
+        }
+        
 def create_response(status_code, body):
     return {
         'statusCode': status_code,
         'body': json.dumps(body, ensure_ascii=False, default=str),
         'headers': get_cors_headers()
     }
-
+    
+# Função para obter cabeçalhos CORS
 def get_cors_headers():
     return {
-        'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'OPTIONS, POST, GET'
     }
+
+# Função para obter o histórico de temperatura do solo
+def get_moisture_history():
+    try:
+        table = dynamodb.Table(SOIL_TEMPERATURE_AVERAGES_DATA_TABLE_NAME)
+        
+        # Definir o período de tempo para buscar o histórico (por exemplo, últimos 7 dias)
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=7)
+        
+        response = table.query(
+            KeyConditionExpression=Key('date').between(start_date.isoformat(), end_date.isoformat()),
+            ScanIndexForward=False  # Para obter os resultados mais recentes primeiro
+        )
+        
+        items = response.get('Items', [])
+        
+        if not items:
+            return {
+                'statusCode': 404,
+                'body': json.dumps({'error': 'Nenhum dado de histórico encontrado'}),
+                'headers': get_cors_headers()
+            }
+        
+        # Processar e formatar os dados do histórico
+        history = []
+        for item in items:
+            date = item['date']
+            readings = item.get('readings', [])
+            for reading in readings:
+                history.append({
+                    'date': date,
+                    'timestamp': reading['timestamp'],
+                    'temperature': float(reading['temperature']),
+                    'status': reading['status']
+                })
+        
+        # Ordenar o histórico por timestamp
+        history.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps(history),
+            'headers': get_cors_headers()
+        }
+    except Exception as e:
+        print(f"Erro ao obter o histórico de temperatura do solo: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': f"Ocorreu um erro ao obter o histórico de temperatura do solo: {str(e)}"}),
+            'headers': get_cors_headers()
+        }

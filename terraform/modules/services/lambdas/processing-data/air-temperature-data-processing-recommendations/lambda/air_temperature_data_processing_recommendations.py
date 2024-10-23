@@ -21,9 +21,9 @@ dynamodb = boto3.resource('dynamodb')
 iot_client = boto3.client('iot-data', endpoint_url=f"https://a3bw5rp1377npv-ats.iot.us-east-1.amazonaws.com")
 
 # Constantes
-TOPIC_NAME = 'agriculture/air/moisture'
-AGRICULTURAL_AIR_MOISTURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME = 'AIAgriculturalAirMoistureRecommendations'
-AIR_MOISTURE_AVERAGES_DATA_TABLE_NAME = 'AirMoistureAverages'
+TOPIC_NAME = 'agriculture/air/temperature'
+AGRICULTURAL_AIR_TEMPERATURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME = 'AIAgriculturalAirTemperatureRecommendations'
+AIR_TEMPERATURE_AVERAGES_DATA_TABLE_NAME = 'AirTemperatureAverages'
 
 # Tópicos para recomendações
 TOPICS = [
@@ -48,7 +48,7 @@ def lambda_handler(event, context):
 
     if 'httpMethod' in event and 'path' in event:
         return handle_api_gateway_event(event)
-    elif 'moisture' in event:
+    elif 'temperature' in event:
         return process_moisture_data(event)
     
     return {
@@ -63,9 +63,9 @@ def handle_api_gateway_event(event):
     path = event['path']
 
     if http_method == 'GET':
-        if path == '/moisture':
+        if path == '/temperature':
             return get_latest_moisture()
-        elif path == '/moisture/history':
+        elif path == '/temperature/history':
             return get_moisture_history()
         elif path == '/recommendations':
             return get_all_recommendations()
@@ -82,7 +82,7 @@ def handle_api_gateway_event(event):
 # Função para obter a última leitura de temperatura do ar
 def get_latest_moisture():
     try:
-        table = dynamodb.Table(AIR_MOISTURE_AVERAGES_DATA_TABLE_NAME)
+        table = dynamodb.Table(AIR_TEMPERATURE_AVERAGES_DATA_TABLE_NAME)
         
         response = table.scan(
             ProjectionExpression="#date, readings",
@@ -118,11 +118,11 @@ def get_latest_moisture():
                 'headers': get_cors_headers()
             }
         
-        moisture = latest_reading.get('moisture')
+        temperature = latest_reading.get('temperature')
         status = latest_reading.get('status')
         timestamp = latest_reading.get('timestamp')
         
-        if moisture is None or status is None or timestamp is None:
+        if temperature is None or status is None or timestamp is None:
             return {
                 'statusCode': 500,
                 'body': json.dumps({'error': 'Dados de leitura incompletos'}),
@@ -132,7 +132,7 @@ def get_latest_moisture():
         return {
             'statusCode': 200,
             'body': json.dumps({
-                'moisture': float(moisture),
+                'temperature': float(temperature),
                 'status': status,
                 'timestamp': timestamp
             }),
@@ -149,7 +149,7 @@ def get_latest_moisture():
 # Função para processar dados de temperatura do ar recebidos
 def process_moisture_data(event):
     try:
-        moisture = event['moisture']
+        temperature = event['temperature']
         status = event['status']
         crops = event['crops']  # Coleta o array crops corretamente
         timestamp = datetime.now().isoformat()
@@ -158,10 +158,10 @@ def process_moisture_data(event):
         if not isinstance(crops, list):
             raise ValueError("Crops deve ser uma lista de culturas.")
 
-        store_moisture_data(moisture, status, timestamp)
+        store_moisture_data(temperature, status, timestamp)
 
         # Gera recomendações passando também as culturas (crops)
-        recommendations_result = generate_agriculture_recommendations(moisture, status, crops)
+        recommendations_result = generate_agriculture_recommendations(temperature, status, crops)
 
         return recommendations_result
     except Exception as e:
@@ -173,8 +173,8 @@ def process_moisture_data(event):
         }
 
 # Função para armazenar dados de temperatura do ar no DynamoDB
-def store_moisture_data(moisture, status, timestamp):
-    table = dynamodb.Table(AIR_MOISTURE_AVERAGES_DATA_TABLE_NAME)
+def store_moisture_data(temperature, status, timestamp):
+    table = dynamodb.Table(AIR_TEMPERATURE_AVERAGES_DATA_TABLE_NAME)
     date = timestamp.split('T')[0]
     
     try:
@@ -197,7 +197,7 @@ def store_moisture_data(moisture, status, timestamp):
                 ':tn': TOPIC_NAME,
                 ':r': [{
                     'timestamp': timestamp,
-                    'moisture': Decimal(str(moisture)),  # Mantemos o Decimal aqui para o DynamoDB
+                    'temperature': Decimal(str(temperature)),  # Mantemos o Decimal aqui para o DynamoDB
                     'status': status
                 }],
                 ':lu': timestamp,
@@ -210,7 +210,7 @@ def store_moisture_data(moisture, status, timestamp):
     except ClientError as e:
         error_code = e.response['Error']['Code']
         if error_code == 'ResourceNotFoundException':
-            print(f"A tabela {AIR_MOISTURE_AVERAGES_DATA_TABLE_NAME} não foi encontrada. Verifique o nome da tabela e a região.")
+            print(f"A tabela {AIR_TEMPERATURE_AVERAGES_DATA_TABLE_NAME} não foi encontrada. Verifique o nome da tabela e a região.")
         elif error_code == 'ConditionalCheckFailedException':
             print(f"Erro de condição ao atualizar o item para a data {date}. Verifique as condições de atualização.")
         else:
@@ -221,10 +221,10 @@ def store_moisture_data(moisture, status, timestamp):
         raise
 
 # Função para gerar recomendações agrícolas
-def generate_agriculture_recommendations(moisture, status, crops):
+def generate_agriculture_recommendations(temperature, status, crops):
     timestamp = datetime.now().isoformat()
     print(f"[{timestamp}] Iniciando geração de recomendações")
-    print(f"[{timestamp}] Parâmetros recebidos - Umidade: {moisture}%, Status: {status}, Culturas: {crops}")
+    print(f"[{timestamp}] Parâmetros recebidos - Umidade: {temperature}%, Status: {status}, Culturas: {crops}")
 
     # Transforma o array de culturas (crops) em uma string separada por vírgulas
     crops_str = ", ".join(crops)
@@ -233,7 +233,7 @@ def generate_agriculture_recommendations(moisture, status, crops):
     # Prepara o prompt de IA com todos os valores (incluindo crops)
     prompt = encode_string(f'''Human: Você é um especialista em agricultura. Forneça recomendações detalhadas para as próximas quatro semanas, com base nas culturas plantadas e na temperatura do ar atual do solo. 
     Considere os seguintes dados:
-    - Umidade atual do solo: {moisture}%
+    - Umidade atual do solo: {temperature}%
     - Status atual: {status}
     - Culturas plantadas: {crops_str}
 
@@ -275,7 +275,6 @@ def generate_agriculture_recommendations(moisture, status, crops):
                 }),
                 contentType="application/json"
             )
-
             print(f"[{timestamp}] Resposta recebida do Bedrock")
             
             result = json.loads(response['body'].read().decode('utf-8'))
@@ -290,11 +289,11 @@ def generate_agriculture_recommendations(moisture, status, crops):
             print(f"[{timestamp}] Recomendações processadas: {recommendations}")
 
             # Salva as recomendações no DynamoDB
-            save_recommendations(recommendations, moisture, status, timestamp)
+            save_recommendations(recommendations, temperature, status, timestamp)
 
             # Codifica o JSON garantindo que caracteres especiais sejam tratados corretamente
             response_body = {
-                'moisture': float(moisture),
+                'temperature': float(temperature),
                 'status': status,
                 'crops': crops,
                 'recommendations': recommendations,
@@ -330,8 +329,8 @@ def generate_agriculture_recommendations(moisture, status, crops):
         'headers': get_cors_headers()
     }
 
-def save_recommendations(recommendations, moisture, status, timestamp):
-    table = dynamodb.Table(AGRICULTURAL_AIR_MOISTURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
+def save_recommendations(recommendations, temperature, status, timestamp):
+    table = dynamodb.Table(AGRICULTURAL_AIR_TEMPERATURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
     
     print(f"[{timestamp}] Iniciando salvamento das recomendações no DynamoDB")
 
@@ -342,7 +341,7 @@ def save_recommendations(recommendations, moisture, status, timestamp):
                 'M': {
                     'topic': {'S': topic},
                     'recommendation': {'S': recommendation},
-                    'moisture': {'N': str(moisture)},
+                    'temperature': {'N': str(temperature)},
                     'status': {'S': status},
                     'timestamp': {'S': timestamp}
                 }
@@ -377,7 +376,7 @@ def decimal_default(obj):
 def get_all_recommendations():
     try:
         logger.info("Iniciando a obtenção de todas as recomendações")
-        table = dynamodb.Table(AGRICULTURAL_AIR_MOISTURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
+        table = dynamodb.Table(AGRICULTURAL_AIR_TEMPERATURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
         
         seven_days_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime('%Y-%m-%d')
         
@@ -459,8 +458,8 @@ def get_recommendations_by_topic(event):
         # Use o tópico raw para a consulta
         topic = topic_raw
 
-        table = dynamodb.Table(AGRICULTURAL_AIR_MOISTURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
-        print(f"Nome da tabela DynamoDB: {AGRICULTURAL_AIR_MOISTURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME}")
+        table = dynamodb.Table(AGRICULTURAL_AIR_TEMPERATURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
+        print(f"Nome da tabela DynamoDB: {AGRICULTURAL_AIR_TEMPERATURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME}")
         
         response = table.query(
             KeyConditionExpression=Key('topic').eq(topic),
@@ -498,7 +497,7 @@ def get_recommendations_by_topic(event):
 # Função para obter a última recomendação por tópico
 def get_latest_recommendation(topic):
     try:
-        table = dynamodb.Table(AGRICULTURAL_AIR_MOISTURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
+        table = dynamodb.Table(AGRICULTURAL_AIR_TEMPERATURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME)
         response = table.query(
             KeyConditionExpression=Key('topic').eq(topic),
             ScanIndexForward=False,
@@ -551,7 +550,7 @@ def get_cors_headers():
 # Função para obter o histórico de temperatura do ar
 def get_moisture_history():
     try:
-        table = dynamodb.Table(AIR_MOISTURE_AVERAGES_DATA_TABLE_NAME)
+        table = dynamodb.Table(AIR_TEMPERATURE_AVERAGES_DATA_TABLE_NAME)
         
         # Definir o período de tempo para buscar o histórico (por exemplo, últimos 7 dias)
         end_date = datetime.now().date()
@@ -580,7 +579,7 @@ def get_moisture_history():
                 history.append({
                     'date': date,
                     'timestamp': reading['timestamp'],
-                    'moisture': float(reading['moisture']),
+                    'temperature': float(reading['temperature']),
                     'status': reading['status']
                 })
         

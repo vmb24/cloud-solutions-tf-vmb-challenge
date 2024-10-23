@@ -1,6 +1,6 @@
 import json
 import boto3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from botocore.exceptions import ClientError
 import uuid
 import logging
@@ -51,10 +51,10 @@ def lambda_handler(event, context):
         elif 'Records' in event:
             return handle_dynamodb_event(event['Records'])
         elif 'moisture' in event:
-            logger.info("Processando dados de umidade do evento")
+            logger.info("Processando dados de umidade do sol do evento")
             return process_moisture_data(event)
         else:
-            logger.info("Coletando dados de umidade do banco de dados")
+            logger.info("Coletando dados de umidade do sol do banco de dados")
             return handle_database_event()
     except Exception as e:
         logger.error(f"Erro no lambda_handler: {str(e)}")
@@ -85,12 +85,12 @@ def handle_database_event():
     if moisture_data:
         return process_moisture_data(moisture_data)
     else:
-        logger.error("Não foi possível obter dados de umidade de nenhuma tabela")
-        return create_response(404, "Dados de umidade não encontrados")
+        logger.error("Não foi possível obter dados de umidade do sol de nenhuma tabela")
+        return create_response(404, "Dados de umidade do sol não encontrados")
 
 def get_latest_moisture_from_averages():
     try:
-        logger.info("Obtendo a última umidade da tabela SoilMoistureAverages")
+        logger.info("Obtendo a última umidade do sol da tabela SoilMoistureAverages")
         response = soil_moisture_averages_table.scan(Limit=1)
         items = response.get('Items', [])
         if items:
@@ -102,12 +102,12 @@ def get_latest_moisture_from_averages():
             }
         return None
     except Exception as e:
-        logger.error(f"Erro ao obter umidade da tabela SoilMoistureAverages: {str(e)}")
+        logger.error(f"Erro ao obter umidade do sol da tabela SoilMoistureAverages: {str(e)}")
         return None
 
 def get_latest_moisture_from_history():
     try:
-        logger.info("Obtendo a última umidade da tabela SoilMoistureHistory")
+        logger.info("Obtendo a última umidade do sol da tabela SoilMoistureHistory")
         response = soil_moisture_history_table.scan(Limit=1)
         items = response.get('Items', [])
         if items:
@@ -119,7 +119,7 @@ def get_latest_moisture_from_history():
             }
         return None
     except Exception as e:
-        logger.error(f"Erro ao obter umidade da tabela SoilMoistureHistory: {str(e)}")
+        logger.error(f"Erro ao obter umidade do sol da tabela SoilMoistureHistory: {str(e)}")
         return None
 
 def get_task_plan(task_id):
@@ -150,19 +150,23 @@ def process_moisture_data(data):
     try:
         logger.info(f"Dados recebidos para processamento: {data}")
         
+        # Normalizando os dados recebidos
         data = normalize_input_data(data)
         
         moisture = data.get('moisture')
         status = data.get('status')
+        crops = data.get('crops')  # Recebendo a lista de culturas
         
-        logger.info(f"Dados normalizados: moisture={moisture}, status={status}")
+        logger.info(f"Dados normalizados: moisture={moisture}, status={status}, crops={crops}")
         
+        # Validando umidade do sol
         if not validate_moisture_data(moisture):
-            return create_response(400, 'Dados de umidade inválidos ou ausentes')
+            return create_response(400, 'Dados de umidade do sol inválidos ou ausentes')
 
-        logger.info(f"Processando dados de umidade: moisture={moisture}, status={status}")
+        # Gerando o plano de tarefas com a IA
+        logger.info(f"Processando dados de umidade do sol: moisture={moisture}, status={status}, crops={crops}")
         
-        new_plan = generate_task_plan_with_ai(moisture, status)
+        new_plan = generate_task_plan_with_ai(moisture, status, crops)
         if new_plan:
             plan_id = store_task_plan(new_plan, moisture, status)
             if plan_id:
@@ -179,8 +183,8 @@ def process_moisture_data(data):
         logger.error(f"Erro de validação: {str(ve)}")
         return create_response(400, f"Erro de validação: {str(ve)}")
     except Exception as e:
-        logger.error(f"Erro ao processar dados de umidade: {str(e)}")
-        return create_response(500, f"Erro ao processar dados de umidade: {str(e)}")
+        logger.error(f"Erro ao processar dados de umidade do sol: {str(e)}")
+        return create_response(500, f"Erro ao processar dados de umidade do sol: {str(e)}")
 
 def normalize_input_data(data):
     if isinstance(data, str):
@@ -197,16 +201,16 @@ def normalize_input_data(data):
 
 def validate_moisture_data(moisture):
     if moisture is None:
-        logger.error("Dados de umidade ausentes")
+        logger.error("Dados de umidade do sol ausentes")
         return False
     
     try:
         moisture_value = Decimal(str(moisture))
         if moisture_value < 0 or moisture_value > 100:
-            logger.error(f"Valor de umidade fora do intervalo válido: {moisture_value}")
+            logger.error(f"Valor de umidade do sol fora do intervalo válido: {moisture_value}")
             return False
     except ValueError:
-        logger.error(f"Valor de umidade não é um número válido: {moisture}")
+        logger.error(f"Valor de umidade do sol não é um número válido: {moisture}")
         return False
     
     return True
@@ -237,60 +241,101 @@ def get_recommendations(topic):
         logger.error(f"Erro ao obter recomendações para {topic}: {str(e)}")
         return create_response(500, f"Erro ao obter recomendações: {str(e)}")
 
-def generate_task_plan_with_ai(moisture, status):
+def generate_task_plan_with_ai(moisture, status, crops):
     timestamp = int(time.time())
     logger.info(f"[{timestamp}] Iniciando geração do plano de tarefas")
-    logger.info(f"[{timestamp}] Parâmetros recebidos - Umidade: {moisture}%, Status: {status}")
+    logger.info(f"[{timestamp}] Parâmetros recebidos - Umidade: {moisture}%, Status: {status}, Culturas: {crops}")
 
     try:
-        prompt = f'''Human: Com base em uma umidade do solo de {moisture}% e status '{status}', 
-        gere um plano de tarefas para a fazenda. Considere práticas agrícolas modernas e 
-        sustentáveis. Forneça uma lista de tarefas e recomendações específicas.
+        current_date = datetime.now()
+        start_date = current_date.strftime("%Y-%m-%d")  # Mantendo start_date como string aqui
+
+        # Criando a lista de culturas no formato de string para o prompt
+        crops_str = ", ".join(crops)
+
+        # Novo prompt que inclui as culturas e tarefas
+        prompt = f'''Human: Com base em uma umidade do sol do solo de {moisture}% e status '{status}', 
+        gere um plano de tarefas agrícola para as próximas 4 semanas para as culturas {crops_str}. 
+        Inclua datas e horários exatos para cada tarefa. Cada semana deve ter uma sequência de ações específicas relacionadas à {crops_str}, 
+        práticas agrícolas modernas e sustentáveis, começando a partir de {start_date}.
+        O plano deve cobrir controle da umidade do sol, irrigação, monitoramento do solo, possíveis ajustes baseados em medições futuras e quaisquer práticas específicas relacionadas à {crops_str}.
+
+        Além disso, forneça recomendações semanais para o agricultor, sugerindo novas culturas ou práticas agrícolas baseadas em medições e previsões climáticas.
+        As recomendações devem ser diferentes das tarefas diárias e focar em estratégias para melhorar a produção a longo prazo.
 
         Assistant:'''
-        
+
         logger.info(f"[{timestamp}] Enviando prompt para o modelo de IA...")
         response = bedrock.invoke_model(
-            modelId="anthropic.claude-v2",
+            modelId="anthropic.claude-v2:1",
             contentType="application/json",
             accept="application/json",
             body=json.dumps({
                 "prompt": prompt,
-                "max_tokens_to_sample": 300,
+                "max_tokens_to_sample": 400,
                 "temperature": TEMPERATURE,
                 "top_p": TOP_P,
                 "stop_sequences": ["Human:"]
             })
         )
-        
-        logger.info(f"[{timestamp}] Resposta recebida do modelo de IA")
+
+        logger.info(f"[{timestamp}] Resposta recebida do modelo de IA!!!!")
         response_body = json.loads(response['body'].read())
         recommendations = response_body['completion'].strip()
+
+        # Função para gerar o cronograma de tarefas com base na recomendação da IA
+        def generate_task_schedule(recommendations):
+            tasks_by_week = {}
+            schedule_start_date = datetime.now()  # Renomeado para schedule_start_date
+            
+            for week in range(1, 5):  # Para 4 semanas
+                tasks = []
+                for day in range(7):  # Atribuindo uma tarefa por dia
+                    task_date = schedule_start_date + timedelta(weeks=week-1, days=day)
+                    task_time = task_date.replace(hour=9, minute=0)  # Horário fixo de 9h
+                    task = {
+                        "date": task_time.strftime("%Y-%m-%d"),
+                        "time": task_time.strftime("%H:%M"),
+                        "task": f"Tarefa diária de manutenção para {crops_str}."
+                    }
+
+                    # Adicionando recomendação semanal
+                    if day == 0:  # A cada início de semana, forneça uma nova recomendação
+                        task["recommendation"] = f"Recomenda-se plantar {crops_str} complementar ou alternativo, ou adotar práticas como rotação de cultura."
+
+                    tasks.append(task)
+                tasks_by_week[f"Semana {week}"] = tasks
+            return tasks_by_week
+
+        # Gerando plano de tarefas
+        tasks_by_week = generate_task_schedule(recommendations)
         
         plan = {
             'planId': str(uuid.uuid4()),
             'moisture': Decimal(str(moisture)),
             'status': status,
-            'recommendations': recommendations,
-            'timestamp': timestamp,
-            'createdAt': timestamp  # Adicionando o campo createdAt
+            'crops': crops,  # Lista de culturas original
+            'recommendations': recommendations,  # Recomendação geral da IA
+            'tasks_by_week': tasks_by_week,  # Tarefas organizadas por semana
+            'generatedAt': current_date.strftime("%Y-%m-%d")  # Use current_date aqui
         }
-        logger.info(f"[{timestamp}] Plano de tarefas gerado: {plan}")
+
         return plan
+
     except Exception as e:
-        logger.error(f"[{timestamp}] Erro ao gerar o plano de tarefas com IA: {str(e)}")
+        logger.error(f"Erro ao gerar plano de tarefas: {str(e)}")
         return None
 
 def store_task_plan(plan, moisture, status):
     timestamp = datetime.now(timezone.utc).isoformat()
-    logger.info(f"[{timestamp}] Iniciando armazenamento do plano de tarefas de umidade")
+    logger.info(f"[{timestamp}] Iniciando armazenamento do plano de tarefas de umidade do sol")
     logger.info(f"[{timestamp}] Parâmetros recebidos - Umidade: {moisture}, Status: {status}")
     
     try:
         plan_id = str(uuid.uuid4())
         logger.info(f"[{timestamp}] UUID gerado para o plano: {plan_id}")
         
-        logger.info(f"[{timestamp}] Convertendo umidade para Decimal")
+        logger.info(f"[{timestamp}] Convertendo umidade do sol para Decimal")
         moisture_decimal = Decimal(str(moisture))
         logger.info(f"[{timestamp}] Umidade convertida: {moisture_decimal}")
         
@@ -311,7 +356,7 @@ def store_task_plan(plan, moisture, status):
         logger.info(f"[{timestamp}] Operação put_item concluída")
         logger.debug(f"[{timestamp}] Resposta do DynamoDB: {json.dumps(response, default=str)}")
         
-        logger.info(f"[{timestamp}] Plano de tarefas de umidade armazenado com sucesso. ID: {plan_id}")
+        logger.info(f"[{timestamp}] Plano de tarefas de umidade do sol armazenado com sucesso. ID: {plan_id}")
         return plan_id
     except ClientError as e:
         if e.response['Error']['Code'] == 'ValidationException':
@@ -322,11 +367,11 @@ def store_task_plan(plan, moisture, status):
         logger.exception("Detalhes do erro:")
         return None
     except Exception as e:
-        logger.error(f"[{timestamp}] Erro inesperado ao armazenar plano de tarefas de umidade: {str(e)}")
+        logger.error(f"[{timestamp}] Erro inesperado ao armazenar plano de tarefas de umidade do sol: {str(e)}")
         logger.exception("Detalhes do erro:")
         return None
     finally:
-        logger.info(f"[{timestamp}] Finalizando operação de armazenamento do plano de tarefas de umidade")
+        logger.info(f"[{timestamp}] Finalizando operação de armazenamento do plano de tarefas de umidade do sol")
 
 def create_response(status_code, body, headers=None):
     response = {

@@ -3,7 +3,7 @@ resource "aws_api_gateway_deployment" "brightness_data_processing_recommendation
   depends_on = [
     aws_api_gateway_integration.get_recommendations_integration,
     aws_api_gateway_integration.get_recommendations_by_topic_integration,
-    aws_api_gateway_integration.get_temperature_integration,
+    aws_api_gateway_integration.get_brightness_integration,
     aws_api_gateway_integration.post_generate_recommendations_integration
   ]
 
@@ -18,15 +18,15 @@ resource "aws_api_gateway_deployment" "brightness_data_processing_recommendation
     redeployment = sha1(jsonencode([
       aws_api_gateway_resource.recommendations.id,
       aws_api_gateway_resource.recommendations_by_topic.id,
-      aws_api_gateway_resource.temperature.id,
+      aws_api_gateway_resource.brightness.id,
       aws_api_gateway_resource.generate_recommendations.id,
       aws_api_gateway_method.get_recommendations.id,
       aws_api_gateway_method.get_recommendations_by_topic.id,
-      aws_api_gateway_method.get_temperature.id,
+      aws_api_gateway_method.get_brightness.id,
       aws_api_gateway_method.post_generate_recommendations.id,
       aws_api_gateway_integration.get_recommendations_integration.id,
       aws_api_gateway_integration.get_recommendations_by_topic_integration.id,
-      aws_api_gateway_integration.get_temperature_integration.id,
+      aws_api_gateway_integration.get_brightness_integration.id,
       aws_api_gateway_integration.post_generate_recommendations_integration.id,
     ]))
   }

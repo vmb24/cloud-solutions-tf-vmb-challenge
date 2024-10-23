@@ -3,7 +3,7 @@ resource "aws_api_gateway_method" "options_method" {
   for_each = {
     "recommendations" = aws_api_gateway_resource.recommendations.id,
     "recommendations_by_topic" = aws_api_gateway_resource.recommendations_by_topic.id,
-    "temperature" = aws_api_gateway_resource.temperature.id,
+    "brightness" = aws_api_gateway_resource.brightness.id,
     "generate_recommendations" = aws_api_gateway_resource.generate_recommendations.id
   }
 
@@ -65,7 +65,7 @@ resource "aws_api_gateway_method_response" "cors" {
   for_each = {
     "get_recommendations" = aws_api_gateway_method.get_recommendations,
     "get_recommendations_by_topic" = aws_api_gateway_method.get_recommendations_by_topic,
-    "get_temperature" = aws_api_gateway_method.get_temperature,
+    "get_brightness" = aws_api_gateway_method.get_brightness,
     "post_generate_recommendations" = aws_api_gateway_method.post_generate_recommendations
   }
 
@@ -94,7 +94,7 @@ resource "aws_api_gateway_integration_response" "cors_integration_response" {
   depends_on = [
     aws_api_gateway_integration.get_recommendations_integration,
     aws_api_gateway_integration.get_recommendations_by_topic_integration,
-    aws_api_gateway_integration.get_temperature_integration,
+    aws_api_gateway_integration.get_brightness_integration,
     aws_api_gateway_integration.post_generate_recommendations_integration
   ]
 }

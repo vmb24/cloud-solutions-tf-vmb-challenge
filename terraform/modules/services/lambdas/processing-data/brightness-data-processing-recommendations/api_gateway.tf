@@ -60,26 +60,26 @@ resource "aws_api_gateway_integration" "get_recommendations_by_topic_integration
   uri                     = aws_lambda_function.brightness_data_processing_recommendations.invoke_arn
 }
 
-# Recurso /temperature
-resource "aws_api_gateway_resource" "temperature" {
+# Recurso /brightness
+resource "aws_api_gateway_resource" "brightness" {
   rest_api_id = aws_api_gateway_rest_api.brightness_data_processing_recommendations_api.id
   parent_id   = aws_api_gateway_rest_api.brightness_data_processing_recommendations_api.root_resource_id
-  path_part   = "temperature"
+  path_part   = "brightness"
 }
 
-# Método GET para /temperature
-resource "aws_api_gateway_method" "get_temperature" {
+# Método GET para /brightness
+resource "aws_api_gateway_method" "get_brightness" {
   rest_api_id   = aws_api_gateway_rest_api.brightness_data_processing_recommendations_api.id
-  resource_id   = aws_api_gateway_resource.temperature.id
+  resource_id   = aws_api_gateway_resource.brightness.id
   http_method   = "GET"
   authorization = "NONE"
 }
 
-# Integração do método GET /temperature com a função Lambda
-resource "aws_api_gateway_integration" "get_temperature_integration" {
+# Integração do método GET /brightness com a função Lambda
+resource "aws_api_gateway_integration" "get_brightness_integration" {
   rest_api_id = aws_api_gateway_rest_api.brightness_data_processing_recommendations_api.id
-  resource_id = aws_api_gateway_resource.temperature.id
-  http_method = aws_api_gateway_method.get_temperature.http_method
+  resource_id = aws_api_gateway_resource.brightness.id
+  http_method = aws_api_gateway_method.get_brightness.http_method
 
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
