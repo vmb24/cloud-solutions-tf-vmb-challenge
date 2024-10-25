@@ -254,15 +254,15 @@ def generate_task_plan_with_ai(temperature, status, crops):
         crops_str = ", ".join(crops)
 
         # Novo prompt que inclui as culturas e tarefas
-        prompt = f'''Human: Com base em uma temperatura do solo do solo de {temperature}% e status '{status}', 
-        gere um plano de tarefas agrícola para as próximas 4 semanas para as culturas {crops_str}. 
-        Inclua datas e horários exatos para cada tarefa. Cada semana deve ter uma sequência de ações específicas relacionadas à {crops_str}, 
-        práticas agrícolas modernas e sustentáveis, começando a partir de {start_date}.
-        O plano deve cobrir controle da temperatura do solo, irrigação, monitoramento do solo, possíveis ajustes baseados em medições futuras e quaisquer práticas específicas relacionadas à {crops_str}.
+        prompt = f'''Human: Com base em uma temperatura do solo de {temperature}°C e status '{status}', gere um plano de tarefas agrícola para as próximas 4 semanas para as culturas {crops_str}.
+        Inclua datas e horários exatos para cada tarefa. Cada semana deve ter uma sequência de ações específicas relacionadas às {crops_str}, práticas agrícolas modernas e sustentáveis, começando a partir de {start_date}.
+        O plano deve cobrir:
+        1. Monitoramento da temperatura do solo e ajustes na irrigação para evitar superaquecimento.
+        2. Introdução de técnicas para manter a temperatura ideal do solo, como coberturas vegetais.
+        3. Avaliar o impacto da temperatura no crescimento das plantas e ajustar práticas agrícolas.
+        4. Identificar áreas de solo com temperaturas extremas e propor soluções de manejo.
 
-        Além disso, forneça recomendações semanais para o agricultor, sugerindo novas culturas ou práticas agrícolas baseadas em medições e previsões climáticas.
-        As recomendações devem ser diferentes das tarefas diárias e focar em estratégias para melhorar a produção a longo prazo.
-
+        Além disso, forneça recomendações semanais sobre como adaptar o manejo agrícola a diferentes condições térmicas do solo para maximizar a produtividade.
         Assistant:'''
 
         logger.info(f"[{timestamp}] Enviando prompt para o modelo de IA...")

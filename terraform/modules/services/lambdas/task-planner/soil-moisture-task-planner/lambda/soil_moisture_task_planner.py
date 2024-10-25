@@ -254,15 +254,15 @@ def generate_task_plan_with_ai(moisture, status, crops):
         crops_str = ", ".join(crops)
 
         # Novo prompt que inclui as culturas e tarefas
-        prompt = f'''Human: Com base em uma umidade do sol do solo de {moisture}% e status '{status}', 
-        gere um plano de tarefas agrícola para as próximas 4 semanas para as culturas {crops_str}. 
-        Inclua datas e horários exatos para cada tarefa. Cada semana deve ter uma sequência de ações específicas relacionadas à {crops_str}, 
-        práticas agrícolas modernas e sustentáveis, começando a partir de {start_date}.
-        O plano deve cobrir controle da umidade do sol, irrigação, monitoramento do solo, possíveis ajustes baseados em medições futuras e quaisquer práticas específicas relacionadas à {crops_str}.
+        prompt = f'''Human: Com base em uma umidade do solo de {moisture}% e status '{status}', gere um plano de tarefas agrícola para as próximas 4 semanas para as culturas {crops_str}.
+        Inclua datas e horários exatos para cada tarefa. Cada semana deve ter uma sequência de ações específicas relacionadas às {crops_str}, práticas agrícolas modernas e sustentáveis, começando a partir de {start_date}.
+        O plano deve abordar:
+        1. Necessidade de irrigação para manter a umidade do solo adequada.
+        2. Medições semanais para prevenir estresse hídrico e otimizar o uso da água.
+        3. Avaliar a retenção de água do solo e implementar correções necessárias.
+        4. Detecção de zonas de solo deficiente e soluções para melhorar sua capacidade de retenção de água.
 
-        Além disso, forneça recomendações semanais para o agricultor, sugerindo novas culturas ou práticas agrícolas baseadas em medições e previsões climáticas.
-        As recomendações devem ser diferentes das tarefas diárias e focar em estratégias para melhorar a produção a longo prazo.
-
+        Além disso, forneça recomendações semanais, focando em estratégias de irrigação inteligente e ajustes no manejo do solo para melhorar sua retenção de água a longo prazo.
         Assistant:'''
 
         logger.info(f"[{timestamp}] Enviando prompt para o modelo de IA...")

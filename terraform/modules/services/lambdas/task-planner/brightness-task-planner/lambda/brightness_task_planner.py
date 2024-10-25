@@ -254,15 +254,15 @@ def generate_task_plan_with_ai(temperature, status, crops):
         crops_str = ", ".join(crops)
 
         # Novo prompt que inclui as culturas e tarefas
-        prompt = f'''Human: Com base em uma luminosidade do solo de {temperature}% e status '{status}', 
-        gere um plano de tarefas agrícola para as próximas 4 semanas para as culturas {crops_str}. 
-        Inclua datas e horários exatos para cada tarefa. Cada semana deve ter uma sequência de ações específicas relacionadas à {crops_str}, 
-        práticas agrícolas modernas e sustentáveis, começando a partir de {start_date}.
-        O plano deve cobrir controle da luminosidade, irrigação, monitoramento do solo, possíveis ajustes baseados em medições futuras e quaisquer práticas específicas relacionadas à {crops_str}.
+        prompt = f'''Human: Com base em uma luminosidade de {light_level} lux e status '{status}', gere um plano de tarefas agrícola para as próximas 4 semanas para as culturas {crops_str}.
+        Inclua datas e horários exatos para cada tarefa. Cada semana deve ter uma sequência de ações específicas relacionadas às {crops_str}, práticas agrícolas modernas e sustentáveis, começando a partir de {start_date}.
+        O plano deve focar em:
+        1. Monitorar a exposição solar das plantas e ajustar a irrigação em dias de alta luminosidade.
+        2. Introduzir técnicas de sombreamento para evitar queimaduras nas folhas.
+        3. Maximizar a absorção de luz para otimizar o crescimento das plantas.
+        4. Propor o uso de coberturas vegetais ou técnicas de manejo da luz para melhorar o crescimento.
 
-        Além disso, forneça recomendações semanais para o agricultor, sugerindo novas culturas ou práticas agrícolas baseadas em medições e previsões climáticas.
-        As recomendações devem ser diferentes das tarefas diárias e focar em estratégias para melhorar a produção a longo prazo.
-
+        Além disso, forneça recomendações semanais, sugerindo novas práticas de cultivo ou técnicas de otimização da luz para aumentar a produtividade.
         Assistant:'''
 
         logger.info(f"[{timestamp}] Enviando prompt para o modelo de IA...")

@@ -220,25 +220,25 @@ def store_brightness_data(brightness, status, timestamp):
         print(f"Erro inesperado ao armazenar dados de luminosidade: {str(e)}")
         raise
 
-# Função para gerar recomendações agrícolas
 def generate_agriculture_recommendations(brightness, status, crops):
     timestamp = datetime.now().isoformat()
     print(f"[{timestamp}] Iniciando geração de recomendações")
-    print(f"[{timestamp}] Parâmetros recebidos - Umidade: {brightness}%, Status: {status}, Culturas: {crops}")
+    print(f"[{timestamp}] Parâmetros recebidos - Luminosidade: {brightness} lx, Status: {status}, Culturas: {crops}")
 
     crops_str = ", ".join(crops)
     print(f"[{timestamp}] Culturas para o prompt: {crops_str}")
 
-    prompt = encode_string(f'''Human: Você é um especialista em agricultura. Forneça recomendações detalhadas para as próximas quatro semanas, com base nas culturas plantadas e na luminosidade atual do solo. 
+    prompt = encode_string(f'''Human: Você é um especialista em agricultura. Forneça recomendações detalhadas para as próximas quatro semanas com base na luminosidade atual e nas culturas plantadas. 
     Considere os seguintes dados:
-    - Umidade atual do solo: {brightness}%
+    - Luminosidade atual: {brightness} lx
     - Status atual: {status}
     - Culturas plantadas: {crops_str}
 
     O plano deve incluir:
-    1. Sugestões de melhorias nas práticas de plantio.
-    2. Recomendações de novas culturas que possam ser mais adequadas para o solo e condições climáticas.
-    3. Orientações para cada semana com base na evolução esperada do solo e condições climáticas.
+    1. Avaliação da necessidade de ajuste na iluminação para otimizar o crescimento das plantas.
+    2. Sugestões de mudanças nas práticas agrícolas com base na disponibilidade de luz.
+    3. Modelagem de crescimento das plantas com base na luminosidade.
+    4. Identificação de zonas com deficiência de luz para melhoria do plantio.
 
     Formate sua resposta como um dicionário JSON, onde as chaves são as semanas e os valores são recomendações específicas para cada semana.
 
@@ -255,8 +255,8 @@ def generate_agriculture_recommendations(brightness, status, crops):
     Human: Obrigado. Por favor, forneça apenas o dicionário JSON com as recomendações, sem incluir nenhum texto introdutório ou conclusivo.
 
     Assistant:''')
-
-    print(f"[{timestamp}] Prompt preparado para envio ao Bedrock!!!!")
+    
+    print(f"[{timestamp}] Prompt preparado para envio ao Bedrock!")
 
     max_retries = 5
     base_delay = 1  # segundo

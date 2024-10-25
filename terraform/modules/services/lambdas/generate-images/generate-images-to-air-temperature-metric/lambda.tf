@@ -6,9 +6,9 @@ data "archive_file" "lambda_zip" {
 }
 
 resource "aws_lambda_function" "generate_images_to_air_temperature_metric" {
-  function_name    = "generate_gifs_to_air_temperature_metric"
+  function_name    = "generate_images_to_air_temperature_metric"
   role             = var.generate_images_to_air_temperature_metric_lambda_role_arn
-  handler          = "generate_gifs_to_air_temperature_metric.lambda_handler"
+  handler          = "generate_images_to_air_temperature_metric.lambda_handler"
   runtime          = "python3.9"
   filename         = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256

@@ -164,36 +164,11 @@ module "generate_gifs_lambda_identity_compliance_security" {
   soil_temperature_media_bucket_arn = module.media_bucket.soil_temperature_media_bucket_arn
 }
 
-# AGRIX ASSISTANT IDENTITY COMPLIANCE SECURITY
-module "agrix_assistant_identity_compliance_security" {
-  source = "./modules/identity-compliance-security/agrix-assistant-iam"
-}
-
-module "agrix_assistant_features_identity_compliance_security" {
-  source = "./modules/identity-compliance-security/agrix-assistant-iam/agrix-features"
-}
-
-module "agrix_assistant_features_fulfillment_identity_compliance_security" {
-  source = "./modules/identity-compliance-security/agrix-assistant-iam/agrix-features/fulfillments"
-}
-
 # TASKS MANAGEMENT COMPLIANCE SECURITY
 module "tasks_management_identity_compliance_security" {
   source = "./modules/identity-compliance-security/tasks-management-iam"
 
   aws_region = var.aws_region
-}
-
-# TASKS RESULTS COMPLIANCE SECURITY
-module "tasks_results_merge_identity_compliance_security" {
-  source = "./modules/identity-compliance-security/tasks-results-merge-iam"
-
-  aws_region = var.aws_region
-}
-
-# GENERATE ACCESSIBLE CONTENTS COMPLIANCE SECURITY
-module "accessible_contents_lambdas_identity_compliance_security" {
-  source = "./modules/identity-compliance-security/generate-accessible-contents-iam"
 }
 
 # DATABASES
@@ -342,66 +317,38 @@ module "soil_temperature_task_planner" {
 }
 
 # GENERATE ACCESSIBLE CONTENTS
-module "accessible_image_recognition_lambda" {
-  source = "./modules/services/lambdas/generate-accessible-contents/accessible-image-recognition"
-
-  accessible_image_recognition_lambda_role_arn = module.accessible_contents_lambdas_identity_compliance_security.accessible_image_recognition_handler_lambdas_roles_iam_arn
-}
-
-module "accessible_text_simplification_lambda" {
-  source = "./modules/services/lambdas/generate-accessible-contents/accessible-text-simplification"
-
-  accessible_text_simplification_lambda_role_arn = module.accessible_contents_lambdas_identity_compliance_security.accessible_text_simplification_handler_lambdas_roles_iam_arn
-}
-
-module "accessible_text_to_speech_lambda" {
-  source = "./modules/services/lambdas/generate-accessible-contents/accessible-text-to-speech"
-
-  accessible_text_to_speech_lambda_role_arn = module.accessible_contents_lambdas_identity_compliance_security.accessible_text_to_speech_handler_lambdas_roles_iam_arn
-}
-
-module "accessible_video_caption_lambda" {
-  source = "./modules/services/lambdas/generate-accessible-contents/accessible-video-caption"
-
-  accessible_video_caption_lambda_role_arn = module.accessible_contents_lambdas_identity_compliance_security.accessible_video_captions_handler_lambdas_roles_iam_arn
-}
-
-module "management_generate_accessible_contents_lambda" {
-  source = "./modules/services/lambdas/generate-accessible-contents/management-generate-accessible-contents"
-
-  management_generate_accessible_contents_lambda_role_arn = module.accessible_contents_lambdas_identity_compliance_security.management_generate_accessible_contents_handler_lambdas_roles_iam_arn
-}
+# FUTURO!!!!
 
 # GENERATE GIFS LAMBDAS
-# module "generate_gifs_to_air_moisture_metric_lambda" {
-#   source = "./modules/services/lambdas/generate-gifs/generate-gifs-to-air-moisture-metric"
+module "generate_gifs_to_air_moisture_metric_lambda" {
+  source = "./modules/services/lambdas/generate-gifs/generate-gifs-to-air-moisture-metric"
 
-#   generate_gifs_to_air_moisture_metric_lambda_role_arn = module.generate_gifs_lambda_identity_compliance_security.generate_gifs_to_air_moisture_metric_lambda_role_arn
-# }
+  generate_gifs_to_air_moisture_metric_lambda_role_arn = module.generate_gifs_lambda_identity_compliance_security.generate_gifs_to_air_moisture_metric_lambda_role_arn
+}
 
-# module "generate_gifs_to_air_temperature_metric_lambda" {
-#   source = "./modules/services/lambdas/generate-gifs/generate-gifs-to-air-temperature-metric"
+module "generate_gifs_to_air_temperature_metric_lambda" {
+  source = "./modules/services/lambdas/generate-gifs/generate-gifs-to-air-temperature-metric"
 
-#   generate_gifs_to_air_temperature_metric_lambda_role_arn = module.generate_gifs_lambda_identity_compliance_security.generate_gifs_to_air_temperature_metric_lambda_role_arn
-# }
+  generate_gifs_to_air_temperature_metric_lambda_role_arn = module.generate_gifs_lambda_identity_compliance_security.generate_gifs_to_air_temperature_metric_lambda_role_arn
+}
 
-# module "generate_gifs_to_brightness_metric_lambda" {
-#   source = "./modules/services/lambdas/generate-gifs/generate-gifs-to-brightness-metric"
+module "generate_gifs_to_brightness_metric_lambda" {
+  source = "./modules/services/lambdas/generate-gifs/generate-gifs-to-brightness-metric"
 
-#   generate_gifs_to_brightness_metric_lambda_role_arn = module.generate_gifs_lambda_identity_compliance_security.generate_gifs_to_brightness_metric_lambda_role_arn
-# }
+  generate_gifs_to_brightness_metric_lambda_role_arn = module.generate_gifs_lambda_identity_compliance_security.generate_gifs_to_brightness_metric_lambda_role_arn
+}
 
-# module "generate_gifs_to_soil_moisture_metric_lambda" {
-#   source = "./modules/services/lambdas/generate-gifs/generate-gifs-to-soil-moisture-metric"
+module "generate_gifs_to_soil_moisture_metric_lambda" {
+  source = "./modules/services/lambdas/generate-gifs/generate-gifs-to-soil-moisture-metric"
 
-#   generate_gifs_to_soil_moisture_metric_lambda_role_arn = module.generate_gifs_lambda_identity_compliance_security.generate_gifs_to_soil_moisture_metric_lambda_role_arn
-# }
+  generate_gifs_to_soil_moisture_metric_lambda_role_arn = module.generate_gifs_lambda_identity_compliance_security.generate_gifs_to_soil_moisture_metric_lambda_role_arn
+}
 
-# module "generate_gifs_to_soil_temperature_metric_lambda" {
-#   source = "./modules/services/lambdas/generate-gifs/generate-gifs-to-soil-temperature-metric"
+module "generate_gifs_to_soil_temperature_metric_lambda" {
+  source = "./modules/services/lambdas/generate-gifs/generate-gifs-to-soil-temperature-metric"
 
-#   generate_gifs_to_soil_temperature_metric_lambda_role_arn = module.generate_gifs_lambda_identity_compliance_security.generate_gifs_to_soil_temperature_metric_lambda_role_arn
-# }
+  generate_gifs_to_soil_temperature_metric_lambda_role_arn = module.generate_gifs_lambda_identity_compliance_security.generate_gifs_to_soil_temperature_metric_lambda_role_arn
+}
 
 # GENERATE IMAGE LAMBDAS
 module "generate_images_to_air_moisture_metric_lambda" {
@@ -439,294 +386,65 @@ module "generate_images_to_soil_temperature_metric_lambda" {
   soil_temperature_media_bucket_arn = module.media_bucket.soil_temperature_media_bucket_arn
 }
 
-# ÁGRIX LAMBDAS FEATURES
-module "advanced_sensor_assistant_feature_lambda_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/advanced-sensor-handler"
-
-  agrix_interaction_features_lambdas_roles_iam_arn = module.agrix_assistant_features_identity_compliance_security.agrix_interaction_features_lambdas_roles_iam_arn
-}
-
-module "ar_processor_assistant_feature_lambda_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/ar-processor-handler"
-
-  agrix_interaction_features_lambdas_roles_iam_arn = module.agrix_assistant_features_identity_compliance_security.agrix_interaction_features_lambdas_roles_iam_arn
-}
-
-module "compliance_assistant_feature_lambda_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/compliance-assistant-handler"
-
-  agrix_interaction_features_lambdas_roles_iam_arn = module.agrix_assistant_features_identity_compliance_security.agrix_interaction_features_lambdas_roles_iam_arn
-}
-
-module "crop_planning_assistant_feature_lambda_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/crop-planning-handler"
-
-  agrix_interaction_features_lambdas_roles_iam_arn = module.agrix_assistant_features_identity_compliance_security.agrix_interaction_features_lambdas_roles_iam_arn
-}
-
-module "dynamic_personalization_assistant_feature_lambda_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/dynamic-personalization-handler"
-
-  agrix_interaction_features_lambdas_roles_iam_arn = module.agrix_assistant_features_identity_compliance_security.agrix_interaction_features_lambdas_roles_iam_arn
-}
-
-module "image_diagnosis_assistant_feature_lambda_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/image-diagnosis-handler"
-
-  agrix_interaction_features_lambdas_roles_iam_arn = module.agrix_assistant_features_identity_compliance_security.agrix_interaction_features_lambdas_roles_iam_arn
-}
-
-module "knowledge_sharing_assistant_feature_lambda_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/knowledge-sharing-handler"
-
-  agrix_interaction_features_lambdas_roles_iam_arn = module.agrix_assistant_features_identity_compliance_security.agrix_interaction_features_lambdas_roles_iam_arn
-}
-
-module "learning_module_assistant_feature_lambda_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/learning-module-handler"
-
-  agrix_interaction_features_lambdas_roles_iam_arn = module.agrix_assistant_features_identity_compliance_security.agrix_interaction_features_lambdas_roles_iam_arn
-}
-
-module "marketing_assistant_assistant_feature_lambda_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/marketing-assistant-handler"
-
-  agrix_interaction_features_lambdas_roles_iam_arn = module.agrix_assistant_features_identity_compliance_security.agrix_interaction_features_lambdas_roles_iam_arn
-}
-
-module "marketplace_assistant_feature_lambda_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/marketplace-handler"
-
-  agrix_interaction_features_lambdas_roles_iam_arn = module.agrix_assistant_features_identity_compliance_security.agrix_interaction_features_lambdas_roles_iam_arn
-}
-
-module "predictive_analysis_assistant_feature_lambda_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/predictive-analysis-handler"
-
-  agrix_interaction_features_lambdas_roles_iam_arn = module.agrix_assistant_features_identity_compliance_security.agrix_interaction_features_lambdas_roles_iam_arn
-}
-
-module "report_generator_handler_feature_lambda_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/report-generator-handler"
-
-  agrix_interaction_features_lambdas_roles_iam_arn = module.agrix_assistant_features_identity_compliance_security.agrix_interaction_features_lambdas_roles_iam_arn
-}
-
-module "scenario_simulator_assistant_feature_lambda_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/scenario-simulator-handler"
-
-  agrix_interaction_features_lambdas_roles_iam_arn = module.agrix_assistant_features_identity_compliance_security.agrix_interaction_features_lambdas_roles_iam_arn
-}
-
-module "sustainability_assistant_feature_lambda_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/sustainability-assistant-handler"
-
-  agrix_interaction_features_lambdas_roles_iam_arn = module.agrix_assistant_features_identity_compliance_security.agrix_interaction_features_lambdas_roles_iam_arn
-}
-
-module "voice_assistant_feature_lambda_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/voice-assistant-handler"
-
-  agrix_interaction_features_lambdas_roles_iam_arn = module.agrix_assistant_features_identity_compliance_security.agrix_interaction_features_lambdas_roles_iam_arn
-}
-
-# ÁGRIX LAMBDAS FEATURES FULFILLMENT
-# ESSA FUNÇÃO SÓ VAI EXISTIR NO FUTURO
-module "advanced_sensor_assistant_feature_lambda_fulfillment_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/advanced-sensor-handler/fulfillment"
-
-  agrix_interaction_features_fulfillment_lambdas_roles_iam_arn = module.agrix_assistant_features_fulfillment_identity_compliance_security.agrix_interaction_features_fulfillment_lambdas_roles_iam_arn
-}
-
-module "ar_processor_assistant_feature_lambda_fulfillment_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/ar-processor-handler/fulfillment"
-
-  agrix_interaction_features_fulfillment_lambdas_roles_iam_arn = module.agrix_assistant_features_fulfillment_identity_compliance_security.agrix_interaction_features_fulfillment_lambdas_roles_iam_arn
-}
-
-module "compliance_assistant_feature_lambda_fulfillment_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/compliance-assistant-handler/fulfillment"
-
-  agrix_interaction_features_fulfillment_lambdas_roles_iam_arn = module.agrix_assistant_features_fulfillment_identity_compliance_security.agrix_interaction_features_fulfillment_lambdas_roles_iam_arn
-}
-
-module "crop_planning_assistant_feature_lambda_fulfillment_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/crop-planning-handler/fulfillment"
-
-  agrix_interaction_features_fulfillment_lambdas_roles_iam_arn = module.agrix_assistant_features_fulfillment_identity_compliance_security.agrix_interaction_features_fulfillment_lambdas_roles_iam_arn
-}
-
-module "dynamic_personalization_assistant_feature_lambda_fulfillment_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/dynamic-personalization-handler/fulfillment"
-
-  agrix_interaction_features_fulfillment_lambdas_roles_iam_arn = module.agrix_assistant_features_fulfillment_identity_compliance_security.agrix_interaction_features_fulfillment_lambdas_roles_iam_arn
-}
-
-module "image_diagnosis_assistant_feature_lambda_fulfillment_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/image-diagnosis-handler/fulfillment"
-
-  agrix_interaction_features_fulfillment_lambdas_roles_iam_arn = module.agrix_assistant_features_fulfillment_identity_compliance_security.agrix_interaction_features_fulfillment_lambdas_roles_iam_arn
-}
-
-module "knowledge_sharing_assistant_feature_lambda_fulfillment_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/knowledge-sharing-handler/fulfillment"
-
-  agrix_interaction_features_fulfillment_lambdas_roles_iam_arn = module.agrix_assistant_features_fulfillment_identity_compliance_security.agrix_interaction_features_fulfillment_lambdas_roles_iam_arn
-}
-
-module "learning_module_assistant_feature_lambda_fulfillment_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/learning-module-handler/fulfillment"
-
-  agrix_interaction_features_fulfillment_lambdas_roles_iam_arn = module.agrix_assistant_features_fulfillment_identity_compliance_security.agrix_interaction_features_fulfillment_lambdas_roles_iam_arn
-}
-
-module "marketing_assistant_assistant_feature_lambda_fulfillment_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/marketing-assistant-handler/fulfillment"
-
-  agrix_interaction_features_fulfillment_lambdas_roles_iam_arn = module.agrix_assistant_features_fulfillment_identity_compliance_security.agrix_interaction_features_fulfillment_lambdas_roles_iam_arn
-}
-
-module "marketplace_assistant_feature_lambda_fulfillment_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/marketplace-handler/fulfillment"
-
-  agrix_interaction_features_fulfillment_lambdas_roles_iam_arn = module.agrix_assistant_features_fulfillment_identity_compliance_security.agrix_interaction_features_fulfillment_lambdas_roles_iam_arn
-}
-
-module "predictive_analysis_assistant_feature_lambda_fulfillment_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/predictive-analysis-handler/fulfillment"
-
-  agrix_interaction_features_fulfillment_lambdas_roles_iam_arn = module.agrix_assistant_features_fulfillment_identity_compliance_security.agrix_interaction_features_fulfillment_lambdas_roles_iam_arn
-}
-
-module "report_generator_handler_feature_lambda_fulfillment_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/report-generator-handler/fulfillment"
-
-  agrix_interaction_features_fulfillment_lambdas_roles_iam_arn = module.agrix_assistant_features_fulfillment_identity_compliance_security.agrix_interaction_features_fulfillment_lambdas_roles_iam_arn
-}
-
-module "scenario_simulator_assistant_feature_lambda_fulfillment_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/scenario-simulator-handler/fulfillment"
-
-  agrix_interaction_features_fulfillment_lambdas_roles_iam_arn = module.agrix_assistant_features_fulfillment_identity_compliance_security.agrix_interaction_features_fulfillment_lambdas_roles_iam_arn
-}
-
-module "sustainability_assistant_feature_lambda_fulfillment_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/sustainability-assistant-handler/fulfillment"
-
-  agrix_interaction_features_fulfillment_lambdas_roles_iam_arn = module.agrix_assistant_features_fulfillment_identity_compliance_security.agrix_interaction_features_fulfillment_lambdas_roles_iam_arn
-}
-
-module "voice_assistant_feature_lambda_fulfillment_handler" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-features/voice-assistant-handler/fulfillment"
-
-  agrix_interaction_features_fulfillment_lambdas_roles_iam_arn = module.agrix_assistant_features_fulfillment_identity_compliance_security.agrix_interaction_features_fulfillment_lambdas_roles_iam_arn
-}
-
-  # TASK MANAGEMENT LAMBDA
-module "tasks_management_lambda" {
-  source = "./modules/services/lambdas/tasks-management"
-
-  tasks_management_lambda_role_arn = module.tasks_management_identity_compliance_security.tasks_management_lambda_role_arn
-}
-
-  # TASKS RESULTS MERGE
-module "tasks_results_merge_lambda" {
-  source = "./modules/services/lambdas/tasks-results-merge"
-
-  tasks_results_merge_lambda_role_arn = module.tasks_results_merge_identity_compliance_security.tasks_results_merge_lambda_role_arn
-}
-
-module "agrix_interaction_handler_feature" {
-  source = "./modules/services/lambdas/agrix-assistant/agrix-interaction"
-
-  agrix_interaction_lambdas_roles_iam_arn = module.agrix_assistant_identity_compliance_security.agrix_interaction_handler_lambdas_roles_iam_arn
-}
+# IÁGRIX LAMBDAS FEATURES
+# FUTURO!!!!
+
+# TASK MANAGEMENT LAMBDA
+# FUTURO!!!!
 
 # Application Integration (Step Functions)
-# module "application_integration" {
-#   source = "./modules/application-integration"
+module "application_integration" {
+  source = "./modules/application-integration"
 
-#   # IAM role arn
-#   step_function_role_arn = module.general_identity_compliance_security.step_function_role_arn
+  # IAM role arn
+  step_function_role_arn = module.general_identity_compliance_security.step_function_role_arn
 
-#   # Processing data lambda arn
-#   air_moisture_data_processing_recommendations_lambda_arn = module.air_moisture_data_processing_recommendations.air_moisture_data_processing_recommendations_lambda_arn
-#   air_temperature_data_processing_recommendations_lambda_arn = module.air_temperature_data_processing_recommendations.air_temperature_data_processing_recommendations_lambda_arn
-#   brightness_processing_recommendations_lambda_arn = module.brightness_data_processing_recommendations.brightness_data_processing_recommendations_lambda_arn
-#   soil_moisture_data_processing_recommendations_lambda_arn = module.soil_moisture_data_processing_recommendations.soil_moisture_data_processing_recommendations_lambda_arn
-#   soil_temperature_data_processing_recommendations_lambda_arn = module.soil_temperature_data_processing_recommendations.soil_temperature_data_processing_recommendations_lambda_arn
+  # Processing data lambda arn
+  air_moisture_data_processing_recommendations_lambda_arn = module.air_moisture_data_processing_recommendations.air_moisture_data_processing_recommendations_lambda_arn
+  air_temperature_data_processing_recommendations_lambda_arn = module.air_temperature_data_processing_recommendations.air_temperature_data_processing_recommendations_lambda_arn
+  brightness_processing_recommendations_lambda_arn = module.brightness_data_processing_recommendations.brightness_data_processing_recommendations_lambda_arn
+  soil_moisture_data_processing_recommendations_lambda_arn = module.soil_moisture_data_processing_recommendations.soil_moisture_data_processing_recommendations_lambda_arn
+  soil_temperature_data_processing_recommendations_lambda_arn = module.soil_temperature_data_processing_recommendations.soil_temperature_data_processing_recommendations_lambda_arn
 
-#   # Task planner lambda arn
-#   air_moisture_task_planner_lambda_arn = module.air_moisture_task_planner.air_moisture_task_planner_lambda_arn
-#   air_temperature_task_planner_lambda_arn = module.air_temperature_task_planner.air_temperature_task_planner_lambda_arn
-#   brightness_task_planner_lambda_arn = module.brightness_task_planner.brightness_task_planner_lambda_arn
-#   soil_moisture_task_planner_lambda_arn = module.soil_moisture_task_planner.soil_moisture_task_planner_lambda_arn
-#   soil_temperature_task_planner_lambda_arn = module.soil_temperature_task_planner.soil_temperature_task_planner_lambda_arn
+  # Task planner lambda arn
+  air_moisture_task_planner_lambda_arn = module.air_moisture_task_planner.air_moisture_task_planner_lambda_arn
+  air_temperature_task_planner_lambda_arn = module.air_temperature_task_planner.air_temperature_task_planner_lambda_arn
+  brightness_task_planner_lambda_arn = module.brightness_task_planner.brightness_task_planner_lambda_arn
+  soil_moisture_task_planner_lambda_arn = module.soil_moisture_task_planner.soil_moisture_task_planner_lambda_arn
+  soil_temperature_task_planner_lambda_arn = module.soil_temperature_task_planner.soil_temperature_task_planner_lambda_arn
 
-#   # Generate accessible contents lambdas arn
-#   accessible_image_recognition_lambda_arn = module.accessible_image_recognition_lambda.accessible_image_recognition_lambda_arn
-#   accessible_text_simplification_lambda_arn = module.accessible_text_simplification_lambda.accessible_text_simplification_lambda_arn
-#   accessible_text_to_speech_lambda_arn = module.accessible_text_to_speech_lambda.accessible_text_to_speech_lambda_arn
-#   accessible_video_caption_lambda_arn = module.accessible_video_caption_lambda.accessible_video_caption_lambda_arn
-#   management_generate_accessible_contents_lambda_arn = module.management_generate_accessible_contents_lambda.management_generate_accessible_contents_lambda_arn
+  # Generate accessible contents lambdas arn
+  # FUTURO!!!!
 
-#   # Generate gifs lambdas arn
-#   generate_gifs_to_air_moisture_metric_lambda_arn = module.generate_gifs_to_air_moisture_metric_lambda.generate_gifs_to_air_moisture_metric_lambda_arn
-#   generate_gifs_to_air_temperature_metric_lambda_arn = module.generate_gifs_to_air_temperature_metric_lambda.generate_gifs_to_air_temperature_metric_lambda_arn
-#   generate_gifs_to_brightness_metric_lambda_arn = module.generate_gifs_to_brightness_metric_lambda.generate_gifs_to_brightness_metric_lambda_arn
-#   generate_gifs_to_soil_moisture_metric_lambda_arn = module.generate_gifs_to_soil_moisture_metric_lambda.generate_gifs_to_soil_moisture_metric_lambda_arn
-#   generate_gifs_to_soil_temperature_metric_lambda_arn = module.generate_gifs_to_soil_temperature_metric_lambda.generate_gifs_to_soil_temperature_metric_lambda_arn
+  # Generate gifs lambdas arn
+  generate_gifs_to_air_moisture_metric_lambda_arn = module.generate_gifs_to_air_moisture_metric_lambda.generate_gifs_to_air_moisture_metric_lambda_arn
+  generate_gifs_to_air_temperature_metric_lambda_arn = module.generate_gifs_to_air_temperature_metric_lambda.generate_gifs_to_air_temperature_metric_lambda_arn
+  generate_gifs_to_brightness_metric_lambda_arn = module.generate_gifs_to_brightness_metric_lambda.generate_gifs_to_brightness_metric_lambda_arn
+  generate_gifs_to_soil_moisture_metric_lambda_arn = module.generate_gifs_to_soil_moisture_metric_lambda.generate_gifs_to_soil_moisture_metric_lambda_arn
+  generate_gifs_to_soil_temperature_metric_lambda_arn = module.generate_gifs_to_soil_temperature_metric_lambda.generate_gifs_to_soil_temperature_metric_lambda_arn
 
-#   # Generate images lambdas arn
-#   generate_images_to_air_moisture_metric_lambda_arn = module.generate_images_to_air_moisture_metric_lambda.generate_images_to_air_moisture_metric_lambda_arn
-#   generate_images_to_air_temperature_metric_lambda_arn = module.generate_images_to_air_temperature_metric_lambda.generate_images_to_air_temperature_metric_lambda_arn
-#   generate_images_to_brightness_metric_lambda_arn = module.generate_images_to_brightness_metric_lambda.generate_images_to_brightness_metric_lambda_arn
-#   generate_images_to_soil_moisture_metric_lambda_arn = module.generate_images_to_soil_moisture_metric_lambda.generate_images_to_soil_moisture_metric_lambda_arn
-#   generate_images_to_soil_temperature_metric_lambda_arn = module.generate_images_to_soil_temperature_metric_lambda.generate_images_to_soil_temperature_metric_lambda_arn
+  # Generate images lambdas arn
+  generate_images_to_air_moisture_metric_lambda_arn = module.generate_images_to_air_moisture_metric_lambda.generate_images_to_air_moisture_metric_lambda_arn
+  generate_images_to_air_temperature_metric_lambda_arn = module.generate_images_to_air_temperature_metric_lambda.generate_images_to_air_temperature_metric_lambda_arn
+  generate_images_to_brightness_metric_lambda_arn = module.generate_images_to_brightness_metric_lambda.generate_images_to_brightness_metric_lambda_arn
+  generate_images_to_soil_moisture_metric_lambda_arn = module.generate_images_to_soil_moisture_metric_lambda.generate_images_to_soil_moisture_metric_lambda_arn
+  generate_images_to_soil_temperature_metric_lambda_arn = module.generate_images_to_soil_temperature_metric_lambda.generate_images_to_soil_temperature_metric_lambda_arn
 
-#   # Ágrix assistant main lambdas arn
-#   agrix_interaction_handler_feature_lambda_arn = module.agrix_interaction_handler_feature.agrix_interaction_handler_feature_lambda_arn
+  # Ágrix assistant main lambdas arn
+  # FUTURO!!!!
 
-#   # Ágrix assistant features fulfillments lambdas arn
-#   # advanced_sensor_handler_feature_fulfillment_lambda_arn =
-#   ar_processor_handler_feature_fulfillment_lambda_arn = module.ar_processor_assistant_feature_lambda_fulfillment_handler.ar_processor_handler_feature_fulfillment_lambda_arn
-#   compliance_assistance_handler_feature_fulfillment_lambda_arn = module.compliance_assistant_feature_lambda_fulfillment_handler.compliance_assistance_handler_feature_fulfillment_lambda_arn
-#   crop_planning_handler_feature_fulfillment_lambda_arn = module.crop_planning_assistant_feature_lambda_fulfillment_handler.crop_planning_handler_feature_fulfillment_lambda_arn
-#   dynamic_personlization_handler_feature_fulfillment_lambda_arn = module.dynamic_personalization_assistant_feature_lambda_fulfillment_handler.dynamic_personlization_handler_feature_fulfillment_lambda_arn
-#   image_diagnosis_handler_feature_fulfillment_lambda_arn = module.image_diagnosis_assistant_feature_lambda_fulfillment_handler.image_diagnosis_handler_feature_fulfillment_lambda_arn
-#   knowledge_sharing_handler_feature_fulfillment_lambda_arn = module.knowledge_sharing_assistant_feature_lambda_fulfillment_handler.knowledge_sharing_handler_feature_fulfillment_lambda_arn
-#   learning_module_handler_feature_fulfillment_lambda_arn = module.learning_module_assistant_feature_lambda_fulfillment_handler.learning_module_handler_feature_fulfillment_lambda_arn
-#   marketing_assistant_handler_feature_fulfillment_lambda_arn = module.marketing_assistant_assistant_feature_lambda_fulfillment_handler.marketing_assistant_handler_feature_fulfillment_lambda_arn
-#   marketplace_handler_feature_fulfillment_lambda_arn = module.marketplace_assistant_feature_lambda_fulfillment_handler.marketplace_handler_feature_fulfillment_lambda_arn
-#   predictive_analysis_handler_feature_fulfillment_lambda_arn = module.predictive_analysis_assistant_feature_lambda_fulfillment_handler.predictive_analysis_handler_feature_fulfillment_lambda_arn
-#   report_generator_handler_feature_fulfillment_lambda_arn = module.report_generator_handler_feature_lambda_fulfillment_handler.report_generator_handler_feature_fulfillment_lambda_arn
-#   scenario_simulator_handler_feature_fulfillment_lambda_arn = module.scenario_simulator_assistant_feature_lambda_fulfillment_handler.scenario_simulator_handler_feature_fulfillment_lambda_arn
-#   sustainability_assistant_handler_feature_fulfillment_lambda_arn = module.sustainability_assistant_feature_lambda_fulfillment_handler.sustainability_assistant_handler_feature_fulfillment_lambda_arn
-#   voice_assistant_handler_feature_fulfillment_lambda_arn = module.voice_assistant_feature_lambda_fulfillment_handler.voice_assistant_handler_feature_fulfillment_lambda_arn
+  # Ágrix assistant features fulfillments lambdas arn
+  #FUTURO
 
-#   # Ágrix assistant features lambdas arn
-#   # advanced_sensor_handler_feature_lambda_arn =
-#   ar_processor_handler_feature_lambda_arn = module.ar_processor_assistant_feature_lambda_handler.ar_processor_handler_feature_lambda_arn
-#   compliance_assistance_handler_feature_lambda_arn = module.crop_planning_assistant_feature_lambda_handler.crop_planning_handler_feature_lambda_arn
-#   crop_planning_handler_feature_lambda_arn = module.crop_planning_assistant_feature_lambda_handler.crop_planning_handler_feature_lambda_arn
-#   dynamic_personlization_handler_feature_lambda_arn = module.dynamic_personalization_assistant_feature_lambda_handler.dynamic_personlization_handler_feature_lambda_arn
-#   image_diagnosis_handler_feature_lambda_arn = module.image_diagnosis_assistant_feature_lambda_handler.image_diagnosis_handler_feature_lambda_arn
-#   knowledge_sharing_handler_feature_lambda_arn = module.knowledge_sharing_assistant_feature_lambda_handler.knowledge_sharing_handler_feature_lambda_arn
-#   learning_module_handler_feature_lambda_arn = module.learning_module_assistant_feature_lambda_handler.learning_module_handler_feature_lambda_arn
-#   marketing_assistant_handler_feature_lambda_arn = module.marketing_assistant_assistant_feature_lambda_handler.marketing_assistant_handler_feature_lambda_arn
-#   marketplace_handler_feature_lambda_arn = module.marketplace_assistant_feature_lambda_handler.marketplace_handler_feature_lambda_arn
-#   predictive_analysis_handler_feature_lambda_arn = module.predictive_analysis_assistant_feature_lambda_handler.predictive_analysis_handler_feature_lambda_arn
-#   report_generator_handler_feature_lambda_arn = module.report_generator_handler_feature_lambda_handler.report_generator_handler_feature_lambda_arn
-#   scenario_simulator_handler_feature_lambda_arn = module.scenario_simulator_assistant_feature_lambda_handler.scenario_simulator_handler_feature_lambda_arn
-#   sustainability_assistant_handler_feature_lambda_arn = module.sustainability_assistant_feature_lambda_handler.sustainability_assistant_handler_feature_lambda_arn
-#   voice_assistant_handler_feature_lambda_arn = module.voice_assistant_feature_lambda_handler.voice_assistant_handler_feature_lambda_arn
+  # Ágrix assistant features lambdas arn
+  # FUTURO!!!!
 
-#   # Task management lambda arn
-#   tasks_management_lambda_arn = module.tasks_management_lambda.tasks_management_lambda_arn
+  # Task management lambda arn
+  # tasks_management_lambda_arn = module.tasks_management_lambda.tasks_management_lambda_arn
 
-#   # Tasks results merge lambda arn
-#   tasks_results_merge_lambda_arn = module.tasks_results_merge_lambda.tasks_results_merge_lambda_arn
-# }
+  # Tasks results merge lambda arn
+  # tasks_results_merge_lambda_arn = module.tasks_results_merge_lambda.tasks_results_merge_lambda_arn
+}
 
 # module "analisys" {
 #   source = "./modules/analysis"

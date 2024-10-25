@@ -45,66 +45,6 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
                       }
                     }
                   },
-                  {
-                    StartAt = "GenerateSoilMoistureAccessibleContent"
-                    States = {
-                      GenerateSoilMoistureAccessibleContent = {
-                        Type     = "Task"
-                        Resource = var.management_generate_accessible_contents_lambda_arn
-                        Next     = "AccessibilityChoice"
-                      }
-                      AccessibilityChoice = {
-                        Type = "Choice"
-                        Choices = [
-                          {
-                            Variable = "$.type"
-                            StringEquals = "text_to_speech"
-                            Next = "TextToSpeech"
-                          },
-                          {
-                            Variable = "$.type"
-                            StringEquals = "image_recognition"
-                            Next = "ImageRecognition"
-                          },
-                          {
-                            Variable = "$.type"
-                            StringEquals = "video_caption"
-                            Next = "VideoCaption"
-                          },
-                          {
-                            Variable = "$.type"
-                            StringEquals = "text_simplification"
-                            Next = "TextSimplification"
-                          }
-                        ]
-                        Default = "AccessibilityEnd"
-                      },
-                      TextToSpeech = {
-                        Type     = "Task"
-                        Resource = var.accessible_text_to_speech_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      ImageRecognition = {
-                        Type     = "Task"
-                        Resource = var.accessible_image_recognition_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      VideoCaption = {
-                        Type     = "Task"
-                        Resource = var.accessible_video_caption_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      TextSimplification = {
-                        Type     = "Task"
-                        Resource = var.accessible_text_simplification_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      AccessibilityEnd = {
-                        Type = "Pass"
-                        End  = true
-                      }
-                    }
-                  }
                 ]
                 End = true
               }
@@ -146,66 +86,6 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
                       }
                     }
                   },
-                  {
-                    StartAt = "GenerateSoilTemperatureAccessibleContent"
-                    States = {
-                      GenerateSoilTemperatureAccessibleContent = {
-                        Type     = "Task"
-                        Resource = var.management_generate_accessible_contents_lambda_arn
-                        Next     = "AccessibilityChoice"
-                      }
-                      AccessibilityChoice = {
-                        Type = "Choice"
-                        Choices = [
-                          {
-                            Variable = "$.type"
-                            StringEquals = "text_to_speech"
-                            Next = "TextToSpeech"
-                          },
-                          {
-                            Variable = "$.type"
-                            StringEquals = "image_recognition"
-                            Next = "ImageRecognition"
-                          },
-                          {
-                            Variable = "$.type"
-                            StringEquals = "video_caption"
-                            Next = "VideoCaption"
-                          },
-                          {
-                            Variable = "$.type"
-                            StringEquals = "text_simplification"
-                            Next = "TextSimplification"
-                          }
-                        ]
-                        Default = "AccessibilityEnd"
-                      },
-                      TextToSpeech = {
-                        Type     = "Task"
-                        Resource = var.accessible_text_to_speech_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      ImageRecognition = {
-                        Type     = "Task"
-                        Resource = var.accessible_image_recognition_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      VideoCaption = {
-                        Type     = "Task"
-                        Resource = var.accessible_video_caption_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      TextSimplification = {
-                        Type     = "Task"
-                        Resource = var.accessible_text_simplification_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      AccessibilityEnd = {
-                        Type = "Pass"
-                        End  = true
-                      }
-                    }
-                  }
                 ]
                 End = true
               }
@@ -247,66 +127,6 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
                       }
                     }
                   },
-                  {
-                    StartAt = "GenerateAirMoistureAccessibleContent"
-                    States = {
-                      GenerateAirMoistureAccessibleContent = {
-                        Type     = "Task"
-                        Resource = var.management_generate_accessible_contents_lambda_arn
-                        Next     = "AccessibilityChoice"
-                      }
-                      AccessibilityChoice = {
-                        Type = "Choice"
-                        Choices = [
-                          {
-                            Variable = "$.type"
-                            StringEquals = "text_to_speech"
-                            Next = "TextToSpeech"
-                          },
-                          {
-                            Variable = "$.type"
-                            StringEquals = "image_recognition"
-                            Next = "ImageRecognition"
-                          },
-                          {
-                            Variable = "$.type"
-                            StringEquals = "video_caption"
-                            Next = "VideoCaption"
-                          },
-                          {
-                            Variable = "$.type"
-                            StringEquals = "text_simplification"
-                            Next = "TextSimplification"
-                          }
-                        ]
-                        Default = "AccessibilityEnd"
-                      },
-                      TextToSpeech = {
-                        Type     = "Task"
-                        Resource = var.accessible_text_to_speech_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      ImageRecognition = {
-                        Type     = "Task"
-                        Resource = var.accessible_image_recognition_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      VideoCaption = {
-                        Type     = "Task"
-                        Resource = var.accessible_video_caption_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      TextSimplification = {
-                        Type     = "Task"
-                        Resource = var.accessible_text_simplification_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      AccessibilityEnd = {
-                        Type = "Pass"
-                        End  = true
-                      }
-                    }
-                  }
                 ]
                 End = true
               }
@@ -348,66 +168,6 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
                       }
                     }
                   },
-                  {
-                    StartAt = "GenerateAirTemperatureAccessibleContent"
-                    States = {
-                      GenerateAirTemperatureAccessibleContent = {
-                        Type     = "Task"
-                        Resource = var.management_generate_accessible_contents_lambda_arn
-                        Next     = "AccessibilityChoice"
-                      }
-                      AccessibilityChoice = {
-                        Type = "Choice"
-                        Choices = [
-                          {
-                            Variable = "$.type"
-                            StringEquals = "text_to_speech"
-                            Next = "TextToSpeech"
-                          },
-                          {
-                            Variable = "$.type"
-                            StringEquals = "image_recognition"
-                            Next = "ImageRecognition"
-                          },
-                          {
-                            Variable = "$.type"
-                            StringEquals = "video_caption"
-                            Next = "VideoCaption"
-                          },
-                          {
-                            Variable = "$.type"
-                            StringEquals = "text_simplification"
-                            Next = "TextSimplification"
-                          }
-                        ]
-                        Default = "AccessibilityEnd"
-                      },
-                      TextToSpeech = {
-                        Type     = "Task"
-                        Resource = var.accessible_text_to_speech_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      ImageRecognition = {
-                        Type     = "Task"
-                        Resource = var.accessible_image_recognition_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      VideoCaption = {
-                        Type     = "Task"
-                        Resource = var.accessible_video_caption_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      TextSimplification = {
-                        Type     = "Task"
-                        Resource = var.accessible_text_simplification_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      AccessibilityEnd = {
-                        Type = "Pass"
-                        End  = true
-                      }
-                    }
-                  }
                 ]
                 End = true
               }
@@ -449,160 +209,14 @@ resource "aws_sfn_state_machine" "agriculture_workflow" {
                       }
                     }
                   },
-                  {
-                    StartAt = "GenerateBrightnessAccessibleContent"
-                    States = {
-                      GenerateBrightnessAccessibleContent = {
-                        Type     = "Task"
-                        Resource = var.management_generate_accessible_contents_lambda_arn
-                        Next     = "AccessibilityChoice"
-                      }
-                      AccessibilityChoice = {
-                        Type = "Choice"
-                        Choices = [
-                          {
-                            Variable = "$.type"
-                            StringEquals = "text_to_speech"
-                            Next = "TextToSpeech"
-                          },
-                          {
-                            Variable = "$.type"
-                            StringEquals = "image_recognition"
-                            Next = "ImageRecognition"
-                          },
-                          {
-                            Variable = "$.type"
-                            StringEquals = "video_caption"
-                            Next = "VideoCaption"
-                          },
-                          {
-                            Variable = "$.type"
-                            StringEquals = "text_simplification"
-                            Next = "TextSimplification"
-                          }
-                        ]
-                        Default = "AccessibilityEnd"
-                      },
-                      TextToSpeech = {
-                        Type     = "Task"
-                        Resource = var.accessible_text_to_speech_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      ImageRecognition = {
-                        Type     = "Task"
-                        Resource = var.accessible_image_recognition_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      VideoCaption = {
-                        Type     = "Task"
-                        Resource = var.accessible_video_caption_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      TextSimplification = {
-                        Type     = "Task"
-                        Resource = var.accessible_text_simplification_lambda_arn
-                        Next     = "AccessibilityEnd"
-                      },
-                      AccessibilityEnd = {
-                        Type = "Pass"
-                        End  = true
-                      }
-                    }
-                  }
                 ]
                 End = true
               }
             }
           },
-          {
-            StartAt = "ManageTasks"
-            States = {
-              ExecuteTasks = {
-                Type     = "Task"
-                Resource = var.tasks_management_lambda_arn
-                End      = true
-              }
-            }
-          }
         ]
-        Next = "MergeBranchResults"
+        End = true  # Finaliza o Step Function geral aqui
       },
-      MergeBranchResults = {
-        Type     = "Task"
-        Resource = var.tasks_results_merge_lambda_arn
-        Next     = "HandleAgrixInteractions"
-      },
-      HandleAgrixInteractions = {
-        Type = "Task",
-        Resource = var.agrix_interaction_handler_feature_lambda_arn
-        Next = "ProcessAgrixFulfillments"
-      },
-      ProcessAgrixFulfillments = {
-        Type = "Task",
-        Resource = var.agrix_interaction_handler_feature_lambda_arn,
-        Parameters = {
-          "input.$": "$",
-          "handlers": {
-            "ar_processor_handler": {
-              "fulfillment": var.ar_processor_handler_feature_fulfillment_lambda_arn,
-              "main": var.ar_processor_handler_feature_lambda_arn
-            },
-            "compliance_assistance_handler": {
-              "fulfillment": var.compliance_assistance_handler_feature_fulfillment_lambda_arn,
-              "main": var.compliance_assistance_handler_feature_lambda_arn
-            },
-            "crop_planning_handler": {
-              "fulfillment": var.crop_planning_handler_feature_fulfillment_lambda_arn,
-              "main": var.crop_planning_handler_feature_lambda_arn
-            },
-            "dynamic_personlization_handler": {
-              "fulfillment": var.dynamic_personlization_handler_feature_fulfillment_lambda_arn,
-              "main": var.dynamic_personlization_handler_feature_lambda_arn
-            },
-            "image_diagnosis_handler": {
-              "fulfillment": var.image_diagnosis_handler_feature_fulfillment_lambda_arn,
-              "main": var.image_diagnosis_handler_feature_lambda_arn
-            },
-            "knowledge_sharing_handler": {
-              "fulfillment": var.knowledge_sharing_handler_feature_fulfillment_lambda_arn,
-              "main": var.knowledge_sharing_handler_feature_lambda_arn
-            },
-            "learning_module_handler": {
-              "fulfillment": var.learning_module_handler_feature_fulfillment_lambda_arn,
-              "main": var.learning_module_handler_feature_lambda_arn
-            },
-            "marketing_assistant_handler": {
-              "fulfillment": var.marketing_assistant_handler_feature_fulfillment_lambda_arn,
-              "main": var.marketing_assistant_handler_feature_lambda_arn
-            },
-            "marketplace_handler": {
-              "fulfillment": var.marketplace_handler_feature_fulfillment_lambda_arn,
-              "main": var.marketplace_handler_feature_lambda_arn
-            },
-            "predictive_analysis_handler": {
-              "fulfillment": var.predictive_analysis_handler_feature_fulfillment_lambda_arn,
-              "main": var.predictive_analysis_handler_feature_lambda_arn
-            },
-            "report_generator_handler": {
-              "fulfillment": var.report_generator_handler_feature_fulfillment_lambda_arn,
-              "main": var.report_generator_handler_feature_lambda_arn
-            },
-            "scenario_simulator_handler": {
-              "fulfillment": var.scenario_simulator_handler_feature_fulfillment_lambda_arn,
-              "main": var.scenario_simulator_handler_feature_lambda_arn
-            },
-            "sustainability_assistant_handler": {
-              "fulfillment": var.sustainability_assistant_handler_feature_fulfillment_lambda_arn,
-              "main": var.sustainability_assistant_handler_feature_lambda_arn
-            },
-            "voice_assistant_handler": {
-              "fulfillment": var.voice_assistant_handler_feature_fulfillment_lambda_arn,
-              "main": var.voice_assistant_handler_feature_lambda_arn
-            }
-          }
-        },
-        End = true
-      }
     }
   })
 }

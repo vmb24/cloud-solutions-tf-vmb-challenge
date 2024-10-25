@@ -26,18 +26,18 @@ AGRICULTURAL_AIR_MOISTURE_RECOMMENDATIONS_DYNAMODB_TABLE_NAME = 'AIAgriculturalA
 AIR_MOISTURE_AVERAGES_DATA_TABLE_NAME = 'AirMoistureAverages'
 
 # Tópicos para recomendações
-TOPICS = [
-    "Necessidade de Irrigação",
-    "Índice de Estresse Hídrico",
-    "Prevenção de Doenças",
-    "Eficiência no Uso da Água",
-    "Análise de Retenção de Água do Solo",
-    "Previsão de Colheita",
-    "Planejamento de Plantio",
-    "Avaliação do Impacto das Chuvas",
-    "Modelagem de Crescimento das Plantas",
-    "Detecção de Zonas de Solo Deficiente"
-]
+# TOPICS = [
+#     "Necessidade de Irrigação",
+#     "Índice de Estresse Hídrico",
+#     "Prevenção de Doenças",
+#     "Eficiência no Uso da Água",
+#     "Análise de Retenção de Água do Solo",
+#     "Previsão de Colheita",
+#     "Planejamento de Plantio",
+#     "Avaliação do Impacto das Chuvas",
+#     "Modelagem de Crescimento das Plantas",
+#     "Detecção de Zonas de Solo Deficiente"
+# ]
 
 def encode_string(s):
     return s.encode('utf-8').decode('utf-8')
@@ -220,27 +220,25 @@ def store_moisture_data(moisture, status, timestamp):
         print(f"Erro inesperado ao armazenar dados de temperatura do ar: {str(e)}")
         raise
 
-# Função para gerar recomendações agrícolas
 def generate_agriculture_recommendations(moisture, status, crops):
     timestamp = datetime.now().isoformat()
     print(f"[{timestamp}] Iniciando geração de recomendações")
-    print(f"[{timestamp}] Parâmetros recebidos - Umidade: {moisture}%, Status: {status}, Culturas: {crops}")
+    print(f"[{timestamp}] Parâmetros recebidos - Umidade do ar: {moisture}%, Status: {status}, Culturas: {crops}")
 
-    # Transforma o array de culturas (crops) em uma string separada por vírgulas
     crops_str = ", ".join(crops)
     print(f"[{timestamp}] Culturas para o prompt: {crops_str}")
 
-    # Prepara o prompt de IA com todos os valores (incluindo crops)
-    prompt = encode_string(f'''Human: Você é um especialista em agricultura. Forneça recomendações detalhadas para as próximas quatro semanas, com base nas culturas plantadas e na temperatura do ar atual do solo. 
+    prompt = encode_string(f'''Human: Você é um especialista em agricultura. Forneça recomendações detalhadas para as próximas quatro semanas com base na umidade do ar e nas culturas plantadas. 
     Considere os seguintes dados:
-    - Umidade atual do solo: {moisture}%
+    - Umidade atual do ar: {moisture}%
     - Status atual: {status}
     - Culturas plantadas: {crops_str}
 
     O plano deve incluir:
-    1. Sugestões de melhorias nas práticas de plantio.
-    2. Recomendações de novas culturas que possam ser mais adequadas para o solo e condições climáticas.
-    3. Orientações para cada semana com base na evolução esperada do solo e condições climáticas.
+    1. Avaliação da necessidade de irrigação e sugestões de melhorias para eficiência no uso da água.
+    2. Identificação do índice de estresse hídrico das plantas.
+    3. Recomendações de novas culturas mais adequadas às condições de umidade do ar.
+    4. Prevenção de doenças relacionadas à umidade excessiva ou baixa.
 
     Formate sua resposta como um dicionário JSON, onde as chaves são as semanas e os valores são recomendações específicas para cada semana.
 
@@ -257,8 +255,8 @@ def generate_agriculture_recommendations(moisture, status, crops):
     Human: Obrigado. Por favor, forneça apenas o dicionário JSON com as recomendações, sem incluir nenhum texto introdutório ou conclusivo.
 
     Assistant:''')
-
-    print(f"[{timestamp}] Prompt preparado para envio ao Bedrock!!!!")
+    
+    print(f"[{timestamp}] Prompt preparado para envio ao Bedrock!")
 
     max_retries = 5
     base_delay = 1  # segundo

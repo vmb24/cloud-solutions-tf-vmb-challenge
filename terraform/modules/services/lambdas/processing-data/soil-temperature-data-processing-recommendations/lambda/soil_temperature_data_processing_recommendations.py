@@ -220,27 +220,25 @@ def store_moisture_data(temperature, status, timestamp):
         print(f"Erro inesperado ao armazenar dados de temperatura do solo: {str(e)}")
         raise
 
-# Função para gerar recomendações agrícolas
 def generate_agriculture_recommendations(temperature, status, crops):
     timestamp = datetime.now().isoformat()
     print(f"[{timestamp}] Iniciando geração de recomendações")
-    print(f"[{timestamp}] Parâmetros recebidos - Umidade: {temperature}%, Status: {status}, Culturas: {crops}")
+    print(f"[{timestamp}] Parâmetros recebidos - Temperatura do solo: {temperature}°C, Status: {status}, Culturas: {crops}")
 
-    # Transforma o array de culturas (crops) em uma string separada por vírgulas
     crops_str = ", ".join(crops)
     print(f"[{timestamp}] Culturas para o prompt: {crops_str}")
 
-    # Prepara o prompt de IA com todos os valores (incluindo crops)
-    prompt = encode_string(f'''Human: Você é um especialista em agricultura. Forneça recomendações detalhadas para as próximas quatro semanas, com base nas culturas plantadas e na temperatura do solo atual do solo. 
+    prompt = encode_string(f'''Human: Você é um especialista em agricultura. Forneça recomendações detalhadas para as próximas quatro semanas com base na temperatura do solo e nas culturas plantadas. 
     Considere os seguintes dados:
-    - Umidade atual do solo: {temperature}%
+    - Temperatura atual do solo: {temperature}°C
     - Status atual: {status}
     - Culturas plantadas: {crops_str}
 
     O plano deve incluir:
-    1. Sugestões de melhorias nas práticas de plantio.
-    2. Recomendações de novas culturas que possam ser mais adequadas para o solo e condições climáticas.
-    3. Orientações para cada semana com base na evolução esperada do solo e condições climáticas.
+    1. Impacto da temperatura do solo no crescimento das plantas e produtividade.
+    2. Prevenção de doenças associadas a variações de temperatura do solo.
+    3. Ajustes necessários nas práticas agrícolas para otimizar o crescimento das plantas.
+    4. Avaliação de técnicas de proteção térmica para o solo e plantas.
 
     Formate sua resposta como um dicionário JSON, onde as chaves são as semanas e os valores são recomendações específicas para cada semana.
 
@@ -257,8 +255,8 @@ def generate_agriculture_recommendations(temperature, status, crops):
     Human: Obrigado. Por favor, forneça apenas o dicionário JSON com as recomendações, sem incluir nenhum texto introdutório ou conclusivo.
 
     Assistant:''')
-
-    print(f"[{timestamp}] Prompt preparado para envio ao Bedrock!!!!")
+    
+    print(f"[{timestamp}] Prompt preparado para envio ao Bedrock!")
 
     max_retries = 5
     base_delay = 1  # segundo

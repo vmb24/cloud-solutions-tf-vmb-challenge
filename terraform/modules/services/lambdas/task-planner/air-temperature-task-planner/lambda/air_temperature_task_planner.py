@@ -254,15 +254,15 @@ def generate_task_plan_with_ai(temperature, status, crops):
         crops_str = ", ".join(crops)
 
         # Novo prompt que inclui as culturas e tarefas
-        prompt = f'''Human: Com base em uma temperatura do ar do solo de {temperature}% e status '{status}', 
-        gere um plano de tarefas agrícola para as próximas 4 semanas para as culturas {crops_str}. 
-        Inclua datas e horários exatos para cada tarefa. Cada semana deve ter uma sequência de ações específicas relacionadas à {crops_str}, 
-        práticas agrícolas modernas e sustentáveis, começando a partir de {start_date}.
-        O plano deve cobrir controle da temperatura do ar, irrigação, monitoramento do solo, possíveis ajustes baseados em medições futuras e quaisquer práticas específicas relacionadas à {crops_str}.
+        prompt = f'''Human: Com base em uma temperatura do ar de {temperature}°C e status '{status}', gere um plano de tarefas agrícola para as próximas 4 semanas para as culturas {crops_str}.
+        Inclua datas e horários exatos para cada tarefa. Cada semana deve ter uma sequência de ações específicas relacionadas às {crops_str}, práticas agrícolas modernas e sustentáveis, começando a partir de {start_date}.
+        O plano deve cobrir:
+        1. Ajustes na irrigação para reduzir estresse hídrico em dias quentes.
+        2. Medidas para proteger as plantas contra altas temperaturas.
+        3. Estratégias para melhorar a eficiência no uso da água, evitando perda de umidade.
+        4. Técnicas para prevenir doenças relacionadas ao calor, como estresse térmico.
 
-        Além disso, forneça recomendações semanais para o agricultor, sugerindo novas culturas ou práticas agrícolas baseadas em medições e previsões climáticas.
-        As recomendações devem ser diferentes das tarefas diárias e focar em estratégias para melhorar a produção a longo prazo.
-
+        Além disso, forneça recomendações semanais, sugerindo mudanças nas práticas de plantio, uso de sombreamento ou outras ações que possam melhorar a produção em períodos de altas temperaturas.
         Assistant:'''
 
         logger.info(f"[{timestamp}] Enviando prompt para o modelo de IA...")
