@@ -5,6 +5,8 @@ O TerraFarming é um sistema de agricultura inteligente que utiliza IoT, anális
 
 Este repositório contém o código para os microserviços e funções Lambda do aplicativo TerraFarming, junto com a configuração da infraestrutura AWS usando Terraform. O TerraFarming é um aplicativo de agricultura inteligente que utiliza inteligência artificial para fornecer recomendações aos agricultores com base em métricas do solo e condições climáticas.
 
+- **Alguns Recursos ainda serão implementados no futuro** 
+
 Componentes Principais
 
 1.  AWS Lambda
@@ -35,21 +37,9 @@ Componentes Principais
     -   Função: Plataforma para conectar e gerenciar dispositivos IoT.
     -   Uso no TerraFarming: Gerencia a conexão e os dados dos sensores agrícolas.
 
-8.  Amazon Kinesis
-    -   Função: Processamento de dados em tempo real.
-    -   Uso no TerraFarming: Analisa streams de dados dos sensores em tempo real para alertas e insights imediatos.
-
-9.  Amazon Redshift
-    -   Função: Data warehouse em nuvem.
-    -   Uso no TerraFarming: Realiza análises complexas em grandes volumes de dados históricos.
-
 10. Amazon S3
     -   Função: Armazenamento de objetos.
     -   Uso no TerraFarming: Armazena arquivos, imagens e backups de dados.
-
-11. AWS Greengrass
-    -   Função: Estende capacidades de nuvem para dispositivos edge.
-    -   Uso no TerraFarming: Permite processamento local em dispositivos agrícolas para operações offline e redução de latência.
 
 12. Amazon SNS
     -   Função: Serviço de notificações.
@@ -66,18 +56,6 @@ Componentes Principais
 15. Amazon Route 53
     -   Função: Serviço de DNS e roteamento de tráfego.
     -   Uso no TerraFarming: Gerencia o DNS do aplicativo e implementa estratégias de failover.
-
-16. Amazon Elasticsearch Service
-    -   Função: Serviço de busca e análise.
-    -   Uso no TerraFarming: Implementa busca avançada e análise de logs.
-
-17. Amazon Translate
-    -   Função: Serviço de tradução automática.
-    -   Uso no TerraFarming: Traduz conteúdo para diferentes idiomas, facilitando a colaboração internacional.
-
-18. Amazon Transcribe
-    -   Função: Serviço de transcrição de fala para texto.
-    -   Uso no TerraFarming: Transcreve comandos de voz dos usuários para processamento textual.
 
 19. Amazon Cognito
     -   Função: Serviço de autenticação e gerenciamento de identidade.
@@ -98,22 +76,6 @@ Componentes Principais
 23. AWS CloudTrail
     -   Função: Serviço de auditoria e logging.
     -   Uso no TerraFarming: Registra todas as atividades da conta AWS para fins de auditoria.
-
-24. Amazon ElastiCache
-    -   Função: Serviço de cache in-memory.
-    -   Uso no TerraFarming: Melhora o desempenho armazenando dados frequentemente acessados em cache.
-
-25. AWS X-Ray
-    -   Função: Serviço de análise e depuração de aplicações distribuídas.
-    -   Uso no TerraFarming: Ajuda a identificar gargalos de desempenho e resolver problemas.
-
-26. AWS Systems Manager
-    -   Função: Serviço de gerenciamento de recursos operacionais.
-    -   Uso no TerraFarming: Automatiza tarefas de manutenção e aplica patches de segurança.
-
-27. AWS Backup
-    -   Função: Serviço de backup centralizado.
-    -   Uso no TerraFarming: Realiza e gerencia backups de diversos serviços AWS usados no aplicativo.
 
 28. AWS Step Functions
     -   Função: Serviço de orquestração de fluxos de trabalho.
@@ -156,10 +118,6 @@ Esta explicação expandida do AWS Bedrock destaca como cada modelo específico 
     -   Função: Registro de contêineres.
     -   Uso no TerraFarming: Armazena, gerencia e implanta imagens de contêineres Docker.
 
-31. Amazon Polly
-    -   Função: Serviço de conversão de texto em fala.
-    -   Uso no TerraFarming: Gera saídas de áudio para instruções e alertas aos usuários.
-
 32. AWS Certificate Manager
     -   Função: Gerenciamento de certificados SSL/TLS.
     -   Uso no TerraFarming: Provisiona, gerencia e implanta certificados para conexões seguras.
@@ -167,67 +125,6 @@ Esta explicação expandida do AWS Bedrock destaca como cada modelo específico 
 33. Amazon QuickSight
     -   Função: Serviço de business intelligence.
     -   Uso no TerraFarming: Cria visualizações e dashboards interativos para análise de dados agrícolas.
-
-# TerraFarming (Amazon Lex)
-
-1.  SOIL_MOISTURE_FULFILLMENT_ARN (SoilMoistureIntent):\
-    Esta função de fulfillment recebe solicitações relacionadas à umidade do solo. Ela chama o serviço apropriado que acessa os dados dos sensores de umidade do solo, processa as leituras atuais e históricas, e retorna informações sobre o nível de umidade do solo. A função então formata essas informações para apresentação ao usuário, incluindo possíveis recomendações sobre irrigação.
-
-2.  SOIL_TEMPERATURE_FULFILLMENT_ARN (SoilTemperatureIntent):\
-    Responsável por intermediar solicitações sobre a temperatura do solo. Chama o serviço que acessa e analisa os dados dos sensores de temperatura do solo. Formata as informações recebidas sobre condições atuais e tendências, incluindo possíveis alertas sobre temperaturas extremas.
-
-3.  AIR_MOISTURE_FULFILLMENT_ARN (AirMoistureIntent):\
-    Esta função lida com consultas sobre a umidade do ar. Ela chama o serviço que acessa os dados dos sensores de umidade atmosférica e processa essas informações. Formata e retorna dados sobre os níveis atuais de umidade relativa do ar, incluindo possíveis insights sobre como isso afeta as culturas.
-
-4.  AIR_TEMPERATURE_FULFILLMENT_ARN (AirTemperatureIntent):\
-    Processa solicitações relacionadas à temperatura do ar. Chama o serviço que acessa e analisa dados de estações meteorológicas. Formata e retorna informações sobre temperaturas atuais, previsões e tendências, incluindo possíveis alertas sobre condições extremas.
-
-5.  BRIGHTNESS_FULFILLMENT_ARN (BrightnessIntent):\
-    Esta função intermedia solicitações sobre os níveis de luminosidade. Chama o serviço que acessa e analisa dados de sensores de luz. Formata e retorna informações sobre a intensidade da luz solar, duração do dia e condições de sombreamento.
-
-6.  VOICE_ASSISTANT_FULFILLMENT_ARN (VoiceAssistantIntent):\
-    Gerencia solicitações relacionadas ao assistente de voz. Chama os serviços necessários para processar entradas de voz, converter texto em fala, e gerar respostas em áudio. Coordena a interação entre esses serviços e formata as respostas para o usuário.
-
-7.  AR_PROCESSOR_FULFILLMENT_ARN (AugmentedRealityIntent):\
-    Esta função gerencia solicitações relacionadas à Realidade Aumentada (RA). Chama os serviços que processam imagens, geram sobreposições de informações, e criam visualizações em RA. Coordena a interação entre esses serviços e formata os resultados para exibição.
-
-8.  PREDICTIVE_ANALYSIS_FULFILLMENT_ARN (PredictiveAnalysisIntent):\
-    Gerencia solicitações de análises preditivas. Chama os serviços de aprendizado de máquina que realizam previsões sobre pragas, doenças ou condições climáticas. Formata os resultados das previsões, incluindo alertas e recomendações, para apresentação ao usuário.
-
-9.  DYNAMIC_PERSONALIZATION_FULFILLMENT_ARN (PersonalizationIntent):\
-    Intermedia solicitações relacionadas à personalização. Chama os serviços que analisam o comportamento do usuário e geram recomendações personalizadas. Formata essas recomendações para apresentação ao usuário.
-
-10. MARKETPLACE_FULFILLMENT_ARN (MarketplaceIntent):\
-    Gerencia solicitações relacionadas ao marketplace. Chama os serviços que sugerem produtos, otimizam preços e gerenciam logística. Formata as sugestões e informações do marketplace para apresentação ao usuário.
-
-11. CROP_PLANNING_FULFILLMENT_ARN (CropPlanningIntent):\
-    Esta função intermedia solicitações de planejamento de safras. Chama os serviços que realizam simulações de safras e geram planos otimizados. Formata os resultados do planejamento para apresentação ao usuário.
-
-12. IMAGE_DIAGNOSIS_FULFILLMENT_ARN (ImageDiagnosisIntent):\
-    Gerencia solicitações de diagnóstico de imagens de plantas. Chama os serviços de visão computacional e aprendizado de máquina que analisam as imagens. Formata os resultados do diagnóstico para apresentação ao usuário.
-
-13. LEARNING_MODULE_FULFILLMENT_ARN (LearningModuleIntent):\
-    Intermedia solicitações relacionadas aos módulos de aprendizado. Chama os serviços que geram conteúdo educacional personalizado e gerenciam elementos de gamificação. Formata o conteúdo educacional para apresentação ao usuário.
-
-14. SUSTAINABILITY_ASSISTANT_FULFILLMENT_ARN (SustainabilityAssistantIntent):\
-    Esta função gerencia solicitações relacionadas à sustentabilidade. Chama os serviços que analisam práticas agrícolas e geram recomendações de sustentabilidade. Formata essas recomendações para apresentação ao usuário.
-
-15. ADVANCED_SENSOR_FULFILLMENT_ARN (AdvancedSensorIntent):\
-    Intermedia solicitações relacionadas a sensores avançados. Chama os serviços que processam e analisam dados de sensores sofisticados. Formata os resultados da análise para apresentação ao usuário.
-
-16. MARKETING_ASSISTANT_FULFILLMENT_ARN (MarketingAssistantIntent):\
-    Gerencia solicitações relacionadas à comercialização de produtos. Chama os serviços que analisam mercados, preveem preços e geram estratégias de marketing. Formata essas informações e estratégias para apresentação ao usuário.
-
-17. SCENARIO_SIMULATOR_FULFILLMENT_ARN (ScenarioSimulatorIntent):\
-    Intermedia solicitações relacionadas à simulação de cenários agrícolas. Chama os serviços que executam simulações complexas de diferentes estratégias. Formata os resultados das simulações para apresentação ao usuário.
-
-18. KNOWLEDGE_SHARING_FULFILLMENT_ARN (KnowledgeSharingIntent):\
-    Gerencia solicitações relacionadas ao compartilhamento de conhecimento. Chama os serviços que conectam agricultores e facilitam a troca de informações. Formata as informações compartilhadas para apresentação ao usuário.
-
-19. COMPLIANCE_ASSISTANT_FULFILLMENT_ARN (ComplianceAssistantIntent):\
-    Intermedia solicitações relacionadas à conformidade regulatória. Chama os serviços que monitoram práticas agrícolas e verificam conformidade com regulamentações. Formata alertas e orientações de conformidade para apresentação ao usuário.
-
-Cada uma dessas funções de fulfillment atua como um ponto de entrada no Amazon Lex, orquestrando a comunicação entre a interface do usuário e os serviços de back-end que realizam o processamento real das informações.
 
 Detalhamento dos Componentes
 
@@ -347,21 +244,6 @@ Para criar GIFs informativos para agricultores sobre os tópicos mencionados, po
 
 -   Fornece e gerencia o certificado SSL/TLS para a aplicação web
 
-1.  Geração de Imagens com AWS Lambda\
-    Em vez de usar um serviço externo para análise de imagens, implementamos uma solução personalizada de geração de imagens usando AWS Lambda. Esta abordagem nos permite criar visualizações específicas baseadas nos dados coletados.
-
-image_generation_lambda:
-
--   Trigger: Pode ser acionada por eventos diversos (novos dados no DynamoDB, solicitações da aplicação web, etc.)
--   Função: Gera imagens personalizadas baseadas nos dados agrícolas
--   Integrações: DynamoDB (para leitura de dados), S3 (para armazenamento das imagens geradas)
-
-A função utiliza bibliotecas Python como Pillow ou Matplotlib para criar visualizações como:
-
--   Mapas de calor de umidade do solo
--   Gráficos de crescimento das plantas
--   Visualizações de distribuição de nutrientes
-
 Arquitetura do Sistema
 
 json
@@ -369,18 +251,21 @@ json
 Copiar
 
 ```
-[IoT Devices] --> [IoT Core] --> [Lambda Functions] --> [DynamoDB]
+[IoT Devices] --> [IoT Core] --> [Lambda Functions]
                                        |
                                        v
-[S3 (Raw Data)] --> [Lambda] --> [image_generation_lambda] --> [S3 (Generated Images)]
-[S3 (Videos)] --> [Lambda Functions] --> [Bedrock] --> [DynamoDB]
+                             [Bedrock] --> [DynamoDB]
                                 |
                                 |
                                 v
-                        [ECS (Web App)] <----> [Lambda Functions]
+                            [API Gateway]
+                                |
+                                |
+                                v
+                        [ECS (Web App)] 
                              |
                              v
-              [Load Balancer] <---> [Route 53]
+              [Load Balancer] <---> [Route 53]---------> Usuário (internet)
                                          |
                                          v
                                    [ACM Certificate]

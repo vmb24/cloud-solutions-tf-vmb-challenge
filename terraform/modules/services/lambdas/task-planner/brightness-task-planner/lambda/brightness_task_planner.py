@@ -50,9 +50,9 @@ def lambda_handler(event, context):
                 return create_response(405, "Método HTTP não permitido.")
         elif 'Records' in event:
             return handle_dynamodb_event(event['Records'])
-        elif 'temperature' in event:
+        elif 'brightness' in event:
             logger.info("Processando dados de luminosidade do evento")
-            return process_temperature_data(event)
+            return process_brightness_data(event)
         else:
             logger.info("Coletando dados de luminosidade do banco de dados")
             return handle_database_event()
@@ -74,21 +74,21 @@ def handle_dynamodb_event(records):
         if record['eventName'] == 'INSERT':
             new_image = record['dynamodb']['NewImage']
             logger.info(f"Novo registro inserido na tabela BrightnessHistory: {json.dumps(new_image)}")
-            return process_temperature_data(new_image)
+            return process_brightness_data(new_image)
     return create_response(200, "Eventos processados com sucesso.")
 
 def handle_database_event():
-    temperature_data = get_latest_temperature_from_averages()
-    if not temperature_data:
-        temperature_data = get_latest_temperature_from_history()
+    brightness_data = get_latest_brightness_from_averages()
+    if not brightness_data:
+        brightness_data = get_latest_brightness_from_history()
     
-    if temperature_data:
-        return process_temperature_data(temperature_data)
+    if brightness_data:
+        return process_brightness_data(brightness_data)
     else:
         logger.error("Não foi possível obter dados de luminosidade de nenhuma tabela")
         return create_response(404, "Dados de luminosidade não encontrados")
 
-def get_latest_temperature_from_averages():
+def get_latest_brightness_from_averages():
     try:
         logger.info("Obtendo a última luminosidade da tabela BrightnessAverages")
         response = brightness_averages_table.scan(Limit=1)
@@ -96,7 +96,7 @@ def get_latest_temperature_from_averages():
         if items:
             latest_item = items[0]
             return {
-                'temperature': latest_item['averageTemperature'],
+                'brightness': latest_item['averageTemperature'],
                 'status': latest_item.get('status', 'unknown'),
                 'timestamp': latest_item['timestamp']
             }
@@ -105,7 +105,7 @@ def get_latest_temperature_from_averages():
         logger.error(f"Erro ao obter luminosidade da tabela BrightnessAverages: {str(e)}")
         return None
 
-def get_latest_temperature_from_history():
+def get_latest_brightness_from_history():
     try:
         logger.info("Obtendo a última luminosidade da tabela BrightnessHistory")
         response = brightness_history_table.scan(Limit=1)
@@ -113,7 +113,7 @@ def get_latest_temperature_from_history():
         if items:
             latest_item = items[0]
             return {
-                'temperature': latest_item['averageTemperature'],
+                'brightness': latest_item['averageTemperature'],
                 'status': latest_item.get('status', 'unknown'),
                 'timestamp': latest_item['timestamp']
             }
@@ -146,29 +146,29 @@ def get_all_task_plans():
         logger.error(f"Erro ao obter todos os planos de tarefas: {str(e)}")
         return create_response(500, f"Erro ao obter todos os planos de tarefas: {str(e)}", get_cors_headers())
 
-def process_temperature_data(data):
+def process_brightness_data(data):
     try:
         logger.info(f"Dados recebidos para processamento: {data}")
         
         # Normalizando os dados recebidos
         data = normalize_input_data(data)
         
-        temperature = data.get('temperature')
+        brightness = data.get('brightness')
         status = data.get('status')
         crops = data.get('crops')  # Recebendo a lista de culturas
         
-        logger.info(f"Dados normalizados: temperature={temperature}, status={status}, crops={crops}")
+        logger.info(f"Dados normalizados: brightness={brightness}, status={status}, crops={crops}")
         
         # Validando luminosidade
-        if not validate_temperature_data(temperature):
+        if not validate_brightness_data(brightness):
             return create_response(400, 'Dados de luminosidade inválidos ou ausentes')
 
         # Gerando o plano de tarefas com a IA
-        logger.info(f"Processando dados de luminosidade: temperature={temperature}, status={status}, crops={crops}")
+        logger.info(f"Processando dados de luminosidade: brightness={brightness}, status={status}, crops={crops}")
         
-        new_plan = generate_task_plan_with_ai(temperature, status, crops)
+        new_plan = generate_task_plan_with_ai(brightness, status, crops)
         if new_plan:
-            plan_id = store_task_plan(new_plan, temperature, status)
+            plan_id = store_task_plan(new_plan, brightness, status)
             if plan_id:
                 logger.info(f"Plano de tarefas armazenado com sucesso. ID: {plan_id}")
                 return create_response(200, f'Novo plano de tarefas gerado e armazenado com ID: {plan_id}')
@@ -199,18 +199,18 @@ def normalize_input_data(data):
     
     return data
 
-def validate_temperature_data(temperature):
-    if temperature is None:
+def validate_brightness_data(brightness):
+    if brightness is None:
         logger.error("Dados de luminosidade ausentes")
         return False
     
     try:
-        temperature_value = Decimal(str(temperature))
-        if temperature_value < 0 or temperature_value > 100:
-            logger.error(f"Valor de luminosidade fora do intervalo válido: {temperature_value}")
+        brightness_value = Decimal(str(brightness))
+        if brightness_value < 0 or brightness_value > 100:
+            logger.error(f"Valor de luminosidade fora do intervalo válido: {brightness_value}")
             return False
     except ValueError:
-        logger.error(f"Valor de luminosidade não é um número válido: {temperature}")
+        logger.error(f"Valor de luminosidade não é um número válido: {brightness}")
         return False
     
     return True
@@ -229,7 +229,7 @@ def get_recommendations(topic):
             body=json.dumps({
                 "prompt": prompt,
                 "max_tokens_to_sample": 300,
-                "temperature": TEMPERATURE,
+                "brightness": TEMPERATURE,
                 "top_p": TOP_P,
             })
         )
@@ -241,10 +241,10 @@ def get_recommendations(topic):
         logger.error(f"Erro ao obter recomendações para {topic}: {str(e)}")
         return create_response(500, f"Erro ao obter recomendações: {str(e)}")
 
-def generate_task_plan_with_ai(temperature, status, crops):
+def generate_task_plan_with_ai(brightness, status, crops):
     timestamp = int(time.time())
     logger.info(f"[{timestamp}] Iniciando geração do plano de tarefas")
-    logger.info(f"[{timestamp}] Parâmetros recebidos - Umidade: {temperature}%, Status: {status}, Culturas: {crops}")
+    logger.info(f"[{timestamp}] Parâmetros recebidos - Umidade: {brightness}%, Status: {status}, Culturas: {crops}")
 
     try:
         current_date = datetime.now()
@@ -254,7 +254,7 @@ def generate_task_plan_with_ai(temperature, status, crops):
         crops_str = ", ".join(crops)
 
         # Novo prompt que inclui as culturas e tarefas
-        prompt = f'''Human: Com base em uma luminosidade de {light_level} lux e status '{status}', gere um plano de tarefas agrícola para as próximas 4 semanas para as culturas {crops_str}.
+        prompt = f'''Human: Com base em uma luminosidade de {brightness} lux e status '{status}', gere um plano de tarefas agrícola para as próximas 4 semanas para as culturas {crops_str}.
         Inclua datas e horários exatos para cada tarefa. Cada semana deve ter uma sequência de ações específicas relacionadas às {crops_str}, práticas agrícolas modernas e sustentáveis, começando a partir de {start_date}.
         O plano deve focar em:
         1. Monitorar a exposição solar das plantas e ajustar a irrigação em dias de alta luminosidade.
@@ -312,7 +312,7 @@ def generate_task_plan_with_ai(temperature, status, crops):
         
         plan = {
             'planId': str(uuid.uuid4()),
-            'temperature': Decimal(str(temperature)),
+            'brightness': Decimal(str(brightness)),
             'status': status,
             'crops': crops,  # Lista de culturas original
             'recommendations': recommendations,  # Recomendação geral da IA
@@ -326,23 +326,23 @@ def generate_task_plan_with_ai(temperature, status, crops):
         logger.error(f"Erro ao gerar plano de tarefas: {str(e)}")
         return None
 
-def store_task_plan(plan, temperature, status):
+def store_task_plan(plan, brightness, status):
     timestamp = datetime.now(timezone.utc).isoformat()
     logger.info(f"[{timestamp}] Iniciando armazenamento do plano de tarefas de luminosidade")
-    logger.info(f"[{timestamp}] Parâmetros recebidos - Umidade: {temperature}, Status: {status}")
+    logger.info(f"[{timestamp}] Parâmetros recebidos - Umidade: {brightness}, Status: {status}")
     
     try:
         plan_id = str(uuid.uuid4())
         logger.info(f"[{timestamp}] UUID gerado para o plano: {plan_id}")
         
         logger.info(f"[{timestamp}] Convertendo luminosidade para Decimal")
-        temperature_decimal = Decimal(str(temperature))
-        logger.info(f"[{timestamp}] Umidade convertida: {temperature_decimal}")
+        brightness_decimal = Decimal(str(brightness))
+        logger.info(f"[{timestamp}] Umidade convertida: {brightness_decimal}")
         
         task_item = {
             'planId': plan_id,
             'plan': plan,
-            'temperature': temperature_decimal,
+            'brightness': brightness_decimal,
             'status': status,
             'createdAt': timestamp,
             'updatedAt': timestamp

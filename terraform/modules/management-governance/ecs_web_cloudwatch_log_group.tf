@@ -25,9 +25,10 @@ data "aws_iam_policy_document" "cloudwatch_logs_policy" {
 	  "logs:PutLogEvents"
 	]
 
-	resources = [
-	  "${aws_cloudwatch_log_group.website_container_log.arn}:*"
-	]
+    resources = [
+      "${aws_cloudwatch_log_group.website_container_log.arn}",
+      "${aws_cloudwatch_log_group.website_container_task_definition_log.arn}"
+    ]
   }
 }
 
