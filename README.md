@@ -1,7 +1,7 @@
 # TerraFarming Application
 
 # Visão Geral
-O TerraFarming é um sistema de agricultura inteligente que utiliza IoT, análise de dados e inteligência artificial para otimizar as práticas agrícolas. O sistema coleta dados de sensores de umidade do solo, processa imagens e vídeos armazenados, e fornece recomendações personalizadas para os agricultores através de uma aplicação web moderna.
+O TerraFarming é um sistema de agricultura inteligente que utiliza IoT, análise de dados e inteligência artificial para otimizar as práticas agrícolas. O sistema coleta dados de sensores de umidade do solo, temperatura do solo, luminosidade, umidade do ar e temperatura do ar, envia para o IoT Core, invoca os lambdas que invoca os modelos de inteligencia artificial do Amazon Bedrock e fornece recomendações personalizadas para os agricultores através dos API Gateways para a aplicação web moderna, provisionada no ECS e disponibilizada pelo Route53 na web.
 
 Este repositório contém o código para os microserviços e funções Lambda do aplicativo TerraFarming, junto com a configuração da infraestrutura AWS usando Terraform. O TerraFarming é um aplicativo de agricultura inteligente que utiliza inteligência artificial para fornecer recomendações aos agricultores com base em métricas do solo e condições climáticas.
 
